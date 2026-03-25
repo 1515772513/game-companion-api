@@ -42,7 +42,7 @@ public class ExceptionHandlingMiddleware
             _ => (int)HttpStatusCode.InternalServerError
         };
 
-        var response = ApiResponse<object>.Error(
+        var response = ApiResponse<object>.Fail(
             context.Response.StatusCode,
             exception switch
             {

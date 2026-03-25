@@ -93,7 +93,7 @@ public class UsersController : ControllerBase
         var data = await _userService.GetUserDetailAsync(userId);
         if (data == null)
         {
-            return NotFound(ApiResponse<object>.Error(404, "用户不存在", "User not found"));
+            return NotFound(ApiResponse<object>.Fail(404, "用户不存在", "User not found"));
         }
         return Ok(ApiResponse<object>.Success(data));
     }
@@ -104,7 +104,7 @@ public class UsersController : ControllerBase
         var success = await _userService.UpdateUserStatusAsync(userId, request.AccountStatus, request.Reason);
         if (!success)
         {
-            return NotFound(ApiResponse<object>.Error(404, "用户不存在", "User not found"));
+            return NotFound(ApiResponse<object>.Fail(404, "用户不存在", "User not found"));
         }
         return Ok(ApiResponse<object>.Success(new { user_id = userId, account_status = request.AccountStatus }));
     }
@@ -115,7 +115,7 @@ public class UsersController : ControllerBase
         var success = await _userService.UpdateUserAsync(userId, updateData);
         if (!success)
         {
-            return NotFound(ApiResponse<object>.Error(404, "用户不存在", "User not found"));
+            return NotFound(ApiResponse<object>.Fail(404, "用户不存在", "User not found"));
         }
         return Ok(ApiResponse<object>.Success(null, "更新成功"));
     }
@@ -151,7 +151,7 @@ public class UsersController : ControllerBase
         var success = await _userService.ResetUserPasswordAsync(userId, request.NewPassword);
         if (!success)
         {
-            return NotFound(ApiResponse<object>.Error(404, "用户不存在", "User not found"));
+            return NotFound(ApiResponse<object>.Fail(404, "用户不存在", "User not found"));
         }
         return Ok(ApiResponse<object>.Success(null, "密码重置成功"));
     }
@@ -195,7 +195,7 @@ public class CompanionsController : ControllerBase
         var data = await _companionService.GetApplicationDetailAsync(applicationId);
         if (data == null)
         {
-            return NotFound(ApiResponse<object>.Error(404, "认证申请不存在", "Application not found"));
+            return NotFound(ApiResponse<object>.Fail(404, "认证申请不存在", "Application not found"));
         }
         return Ok(ApiResponse<object>.Success(data));
     }
@@ -206,7 +206,7 @@ public class CompanionsController : ControllerBase
         var success = await _companionService.AuditApplicationAsync(applicationId, request.Action, request.RejectReason);
         if (!success)
         {
-            return NotFound(ApiResponse<object>.Error(404, "认证申请不存在", "Application not found"));
+            return NotFound(ApiResponse<object>.Fail(404, "认证申请不存在", "Application not found"));
         }
         return Ok(ApiResponse<object>.Success(new { application_id = applicationId, certification_status = request.Action == "approve" ? 1 : 2 }));
     }
@@ -234,7 +234,7 @@ public class CompanionsController : ControllerBase
         var success = await _companionService.UpdateCompanionAsync(companionId, updateData);
         if (!success)
         {
-            return NotFound(ApiResponse<object>.Error(404, "陪玩师不存在", "Companion not found"));
+            return NotFound(ApiResponse<object>.Fail(404, "陪玩师不存在", "Companion not found"));
         }
         return Ok(ApiResponse<object>.Success(null, "更新成功"));
     }
@@ -288,7 +288,7 @@ public class OrdersController : ControllerBase
         var data = await _orderService.GetOrderDetailAsync(orderId);
         if (data == null)
         {
-            return NotFound(ApiResponse<object>.Error(404, "订单不存在", "Order not found"));
+            return NotFound(ApiResponse<object>.Fail(404, "订单不存在", "Order not found"));
         }
         return Ok(ApiResponse<object>.Success(data));
     }
@@ -299,7 +299,7 @@ public class OrdersController : ControllerBase
         var success = await _orderService.UpdateOrderAsync(orderId, updateData);
         if (!success)
         {
-            return NotFound(ApiResponse<object>.Error(404, "订单不存在", "Order not found"));
+            return NotFound(ApiResponse<object>.Fail(404, "订单不存在", "Order not found"));
         }
         return Ok(ApiResponse<object>.Success(null, "更新成功"));
     }
@@ -310,7 +310,7 @@ public class OrdersController : ControllerBase
         var success = await _orderService.ProcessRefundAsync(orderId, request.Action, request.RefundAmount, request.RejectReason);
         if (!success)
         {
-            return NotFound(ApiResponse<object>.Error(404, "订单不存在", "Order not found"));
+            return NotFound(ApiResponse<object>.Fail(404, "订单不存在", "Order not found"));
         }
         return Ok(ApiResponse<object>.Success(new { order_id = orderId, refund_status = request.Action == "approve" ? 2 : 3 }));
     }
@@ -321,7 +321,7 @@ public class OrdersController : ControllerBase
         var success = await _orderService.CancelOrderAsync(orderId, request.CancelReason);
         if (!success)
         {
-            return NotFound(ApiResponse<object>.Error(404, "订单不存在", "Order not found"));
+            return NotFound(ApiResponse<object>.Fail(404, "订单不存在", "Order not found"));
         }
         return Ok(ApiResponse<object>.Success(null, "订单已取消"));
     }
@@ -380,7 +380,7 @@ public class PostsController : ControllerBase
         var data = await _postService.GetPostDetailAsync(postId);
         if (data == null)
         {
-            return NotFound(ApiResponse<object>.Error(404, "动态不存在", "Post not found"));
+            return NotFound(ApiResponse<object>.Fail(404, "动态不存在", "Post not found"));
         }
         return Ok(ApiResponse<object>.Success(data));
     }
@@ -391,7 +391,7 @@ public class PostsController : ControllerBase
         var success = await _postService.AuditPostAsync(postId, request.Action, request.AuditReason);
         if (!success)
         {
-            return NotFound(ApiResponse<object>.Error(404, "动态不存在", "Post not found"));
+            return NotFound(ApiResponse<object>.Fail(404, "动态不存在", "Post not found"));
         }
         return Ok(ApiResponse<object>.Success(null, "审核成功"));
     }
@@ -402,7 +402,7 @@ public class PostsController : ControllerBase
         var success = await _postService.UpdatePostVisibilityAsync(postId, request.AuditStatus);
         if (!success)
         {
-            return NotFound(ApiResponse<object>.Error(404, "动态不存在", "Post not found"));
+            return NotFound(ApiResponse<object>.Fail(404, "动态不存在", "Post not found"));
         }
         return Ok(ApiResponse<object>.Success(null, "更新成功"));
     }
@@ -413,7 +413,7 @@ public class PostsController : ControllerBase
         var success = await _postService.DeletePostAsync(postId);
         if (!success)
         {
-            return NotFound(ApiResponse<object>.Error(404, "动态不存在", "Post not found"));
+            return NotFound(ApiResponse<object>.Fail(404, "动态不存在", "Post not found"));
         }
         return Ok(ApiResponse<object>.Success(null, "删除成功"));
     }
@@ -470,7 +470,7 @@ public class MessagesController : ControllerBase
         var success = await _messageService.CancelMessageAsync(pushId);
         if (!success)
         {
-            return NotFound(ApiResponse<object>.Error(404, "推送记录不存在", "Message not found"));
+            return NotFound(ApiResponse<object>.Fail(404, "推送记录不存在", "Message not found"));
         }
         return Ok(ApiResponse<object>.Success(new { push_id = pushId, status = "cancelled" }));
     }
@@ -555,7 +555,7 @@ public class SettingsController : ControllerBase
         var success = await _settingService.UpdateAdminAsync(adminId, adminData);
         if (!success)
         {
-            return NotFound(ApiResponse<object>.Error(404, "管理员不存在", "Admin not found"));
+            return NotFound(ApiResponse<object>.Fail(404, "管理员不存在", "Admin not found"));
         }
         return Ok(ApiResponse<object>.Success(null, "管理员更新成功"));
     }

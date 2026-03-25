@@ -41,7 +41,7 @@ public class AuthController : ControllerBase
 
             if (accessToken == null)
             {
-                return Unauthorized(ApiResponse<object>.Error(401, "账号或密码错误", "Invalid username or password"));
+                return Unauthorized(ApiResponse<object>.Fail(401, "账号或密码错误", "Invalid username or password"));
             }
 
             var data = new
@@ -57,7 +57,7 @@ public class AuthController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "登录失败");
-            return BadRequest(ApiResponse<object>.Error(400, "登录失败", ex.Message));
+            return BadRequest(ApiResponse<object>.Fail(400, "登录失败", ex.Message));
         }
     }
 
@@ -76,7 +76,7 @@ public class AuthController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "登出失败");
-            return BadRequest(ApiResponse<object>.Error(400, "登出失败", ex.Message));
+            return BadRequest(ApiResponse<object>.Fail(400, "登出失败", ex.Message));
         }
     }
 
@@ -93,7 +93,7 @@ public class AuthController : ControllerBase
 
             if (accessToken == null)
             {
-                return Unauthorized(ApiResponse<object>.Error(401, message ?? "刷新失败", "Invalid or expired refresh token"));
+                return Unauthorized(ApiResponse<object>.Fail(401, message ?? "刷新失败", "Invalid or expired refresh token"));
             }
 
             var data = new
@@ -107,7 +107,7 @@ public class AuthController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Token刷新失败");
-            return BadRequest(ApiResponse<object>.Error(400, "Token刷新失败", ex.Message));
+            return BadRequest(ApiResponse<object>.Fail(400, "Token刷新失败", ex.Message));
         }
     }
 
@@ -122,13 +122,13 @@ public class AuthController : ControllerBase
             var adminIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(adminIdStr) || !int.TryParse(adminIdStr, out var adminId))
             {
-                return Unauthorized(ApiResponse<object>.Error(401, "未授权", "Invalid token"));
+                return Unauthorized(ApiResponse<object>.Fail(401, "未授权", "Invalid token"));
             }
 
             var adminInfo = await _authService.GetCurrentUserAsync(adminId);
             if (adminInfo == null)
             {
-                return NotFound(ApiResponse<object>.Error(404, "管理员不存在", "Admin not found"));
+                return NotFound(ApiResponse<object>.Fail(404, "管理员不存在", "Admin not found"));
             }
 
             return Ok(ApiResponse<object>.Success(adminInfo));
@@ -136,7 +136,7 @@ public class AuthController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "获取管理员信息失败");
-            return BadRequest(ApiResponse<object>.Error(400, "获取信息失败", ex.Message));
+            return BadRequest(ApiResponse<object>.Fail(400, "获取信息失败", ex.Message));
         }
     }
 }

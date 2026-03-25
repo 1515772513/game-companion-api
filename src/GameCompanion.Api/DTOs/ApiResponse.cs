@@ -59,7 +59,7 @@ public class ApiResponse<T>
     /// <summary>
     /// 创建错误响应
     /// </summary>
-    public static ApiResponse<T> Error(int code, string message, string? error = null)
+    public static ApiResponse<T> Fail(int code, string message, string? error = null)
     {
         return new ApiResponse<T>
         {
