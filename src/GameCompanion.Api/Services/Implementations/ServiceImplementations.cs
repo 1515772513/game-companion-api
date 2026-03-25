@@ -173,11 +173,11 @@ public class UserService : IUserService
                 points = u.Points,
                 vip_level = u.VipLevel,
                 vip_level_text = u.VipLevel == 1 ? "VIP会员" : "普通用户",
-                vip_expire_time = u.VipExpireTime?.ToString("yyyy-MM-dd HH:mm:ss"),
+                vip_expire_time = u.VipExpireTime.HasValue ? u.VipExpireTime.Value.ToString("yyyy-MM-dd HH:mm:ss") : null,
                 account_status = u.AccountStatus,
                 account_status_text = GetAccountStatusText(u.AccountStatus),
                 created_at = u.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
-                last_active_time = u.UpdatedAt?.ToString("yyyy-MM-dd HH:mm:ss")
+                last_active_time = u.UpdatedAt.HasValue ? u.UpdatedAt.Value.ToString("yyyy-MM-dd HH:mm:ss") : null
             })
             .ToListAsync();
 
@@ -813,7 +813,7 @@ public class SettingService : ISettingService
                 avatar_url = a.AvatarUrl,
                 role = a.Role,
                 account_status = a.AccountStatus,
-                last_login_time = a.LastLoginTime?.ToString("yyyy-MM-dd HH:mm:ss"),
+                last_login_time = a.LastLoginTime.HasValue ? a.LastLoginTime.Value.ToString("yyyy-MM-dd HH:mm:ss") : null,
                 created_at = a.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")
             })
             .ToListAsync();

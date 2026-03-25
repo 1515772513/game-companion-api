@@ -34,7 +34,7 @@ public class ApiResponse<T>
     /// <summary>
     /// 创建成功响应
     /// </summary>
-    public static ApiResponse<T> Success(T data, string message = "success")
+    public static ApiResponse<T> Success(T? data, string message = "success")
     {
         return new ApiResponse<T>
         {
