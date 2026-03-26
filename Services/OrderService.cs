@@ -221,7 +221,7 @@ public class OrderService : IOrderService
                     {
                         Id = o.Companion.Id,
                         Nickname = o.Companion.Nickname,
-                        AvatarUrl = o.Companion.AvatarUrl ?? "",
+                        // AvatarUrl = o.Companion.AvatarUrl ?? "",
                         Level = o.Companion.Level ?? ""
                     },
                     GameName = o.Game?.Name ?? "",
@@ -291,7 +291,7 @@ public class OrderService : IOrderService
                     Id = order.Companion.Id,
                     UserId = order.Companion.UserId,
                     Nickname = order.Companion.Nickname,
-                    AvatarUrl = order.Companion.AvatarUrl ?? "",
+                    // AvatarUrl = order.Companion.AvatarUrl ?? "",
                     Level = order.Companion.Level ?? "",
                     Phone = order.Companion.Phone ?? "",
                     Wechat = order.Companion.User?.Wechat ?? ""

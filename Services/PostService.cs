@@ -197,7 +197,7 @@ public class PostService : IPostService
                 },
                 Content = c.Content,
                 LikeCount = c.LikeCount ?? 0,
-                IsLiked = c.Likes.Any(l => l.UserId == userId),
+                IsLiked = post.Likes.Any(l => l.UserId == userId),
                 CreatedAt = c.CreatedAt,
                 Replies = c.Replies.Select(r => new PostCommentReplyDto
                 {

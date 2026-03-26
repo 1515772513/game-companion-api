@@ -73,7 +73,7 @@ public class PostsController : ControllerBase
         var userId = GetUserIdFromClaims();
         _logger.LogInformation("用户 {UserId} 获取动态详情，动态ID: {PostId}", userId, id);
 
-        var result = await _postService.GetPostDetailAsync(id, userId);
+        var result = await _postService.GetPostDetailAsync((int)id, userId);
 
         // 处理特定的错误码映射
         if (result.Code == 4001)
@@ -102,7 +102,7 @@ public class PostsController : ControllerBase
         var userId = GetUserIdFromClaims();
         _logger.LogInformation("用户 {UserId} {Action} 动态 {PostId}", userId, request.Action, id);
 
-        var result = await _postService.LikePostAsync(id, request, userId);
+        var result = await _postService.LikePostAsync((int)id, request, userId);
 
         // 处理重复点赞错误
         if (result.Code == 4003)
@@ -126,7 +126,7 @@ public class PostsController : ControllerBase
         var userId = GetUserIdFromClaims();
         _logger.LogInformation("用户 {UserId} {Action} 收藏动态 {PostId}", userId, request.Action, id);
 
-        var result = await _postService.CollectPostAsync(id, request, userId);
+        var result = await _postService.CollectPostAsync((int)id, request, userId);
         return Ok(result);
     }
 
@@ -144,7 +144,7 @@ public class PostsController : ControllerBase
         var userId = GetUserIdFromClaims();
         _logger.LogInformation("用户 {UserId} 评论动态 {PostId}", userId, id);
 
-        var result = await _postService.CommentPostAsync(id, request, userId);
+        var result = await _postService.CommentPostAsync((int)id, request, userId);
 
         // 处理评论频率限制
         if (result.Code == 429)
@@ -185,7 +185,7 @@ public class PostsController : ControllerBase
         var userId = GetUserIdFromClaims();
         _logger.LogInformation("用户 {UserId} 删除动态 {PostId}", userId, id);
 
-        var result = await _postService.DeletePostAsync(id, userId);
+        var result = await _postService.DeletePostAsync((int)id, userId);
 
         // 处理权限错误
         if (result.Code == 403)

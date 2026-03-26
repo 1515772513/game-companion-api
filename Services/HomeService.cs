@@ -31,14 +31,14 @@ public class HomeService : IHomeService
 
             // 获取热门陪玩师
             response.HotCompanions = await _context.Companions
-                .Where(c => c.OnlineStatus == "online" && c.Rating.HasValue && c.Rating.Value >= 4.5m)
+                .Where(c => c.OnlineStatus == "online" && c.Rating >= 4.5m)
                 .OrderByDescending(c => c.Rating)
                 .Take(6)
                 .Select(c => new CompanionSummaryDto
                 {
                     Id = c.Id,
                     Nickname = c.Nickname,
-                    AvatarUrl = c.User?.Avatar ?? "",
+                    AvatarUrl = c.User == null ? "" : c.User.Avatar ?? "",
                     Level = c.Level ?? "银牌",
                     ServiceType = c.ServiceType ?? "娱乐陪玩",
                     Price = c.PricePerGame,
@@ -46,7 +46,7 @@ public class HomeService : IHomeService
                     Rating = c.Rating ?? 0,
                     OnlineStatus = c.OnlineStatus == "online" ? 1 : 0,
                     OnlineStatusText = c.OnlineStatus == "online" ? "在线接单" : "离线",
-                    Tags = c.Tags?.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList() ?? new List<string>()
+                    Tags = c.Tags != null ? c.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList() : new List<string>()
                 })
                 .ToListAsync();
 
@@ -70,21 +70,19 @@ public class HomeService : IHomeService
                 .Where(p => p.Status == "published")
                 .OrderByDescending(p => p.LikeCount + p.CommentCount)
                 .Take(5)
-                .ToListAsync();
-
-            var postDtos = posts.Select(p => new PostDto
+                .Select(p => new PostDto
                 {
                     Id = p.Id,
                     UserId = p.UserId,
-                    UserName = p.User?.Nickname ?? "",
-                    UserAvatar = p.User?.Avatar ?? "",
+                    UserName = p.User == null ? "" : p.User.Nickname ?? "",
+                    UserAvatar = p.User == null ? "" : p.User.Avatar ?? "",
                     Content = p.Content,
-                    Images = p.Images?.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList() ?? new List<string>(),
+                    Images = p.Images != null ? p.Images.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList() : new List<string>(),
                     LikeCount = p.LikeCount ?? 0,
                     CommentCount = p.CommentCount ?? 0,
                     CreatedAt = GetRelativeTime(p.CreatedAt)
                 })
-                .ToList();
+                .ToListAsync();
 
             return ApiResponse<HomeDataResponse>.SuccessResponse(response, "获取成功");
         }
@@ -190,7 +188,7 @@ public class HomeService : IHomeService
                     Id = c.Id,
                     UserId = c.UserId,
                     Nickname = c.Nickname,
-                    AvatarUrl = c.User?.Avatar ?? "",
+                    AvatarUrl = c.User == null ? "" : c.User.Avatar,
                     Level = c.Level ?? "银牌",
                     LevelCode = c.Level ?? "silver",
                     ServiceType = c.ServiceType == "tech" ? "技术陪玩" : "娱乐陪玩",
@@ -198,20 +196,20 @@ public class HomeService : IHomeService
                     Price = c.PricePerGame,
                     PriceUnit = "局",
                     Rating = c.Rating ?? 0,
-                    RatingCount = c.OrderReviews?.Count ?? 0,
+                    RatingCount = c.OrderReviews == null ? 0 : c.OrderReviews.Count(),
                     OrderCount = c.TotalOrders ?? 0,
                     PositiveRate = c.GoodReviewRate ?? 0,
                     OnlineStatus = c.OnlineStatus == "online" ? 1 : 0,
                     OnlineStatusText = c.OnlineStatus == "online" ? "在线接单" : "离线",
-                    Games = c.CompanionGames.Select(cg => cg.Game?.Name ?? "").ToList(),
-                    GameRank = c.CompanionGames.FirstOrDefault()?.GameLevel ?? "",
-                    Tags = c.Tags?.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList() ?? new List<string>(),
+                    Games = c.CompanionGames.Select(cg => cg.Game == null ? "" : cg.Game.Name ?? "").ToList(),
+                    GameRank = c.CompanionGames != null && c.CompanionGames.Any() ? c.CompanionGames.FirstOrDefault().GameLevel ?? "" : "",
+                    Tags = c.Tags != null ? c.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList() : new List<string>(),
                     Bio = c.Bio ?? ""
                 })
                 .ToListAsync();
 
             return ApiResponse<CompanionListResponse>.SuccessResponse(new CompanionListResponse
-            {
+            {   
                 Items = items,
                 Pagination = new PaginationDto
                 {
@@ -273,7 +271,7 @@ public class HomeService : IHomeService
                 OnlineStatus = companion.OnlineStatus == "online" ? 1 : 0,
                 OnlineStatusText = companion.OnlineStatus == "online" ? "在线接单" : "离线",
                 IsVerified = companion.Status == "approved",
-                VerifiedAt = companion.UpdatedAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? "",
+                VerifiedAt = companion.UpdatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
                 Games = companion.CompanionGames.Select(cg => new GameSkillDto
                 {
                     GameId = cg.GameId,
@@ -294,7 +292,7 @@ public class HomeService : IHomeService
                         UserName = r.User?.Nickname ?? "",
                         UserAvatar = r.User?.Avatar ?? "",
                         Rating = r.Rating,
-                        Comment = r.Content ?? "",
+                        // Comment = r.Content  ?? "",
                         ServiceDate = r.CreatedAt.ToString("yyyy-MM-dd HH:mm"),
                         CreatedAt = GetRelativeTime(r.CreatedAt)
                     }).ToList(),
@@ -375,7 +373,7 @@ public class HomeService : IHomeService
                 {
                     Id = c.Id,
                     Nickname = c.Nickname,
-                    AvatarUrl = c.User?.Avatar ?? "",
+                    AvatarUrl = c.User == null ? "" : (c.User.Avatar == null ? "" : c.User.Avatar),
                     Level = c.Level ?? "银牌",
                     ServiceType = c.ServiceType == "tech" ? "技术陪玩" : "娱乐陪玩",
                     Price = c.PricePerGame,
@@ -383,7 +381,7 @@ public class HomeService : IHomeService
                     Rating = c.Rating ?? 0,
                     OnlineStatus = c.OnlineStatus == "online" ? 1 : 0,
                     OnlineStatusText = c.OnlineStatus == "online" ? "在线接单" : "离线",
-                    Tags = c.Tags?.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList() ?? new List<string>()
+                    Tags = c.Tags == null ? new List<string>() : new List<string>(c.Tags == "" ? new List<string>() : c.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList())
                 })
                 .ToListAsync();
 
@@ -432,7 +430,7 @@ public class HomeService : IHomeService
                     Id = c.Id,
                     Name = c.Name,
                     GameId = c.GameId,
-                    GameName = c.Game != null ? c.Game.Name : "",
+                    GameName = c.Game == null ? "" : c.Game.Name,
                     AvatarUrl = c.Icon ?? "",
                     MemberCount = c.MemberCount ?? 0,
                     PostCount = c.PostCount ?? 0,

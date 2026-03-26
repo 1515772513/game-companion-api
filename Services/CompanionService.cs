@@ -228,7 +228,7 @@ public class CompanionService : ICompanionService
             if (request.ServiceType != null) companion.ServiceType = request.ServiceType;
             if (request.Price.HasValue) companion.PricePerGame = request.Price.Value;
             if (request.Bio != null) companion.Bio = request.Bio;
-            if (request.Tags != null) companion.Tags = request.Tags.Join(",");
+            if (request.Tags != null) companion.Tags = string.Join(",", request.Tags);
 
             companion.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
