@@ -68,8 +68,7 @@ public class User
     [Column("points")]
     public int Points { get; set; } = 0;
 
-    [Column("balance")]
-    [Column(TypeName = "decimal(10,2)")]
+    [Column("balance", TypeName = "decimal(10,2)")]
     public decimal Balance { get; set; } = 0;
 
     [Column("status")]

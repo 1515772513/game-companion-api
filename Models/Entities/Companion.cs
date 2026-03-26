@@ -48,23 +48,19 @@ public class Companion
     [MaxLength(20)]
     public string? ServiceType { get; set; } = "技术陪玩"; // 技术陪玩、娱乐陪玩
 
-    [Column("price_per_game")]
-    [Column(TypeName = "decimal(10,2)")]
+    [Column("price_per_game", TypeName = "decimal(10,2)")]
     public decimal PricePerGame { get; set; } = 0;
 
-    [Column("price_per_hour")]
-    [Column(TypeName = "decimal(10,2)")]
+    [Column("price_per_hour", TypeName = "decimal(10,2)")]
     public decimal? PricePerHour { get; set; }
 
-    [Column("rating")]
-    [Column(TypeName = "decimal(3,2)")]
+    [Column("rating", TypeName = "decimal(3,2)")]
     public decimal? Rating { get; set; }
 
     [Column("total_orders")]
     public int? TotalOrders { get; set; }
 
-    [Column("good_review_rate")]
-    [Column(TypeName = "decimal(5,2)")]
+    [Column("good_review_rate", TypeName = "decimal(5,2)")]
     public decimal? GoodReviewRate { get; set; }
 
     [Column("bio")]

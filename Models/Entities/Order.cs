@@ -40,20 +40,16 @@ public class Order
     [Column("duration_value")]
     public int DurationValue { get; set; }
 
-    [Column("unit_price")]
-    [Column(TypeName = "decimal(10,2)")]
+    [Column("unit_price", TypeName = "decimal(10,2)")]
     public decimal UnitPrice { get; set; }
 
-    [Column("total_price")]
-    [Column(TypeName = "decimal(10,2)")]
+    [Column("total_price", TypeName = "decimal(10,2)")]
     public decimal TotalPrice { get; set; }
 
-    [Column("discount_amount")]
-    [Column(TypeName = "decimal(10,2)")]
+    [Column("discount_amount", TypeName = "decimal(10,2)")]
     public decimal? DiscountAmount { get; set; }
 
-    [Column("final_price")]
-    [Column(TypeName = "decimal(10,2)")]
+    [Column("final_price", TypeName = "decimal(10,2)")]
     public decimal FinalPrice { get; set; }
 
     [Column("remark")]
