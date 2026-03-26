@@ -520,8 +520,7 @@ public class OrderService : IOrderService
                 Comment = request.Comment,
                 Images = request.Images != null ? string.Join(",", request.Images) : null,
                 Tags = request.Tags != null ? string.Join(",", request.Tags) : null,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow
             };
 
             _context.OrderReviews.Add(review);
