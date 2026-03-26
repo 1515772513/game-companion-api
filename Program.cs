@@ -19,7 +19,13 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 // 添加服务到容器
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+    });
+
 builder.Services.AddEndpointsApiExplorer();
 
 // 配置Swagger
@@ -36,14 +42,6 @@ builder.Services.AddSwaggerGen(c =>
             Email = "tech@example.com"
         }
     });
-
-    // 启用XML注释
-    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    if (File.Exists(xmlPath))
-    {
-        c.IncludeXmlComments(xmlPath);
-    }
 
     // 添加JWT认证到Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -70,6 +68,24 @@ builder.Services.AddSwaggerGen(c =>
             Array.Empty<string>()
         }
     });
+
+    // 忽略循环引用,使用完整的类型名作为Schema ID
+    c.CustomSchemaIds(type => type.FullName);
+
+    // 如果需要XML注释,可以取消下面的注释
+    // try
+    // {
+    //     var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    //     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    //     if (File.Exists(xmlPath))
+    //     {
+    //         c.IncludeXmlComments(xmlPath);
+    //     }
+    // }
+    // catch
+    // {
+    //     // XML注释文件不存在,忽略
+    // }
 });
 
 // 配置数据库
