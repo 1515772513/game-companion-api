@@ -9,6 +9,16 @@ namespace GameCompanion.Api.Helpers;
 public static class ApiResponseExtensions
 {
     /// <summary>
+    /// 设置Error属性
+    /// </summary>
+    public static T WithError<T>(this T response, string error) where T : ApiResponse
+    {
+        var errorProperty = typeof(T).GetProperty("Error");
+        errorProperty?.SetValue(response, error);
+        return response;
+    }
+
+    /// <summary>
     /// 将ApiResponse转换为ActionResult
     /// </summary>
     public static IActionResult ToActionResult<T>(this ApiResponse<T> response)
