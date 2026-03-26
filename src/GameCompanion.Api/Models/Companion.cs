@@ -158,4 +158,5 @@ public class Companion : BaseEntity
 
     // 导航属性
     public ICollection<Order> Orders { get; set; } = new List<Order>();
+    public ICollection<CompanionGame> CompanionGames { get; set; } = new List<CompanionGame>();
 }

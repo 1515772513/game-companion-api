@@ -947,7 +947,7 @@ public class HomeService : IHomeService
     {
         var query = _context.Companions
             .Include(c => c.User)
-            .Where(c => c.Status == "certified");
+            .Where(c => c.CertificationStatus == 1);
 
         // 游戏筛选
         if (gameId.HasValue)
@@ -970,24 +970,17 @@ public class HomeService : IHomeService
         // 价格筛选
         if (minPrice.HasValue)
         {
-            query = query.Where(c => c.PricePerGame >= minPrice.Value);
+            query = query.Where(c => c.Price >= minPrice.Value);
         }
         if (maxPrice.HasValue)
         {
-            query = query.Where(c => c.PricePerGame <= maxPrice.Value);
+            query = query.Where(c => c.Price <= maxPrice.Value);
         }
 
         // 在线状态筛选
         if (onlineStatus.HasValue)
         {
-            if (onlineStatus.Value == 1)
-            {
-                query = query.Where(c => c.OnlineStatus == "online");
-            }
-            else if (onlineStatus.Value == 2)
-            {
-                query = query.Where(c => c.OnlineStatus == "offline");
-            }
+            query = query.Where(c => c.OnlineStatus == onlineStatus.Value);
         }
 
         // 关键词搜索
@@ -1000,8 +993,8 @@ public class HomeService : IHomeService
         query = sortBy.ToLower() switch
         {
             "rating" => sortOrder.ToLower() == "asc" ? query.OrderBy(c => c.Rating) : query.OrderByDescending(c => c.Rating),
-            "price" => sortOrder.ToLower() == "asc" ? query.OrderBy(c => c.PricePerGame) : query.OrderByDescending(c => c.PricePerGame),
-            "order_count" => sortOrder.ToLower() == "asc" ? query.OrderBy(c => c.TotalOrders) : query.OrderByDescending(c => c.TotalOrders),
+            "price" => sortOrder.ToLower() == "asc" ? query.OrderBy(c => c.Price) : query.OrderByDescending(c => c.Price),
+            "order_count" => sortOrder.ToLower() == "asc" ? query.OrderBy(c => c.OrderCount) : query.OrderByDescending(c => c.OrderCount),
             _ => query.OrderByDescending(c => c.Rating)
         };
 
@@ -1014,20 +1007,20 @@ public class HomeService : IHomeService
                 Id = c.Id,
                 User_id = c.UserId,
                 Nickname = c.Nickname,
-                Avatar_url = c.Avatar ?? "https://cdn.example.com/avatar/default.png",
+                Avatar_url = c.AvatarUrl ?? "https://cdn.example.com/avatar/default.png",
                 Level = GetLevelText(c.Level),
                 Level_code = c.Level,
                 Service_type = GetServiceTypeText(c.ServiceType),
                 Service_type_code = c.ServiceType,
-                Price = c.PricePerGame,
+                Price = c.Price,
                 Price_unit = "局",
                 Rating = c.Rating,
                 Rating_count = 0, // TODO: 从评价表计算
-                Order_count = c.TotalOrders,
-                Positive_rate = c.GoodReviewRate,
-                Online_status = c.OnlineStatus == "online" ? 1 : 0,
-                Online_status_text = c.OnlineStatus == "online" ? "在线接单" : "离线",
-                Is_verified = c.Status == "certified",
+                Order_count = c.OrderCount,
+                Positive_rate = c.PositiveRate,
+                Online_status = c.OnlineStatus == 1 ? 1 : 0,
+                Online_status_text = c.OnlineStatus == 1 ? "在线接单" : "离线",
+                Is_verified = c.CertificationStatus == 1,
                 Verified_at = c.UpdatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
                 Games = _context.CompanionGames
                     .Where(cg => cg.CompanionId == c.Id)
@@ -1046,7 +1039,7 @@ public class HomeService : IHomeService
                 Recent_reviews = new List<ReviewInfo>(), // TODO: 从评价表获取
                 Statistics = new CompanionStatistics
                 {
-                    Total_orders = c.TotalOrders,
+                    Total_orders = c.OrderCount,
                     Total_hours = 0, // TODO: 计算总服务时长
                     Avg_response_time = 5,
                     Completion_rate = 99.2m,
@@ -1072,7 +1065,7 @@ public class HomeService : IHomeService
     {
         var companion = await _context.Companions
             .Include(c => c.User)
-            .Where(c => c.Id == companionId && c.Status == "certified")
+            .Where(c => c.Id == companionId && c.CertificationStatus == 1)
             .FirstOrDefaultAsync();
 
         if (companion == null) return null;
@@ -1082,20 +1075,20 @@ public class HomeService : IHomeService
             Id = companion.Id,
             User_id = companion.UserId,
             Nickname = companion.Nickname,
-            Avatar_url = companion.Avatar ?? "https://cdn.example.com/avatar/default.png",
+            Avatar_url = companion.AvatarUrl ?? "https://cdn.example.com/avatar/default.png",
             Level = GetLevelText(companion.Level),
             Level_code = companion.Level,
             Service_type = GetServiceTypeText(companion.ServiceType),
             Service_type_code = companion.ServiceType,
-            Price = companion.PricePerGame,
+            Price = companion.Price,
             Price_unit = "局",
             Rating = companion.Rating,
             Rating_count = 0,
-            Order_count = companion.TotalOrders,
-            Positive_rate = companion.GoodReviewRate,
-            Online_status = companion.OnlineStatus == "online" ? 1 : 0,
-            Online_status_text = companion.OnlineStatus == "online" ? "在线接单" : "离线",
-            Is_verified = companion.Status == "certified",
+            Order_count = companion.OrderCount,
+            Positive_rate = companion.PositiveRate,
+            Online_status = companion.OnlineStatus == 1 ? 1 : 0,
+            Online_status_text = companion.OnlineStatus == 1 ? "在线接单" : "离线",
+            Is_verified = companion.CertificationStatus == 1,
             Verified_at = companion.UpdatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
             Games = _context.CompanionGames
                 .Where(cg => cg.CompanionId == companion.Id)
@@ -1114,7 +1107,7 @@ public class HomeService : IHomeService
             Recent_reviews = new List<ReviewInfo>(),
             Statistics = new CompanionStatistics
             {
-                Total_orders = companion.TotalOrders,
+                Total_orders = companion.OrderCount,
                 Total_hours = 0,
                 Avg_response_time = 5,
                 Completion_rate = 99.2m,
@@ -1126,17 +1119,16 @@ public class HomeService : IHomeService
     public async Task<List<GameDetailInfo>> GetGamesAsync()
     {
         return await _context.Games
-            .Where(g => g.Status == "active")
             .OrderBy(g => g.SortOrder)
             .Select(g => new GameDetailInfo
             {
                 Id = g.Id,
                 Name = g.Name,
-                Icon_url = g.Icon ?? "https://cdn.example.com/game/default.png",
+                Icon_url = g.IconUrl ?? "https://cdn.example.com/game/default.png",
                 Companion_count = _context.CompanionGames.Count(cg => cg.GameId == g.Id),
                 Online_companion_count = _context.CompanionGames
                     .Join(_context.Companions, cg => cg.CompanionId, c => c.Id, (cg, c) => new { cg, c })
-                    .Count(x => x.cg.GameId == g.Id && x.c.OnlineStatus == "online" && x.c.Status == "certified"),
+                    .Count(x => x.cg.GameId == g.Id && x.c.OnlineStatus == 1 && x.c.CertificationStatus == 1),
                 Description = g.Description ?? "",
                 Is_hot = g.SortOrder <= 3
             })
@@ -1146,7 +1138,7 @@ public class HomeService : IHomeService
     public async Task<PagedResponse<CompanionSimpleInfo>> SearchCompanionsAsync(string keyword, int page, int pageSize)
     {
         var query = _context.Companions
-            .Where(c => c.Status == "certified")
+            .Where(c => c.CertificationStatus == 1)
             .Where(c => c.Nickname.Contains(keyword) || c.Bio.Contains(keyword) || (c.Tags != null && c.Tags.Contains(keyword)));
 
         var total = await query.CountAsync();
@@ -1157,14 +1149,14 @@ public class HomeService : IHomeService
             {
                 Id = c.Id,
                 Nickname = c.Nickname,
-                Avatar_url = c.Avatar ?? "https://cdn.example.com/avatar/default.png",
+                Avatar_url = c.AvatarUrl ?? "https://cdn.example.com/avatar/default.png",
                 Level = GetLevelText(c.Level),
                 Service_type = GetServiceTypeText(c.ServiceType),
-                Price = c.PricePerGame,
+                Price = c.Price,
                 Price_unit = "局",
                 Rating = c.Rating,
-                Online_status = c.OnlineStatus == "online" ? 1 : 0,
-                Online_status_text = c.OnlineStatus == "online" ? "在线接单" : "离线",
+                Online_status = c.OnlineStatus == 1 ? 1 : 0,
+                Online_status_text = c.OnlineStatus == 1 ? "在线接单" : "离线",
                 Tags = c.Tags?.Split(',').ToList() ?? new List<string>()
             })
             .ToListAsync();

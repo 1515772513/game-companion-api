@@ -17,6 +17,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<User> Users { get; set; }
     public DbSet<Companion> Companions { get; set; }
     public DbSet<Game> Games { get; set; }
+    public DbSet<CompanionGame> CompanionGames { get; set; }
     public DbSet<Order> Orders { get; set; }
     public DbSet<Post> Posts { get; set; }
     public DbSet<AdminLog> AdminLogs { get; set; }
@@ -52,6 +53,22 @@ public class ApplicationDbContext : DbContext
 
             entity.Property(e => e.Tags).HasColumnType("json");
             entity.Property(e => e.Games).HasColumnType("json");
+        });
+
+        // 配置CompanionGame实体
+        modelBuilder.Entity<CompanionGame>(entity =>
+        {
+            entity.HasOne(e => e.Companion)
+                .WithMany(c => c.CompanionGames)
+                .HasForeignKey(e => e.CompanionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Game)
+                .WithMany(g => g.CompanionGames)
+                .HasForeignKey(e => e.GameId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => new { e.CompanionId, e.GameId }).IsUnique();
         });
 
         // 配置Game实体
