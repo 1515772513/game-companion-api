@@ -322,7 +322,6 @@ public class HomeService : IHomeService
         try
         {
             var games = await _context.Games
-                .Where(g => g.Status == "active")
                 .Select(g => new GameDetailDto
                 {
                     Id = g.Id,
