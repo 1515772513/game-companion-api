@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace GameCompanion.Api.DTOs.Order;
 
 /// <summary>

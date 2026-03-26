@@ -13,7 +13,7 @@ public class GetOrdersResponse
     /// <summary>
     /// 分页信息
     /// </summary>
-    public Pagination Pagination { get; set; } = new();
+    public OrderPagination Pagination { get; set; } = new();
 
     /// <summary>
     /// 订单项
@@ -125,7 +125,7 @@ public class GetOrdersResponse
     /// <summary>
     /// 分页信息
     /// </summary>
-    public class Pagination
+    public class OrderPagination
     {
         /// <summary>
         /// 当前页码

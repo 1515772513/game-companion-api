@@ -1,3 +1,4 @@
+using GameCompanion.Api.Data;
 using GameCompanion.Api.DTOs.Posts;
 using GameCompanion.Api.Models;
 using GameCompanion.Api.Models.Entities;
