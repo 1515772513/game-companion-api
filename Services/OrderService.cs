@@ -253,7 +253,7 @@ public class OrderService : IOrderService
     /// <summary>
     /// 获取订单详情
     /// </summary>
-    public async Task<ApiResponse<GetOrderResponse>> GetOrderAsync(long orderId)
+    public async Task<ApiResponse<GetOrderResponse>> GetOrderAsync(int orderId)
     {
         try
         {
@@ -344,7 +344,7 @@ public class OrderService : IOrderService
     /// <summary>
     /// 取消订单
     /// </summary>
-    public async Task<ApiResponse<CancelOrderResponse>> CancelOrderAsync(long orderId, CancelOrderRequest request)
+    public async Task<ApiResponse<CancelOrderResponse>> CancelOrderAsync(int orderId, CancelOrderRequest request)
     {
         try
         {
@@ -396,7 +396,7 @@ public class OrderService : IOrderService
     /// <summary>
     /// 申请退款
     /// </summary>
-    public async Task<ApiResponse<RefundOrderResponse>> RefundOrderAsync(long orderId, RefundOrderRequest request)
+    public async Task<ApiResponse<RefundOrderResponse>> RefundOrderAsync(int orderId, RefundOrderRequest request)
     {
         try
         {
@@ -444,7 +444,7 @@ public class OrderService : IOrderService
     /// <summary>
     /// 确认订单完成
     /// </summary>
-    public async Task<ApiResponse<ConfirmOrderResponse>> ConfirmOrderAsync(long orderId)
+    public async Task<ApiResponse<ConfirmOrderResponse>> ConfirmOrderAsync(int orderId)
     {
         try
         {
@@ -488,7 +488,7 @@ public class OrderService : IOrderService
     /// <summary>
     /// 订单评价
     /// </summary>
-    public async Task<ApiResponse<CreateOrderReviewResponse>> ReviewOrderAsync(long orderId, CreateOrderReviewRequest request)
+    public async Task<ApiResponse<CreateOrderReviewResponse>> ReviewOrderAsync(int orderId, CreateOrderReviewRequest request)
     {
         try
         {
@@ -668,7 +668,7 @@ public class OrderService : IOrderService
     /// <summary>
     /// 检查是否已评价
     /// </summary>
-    private bool HasReviewed(long orderId)
+    private bool HasReviewed(int orderId)
     {
         return _context.OrderReviews.Any(r => r.OrderId == orderId);
     }

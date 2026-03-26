@@ -21,25 +21,25 @@ public interface IOrderService
     /// <summary>
     /// 获取订单详情
     /// </summary>
-    Task<ApiResponse<GetOrderResponse>> GetOrderAsync(long orderId);
+    Task<ApiResponse<GetOrderResponse>> GetOrderAsync(int orderId);
 
     /// <summary>
     /// 取消订单
     /// </summary>
-    Task<ApiResponse<CancelOrderResponse>> CancelOrderAsync(long orderId, CancelOrderRequest request);
+    Task<ApiResponse<CancelOrderResponse>> CancelOrderAsync(int orderId, CancelOrderRequest request);
 
     /// <summary>
     /// 申请退款
     /// </summary>
-    Task<ApiResponse<RefundOrderResponse>> RefundOrderAsync(long orderId, RefundOrderRequest request);
+    Task<ApiResponse<RefundOrderResponse>> RefundOrderAsync(int orderId, RefundOrderRequest request);
 
     /// <summary>
     /// 确认订单完成
     /// </summary>
-    Task<ApiResponse<ConfirmOrderResponse>> ConfirmOrderAsync(long orderId);
+    Task<ApiResponse<ConfirmOrderResponse>> ConfirmOrderAsync(int orderId);
 
     /// <summary>
     /// 订单评价
     /// </summary>
-    Task<ApiResponse<CreateOrderReviewResponse>> ReviewOrderAsync(long orderId, CreateOrderReviewRequest request);
+    Task<ApiResponse<CreateOrderReviewResponse>> ReviewOrderAsync(int orderId, CreateOrderReviewRequest request);
 }

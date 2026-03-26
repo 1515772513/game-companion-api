@@ -80,7 +80,7 @@ public class OrdersController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<GetOrderResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse<GetOrderResponse>>> GetOrder(long id)
+    public async Task<ActionResult<ApiResponse<GetOrderResponse>>> GetOrder(int id)
     {
         _logger.LogInformation("用户获取订单详情: OrderId={OrderId}", id);
 
@@ -98,7 +98,7 @@ public class OrdersController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<CancelOrderResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status422UnprocessableEntity)]
-    public async Task<ActionResult<ApiResponse<CancelOrderResponse>>> CancelOrder(long id, [FromBody] CancelOrderRequest request)
+    public async Task<ActionResult<ApiResponse<CancelOrderResponse>>> CancelOrder(int id, [FromBody] CancelOrderRequest request)
     {
         _logger.LogInformation("用户取消订单: OrderId={OrderId}, Reason={Reason}", id, request.CancelReason);
 
@@ -116,7 +116,7 @@ public class OrdersController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<RefundOrderResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status422UnprocessableEntity)]
-    public async Task<ActionResult<ApiResponse<RefundOrderResponse>>> RefundOrder(long id, [FromBody] RefundOrderRequest request)
+    public async Task<ActionResult<ApiResponse<RefundOrderResponse>>> RefundOrder(int id, [FromBody] RefundOrderRequest request)
     {
         _logger.LogInformation("用户申请退款: OrderId={OrderId}, Amount={Amount}", id, request.RefundAmount);
 
@@ -133,7 +133,7 @@ public class OrdersController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<ConfirmOrderResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status422UnprocessableEntity)]
-    public async Task<ActionResult<ApiResponse<ConfirmOrderResponse>>> ConfirmOrder(long id)
+    public async Task<ActionResult<ApiResponse<ConfirmOrderResponse>>> ConfirmOrder(int id)
     {
         _logger.LogInformation("用户确认订单完成: OrderId={OrderId}", id);
 
@@ -151,7 +151,7 @@ public class OrdersController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<CreateOrderReviewResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status422UnprocessableEntity)]
-    public async Task<ActionResult<ApiResponse<CreateOrderReviewResponse>>> ReviewOrder(long id, [FromBody] CreateOrderReviewRequest request)
+    public async Task<ActionResult<ApiResponse<CreateOrderReviewResponse>>> ReviewOrder(int id, [FromBody] CreateOrderReviewRequest request)
     {
         _logger.LogInformation("用户订单评价: OrderId={OrderId}, Rating={Rating}", id, request.Rating);
 
