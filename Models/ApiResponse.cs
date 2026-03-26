@@ -1,3 +1,5 @@
+using GameCompanion.Api.Helpers;
+
 namespace GameCompanion.Api.Models;
 
 /// <summary>

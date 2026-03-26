@@ -23,6 +23,10 @@ public class CompanionGame
     [MaxLength(50)]
     public string? GameRank { get; set; }
 
+    [Column("game_level")]
+    [MaxLength(50)]
+    public string? GameLevel { get; set; }
+
     [Column("level")]
     [MaxLength(20)]
     public string? Level { get; set; }

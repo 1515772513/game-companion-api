@@ -28,6 +28,9 @@ public class PostComment
     [Column("like_count")]
     public int? LikeCount { get; set; } = 0;
 
+    [Column("likes")]
+    public int? Likes { get; set; } = 0;
+
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

@@ -98,4 +98,5 @@ public class Companion
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
     public virtual ICollection<CompanionGame> Games { get; set; } = new List<CompanionGame>();
     public virtual ICollection<CompanionGame> CompanionGames { get; set; } = new List<CompanionGame>();
+    public virtual ICollection<OrderReview> OrderReviews { get; set; } = new List<OrderReview>();
 }

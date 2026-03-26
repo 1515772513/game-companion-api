@@ -24,6 +24,10 @@ public class GameCircle
     [MaxLength(255)]
     public string? AvatarUrl { get; set; }
 
+    [Column("icon")]
+    [MaxLength(255)]
+    public string? Icon { get; set; }
+
     [Column("description")]
     [MaxLength(500)]
     public string? Description { get; set; }
