@@ -3,6 +3,7 @@ using GameCompanion.Api.DTOs.User;
 using GameCompanion.Api.Models;
 using GameCompanion.Api.Models.Entities;
 using GameCompanion.Api.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace GameCompanion.Api.Services;
 
