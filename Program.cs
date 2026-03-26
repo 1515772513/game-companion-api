@@ -37,6 +37,14 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 
+    // 启用XML注释
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+    {
+        c.IncludeXmlComments(xmlPath);
+    }
+
     // 添加JWT认证到Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -84,7 +92,7 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
     if (!string.IsNullOrEmpty(redisConnectionString))
     {
-        var configuration = ConfigurationOptions.Parse(redisConnectionString, true);
+        var configuration = StackExchange.Redis.ConfigurationOptions.Parse(redisConnectionString, true);
         return ConnectionMultiplexer.Connect(configuration);
     }
     throw new InvalidOperationException("Redis连接字符串未配置");
