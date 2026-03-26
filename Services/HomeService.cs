@@ -432,7 +432,7 @@ public class HomeService : IHomeService
                     Id = c.Id,
                     Name = c.Name,
                     GameId = c.GameId,
-                    GameName = c.Game?.Name ?? "",
+                    GameName = c.Game != null ? c.Game.Name : "",
                     AvatarUrl = c.Icon ?? "",
                     MemberCount = c.MemberCount ?? 0,
                     PostCount = c.PostCount ?? 0,
