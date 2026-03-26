@@ -48,35 +48,3 @@ public interface IHomeService
     /// <returns>圈子列表响应</returns>
     Task<ApiResponse<CirclesListResponse>> GetCirclesAsync(CirclesListRequest request);
 }
-
-/// <summary>
-/// 订单服务接口
-/// </summary>
-public interface IOrderService
-{
-    // 接口方法待实现
-}
-
-/// <summary>
-/// 动态服务接口
-/// </summary>
-public interface IPostService
-{
-    // 接口方法待实现
-}
-
-/// <summary>
-/// 消息服务接口
-/// </summary>
-public interface IMessageService
-{
-    // 接口方法待实现
-}
-
-/// <summary>
-/// 用户服务接口
-/// </summary>
-public interface IUserService
-{
-    // 接口方法待实现
-}
