@@ -1,3 +1,5 @@
+using GameCompanion.Api.DTOs;
+
 namespace GameCompanion.Api.Services;
 
 /// <summary>
@@ -101,4 +103,16 @@ public interface ISettingService
     Task<object> GetAdminsAsync();
     Task<bool> CreateAdminAsync(object adminData);
     Task<bool> UpdateAdminAsync(int adminId, object adminData);
+}
+
+/// <summary>
+/// 首页服务接口
+/// </summary>
+public interface IHomeService
+{
+    Task<HomeResponse> GetHomeDataAsync();
+    Task<PagedResponse<CompanionDetailInfo>> GetCompanionsAsync(int page, int pageSize, int? gameId, string? serviceType, string? level, decimal? minPrice, decimal? maxPrice, int? onlineStatus, string? keyword, string sortBy, string sortOrder);
+    Task<CompanionDetailInfo?> GetCompanionDetailAsync(int companionId);
+    Task<List<GameDetailInfo>> GetGamesAsync();
+    Task<PagedResponse<CompanionSimpleInfo>> SearchCompanionsAsync(string keyword, int page, int pageSize);
 }

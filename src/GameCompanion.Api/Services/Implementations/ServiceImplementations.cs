@@ -1,4 +1,5 @@
 using GameCompanion.Api.Configuration;
+using GameCompanion.Api.DTOs;
 using GameCompanion.Api.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -835,5 +836,385 @@ public class SettingService : ISettingService
         admin.UpdatedAt = DateTime.Now;
         await _context.SaveChangesAsync();
         return true;
+    }
+}
+
+/// <summary>
+/// 首页服务实现
+/// </summary>
+public class HomeService : IHomeService
+{
+    private readonly ApplicationDbContext _context;
+    private readonly ILogger<HomeService> _logger;
+
+    public HomeService(ApplicationDbContext context, ILogger<HomeService> logger)
+    {
+        _context = context;
+        _logger = logger;
+    }
+
+    public async Task<HomeResponse> GetHomeDataAsync()
+    {
+        // 获取轮播图（简化实现，从系统配置或数据库获取）
+        var banners = new List<BannerItem>
+        {
+            new BannerItem
+            {
+                Id = 1,
+                Title = "新人专享优惠",
+                Image_url = "https://cdn.example.com/banner1.jpg",
+                Jump_url = "https://example.com/promo/new-user",
+                Jump_type = "url"
+            },
+            new BannerItem
+            {
+                Id = 2,
+                Title = "VIP会员特惠",
+                Image_url = "https://cdn.example.com/banner2.jpg",
+                Jump_url = "vip://open",
+                Jump_type = "internal"
+            }
+        };
+
+        // 获取热门陪玩师
+        var hotCompanions = await _context.Companions
+            .Where(c => c.Status == "certified" && c.OnlineStatus == "online")
+            .OrderByDescending(c => c.Rating)
+            .Take(10)
+            .Select(c => new CompanionSimpleInfo
+            {
+                Id = c.Id,
+                Nickname = c.Nickname,
+                Avatar_url = c.Avatar ?? "https://cdn.example.com/avatar/default.png",
+                Level = GetLevelText(c.Level),
+                Service_type = GetServiceTypeText(c.ServiceType),
+                Price = c.PricePerGame,
+                Price_unit = "局",
+                Rating = c.Rating,
+                Online_status = 1,
+                Online_status_text = "在线接单",
+                Tags = c.Tags?.Split(',').ToList() ?? new List<string>()
+            })
+            .ToListAsync();
+
+        // 获取热门游戏
+        var hotGames = await _context.Games
+            .Where(g => g.Status == "active")
+            .OrderBy(g => g.SortOrder)
+            .Take(10)
+            .Select(g => new GameSimpleInfo
+            {
+                Id = g.Id,
+                Name = g.Name,
+                Icon_url = g.Icon ?? "https://cdn.example.com/game/default.png",
+                Companion_count = _context.CompanionGames.Count(cg => cg.GameId == g.Id),
+                Description = g.Description ?? ""
+            })
+            .ToListAsync();
+
+        // 获取热门动态
+        var hotPosts = await _context.Posts
+            .Where(p => p.Status == "published")
+            .OrderByDescending(p => p.LikeCount)
+            .Take(10)
+            .Select(p => new PostSimpleInfo
+            {
+                Id = p.Id,
+                User_id = p.UserId,
+                User_name = _context.Users.Where(u => u.Id == p.UserId).Select(u => u.Nickname).FirstOrDefault() ?? "",
+                User_avatar = _context.Users.Where(u => u.Id == p.UserId).Select(u => u.Avatar ?? "https://cdn.example.com/avatar/default.png").FirstOrDefault() ?? "",
+                Content = p.Content.Length > 100 ? p.Content.Substring(0, 100) + "..." : p.Content,
+                Images = p.Images?.Split(',').ToList() ?? new List<string>(),
+                Like_count = p.LikeCount,
+                Comment_count = p.CommentCount,
+                Created_at = GetFriendlyTime(p.CreatedAt)
+            })
+            .ToListAsync();
+
+        return new HomeResponse
+        {
+            Banners = banners,
+            Hot_companions = hotCompanions,
+            Hot_games = hotGames,
+            Hot_posts = hotPosts
+        };
+    }
+
+    public async Task<PagedResponse<CompanionDetailInfo>> GetCompanionsAsync(
+        int page, int pageSize, int? gameId, string? serviceType, string? level,
+        decimal? minPrice, decimal? maxPrice, int? onlineStatus, string? keyword,
+        string sortBy, string sortOrder)
+    {
+        var query = _context.Companions
+            .Include(c => c.User)
+            .Where(c => c.Status == "certified");
+
+        // 游戏筛选
+        if (gameId.HasValue)
+        {
+            query = query.Where(c => _context.CompanionGames.Any(cg => cg.CompanionId == c.Id && cg.GameId == gameId.Value));
+        }
+
+        // 服务类型筛选
+        if (!string.IsNullOrWhiteSpace(serviceType))
+        {
+            query = query.Where(c => c.ServiceType == serviceType);
+        }
+
+        // 等级筛选
+        if (!string.IsNullOrWhiteSpace(level))
+        {
+            query = query.Where(c => c.Level == level);
+        }
+
+        // 价格筛选
+        if (minPrice.HasValue)
+        {
+            query = query.Where(c => c.PricePerGame >= minPrice.Value);
+        }
+        if (maxPrice.HasValue)
+        {
+            query = query.Where(c => c.PricePerGame <= maxPrice.Value);
+        }
+
+        // 在线状态筛选
+        if (onlineStatus.HasValue)
+        {
+            if (onlineStatus.Value == 1)
+            {
+                query = query.Where(c => c.OnlineStatus == "online");
+            }
+            else if (onlineStatus.Value == 2)
+            {
+                query = query.Where(c => c.OnlineStatus == "offline");
+            }
+        }
+
+        // 关键词搜索
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            query = query.Where(c => c.Nickname.Contains(keyword) || c.Bio.Contains(keyword));
+        }
+
+        // 排序
+        query = sortBy.ToLower() switch
+        {
+            "rating" => sortOrder.ToLower() == "asc" ? query.OrderBy(c => c.Rating) : query.OrderByDescending(c => c.Rating),
+            "price" => sortOrder.ToLower() == "asc" ? query.OrderBy(c => c.PricePerGame) : query.OrderByDescending(c => c.PricePerGame),
+            "order_count" => sortOrder.ToLower() == "asc" ? query.OrderBy(c => c.TotalOrders) : query.OrderByDescending(c => c.TotalOrders),
+            _ => query.OrderByDescending(c => c.Rating)
+        };
+
+        var total = await query.CountAsync();
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(c => new CompanionDetailInfo
+            {
+                Id = c.Id,
+                User_id = c.UserId,
+                Nickname = c.Nickname,
+                Avatar_url = c.Avatar ?? "https://cdn.example.com/avatar/default.png",
+                Level = GetLevelText(c.Level),
+                Level_code = c.Level,
+                Service_type = GetServiceTypeText(c.ServiceType),
+                Service_type_code = c.ServiceType,
+                Price = c.PricePerGame,
+                Price_unit = "局",
+                Rating = c.Rating,
+                Rating_count = 0, // TODO: 从评价表计算
+                Order_count = c.TotalOrders,
+                Positive_rate = c.GoodReviewRate,
+                Online_status = c.OnlineStatus == "online" ? 1 : 0,
+                Online_status_text = c.OnlineStatus == "online" ? "在线接单" : "离线",
+                Is_verified = c.Status == "certified",
+                Verified_at = c.UpdatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
+                Games = _context.CompanionGames
+                    .Where(cg => cg.CompanionId == c.Id)
+                    .Join(_context.Games, cg => cg.GameId, g => g.Id, (cg, g) => new GameSkillInfo
+                    {
+                        Game_id = g.Id,
+                        Game_name = g.Name,
+                        Game_rank = cg.GameLevel ?? ""
+                    })
+                    .ToList(),
+                Service_times = new List<ServiceTimeInfo>(), // TODO: 添加服务时间配置
+                Tags = c.Tags?.Split(',').ToList() ?? new List<string>(),
+                Bio = c.Bio ?? "",
+                Strengths = new List<string>(), // TODO: 添加优势配置
+                Created_at = c.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
+                Recent_reviews = new List<ReviewInfo>(), // TODO: 从评价表获取
+                Statistics = new CompanionStatistics
+                {
+                    Total_orders = c.TotalOrders,
+                    Total_hours = 0, // TODO: 计算总服务时长
+                    Avg_response_time = 5,
+                    Completion_rate = 99.2m,
+                    On_time_rate = 98.5m
+                }
+            })
+            .ToListAsync();
+
+        return new PagedResponse<CompanionDetailInfo>
+        {
+            Items = items,
+            Pagination = new PaginationInfo
+            {
+                Page = page,
+                PageSize = pageSize,
+                Total = total,
+                TotalPages = (int)Math.Ceiling((double)total / pageSize)
+            }
+        };
+    }
+
+    public async Task<CompanionDetailInfo?> GetCompanionDetailAsync(int companionId)
+    {
+        var companion = await _context.Companions
+            .Include(c => c.User)
+            .Where(c => c.Id == companionId && c.Status == "certified")
+            .FirstOrDefaultAsync();
+
+        if (companion == null) return null;
+
+        return new CompanionDetailInfo
+        {
+            Id = companion.Id,
+            User_id = companion.UserId,
+            Nickname = companion.Nickname,
+            Avatar_url = companion.Avatar ?? "https://cdn.example.com/avatar/default.png",
+            Level = GetLevelText(companion.Level),
+            Level_code = companion.Level,
+            Service_type = GetServiceTypeText(companion.ServiceType),
+            Service_type_code = companion.ServiceType,
+            Price = companion.PricePerGame,
+            Price_unit = "局",
+            Rating = companion.Rating,
+            Rating_count = 0,
+            Order_count = companion.TotalOrders,
+            Positive_rate = companion.GoodReviewRate,
+            Online_status = companion.OnlineStatus == "online" ? 1 : 0,
+            Online_status_text = companion.OnlineStatus == "online" ? "在线接单" : "离线",
+            Is_verified = companion.Status == "certified",
+            Verified_at = companion.UpdatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
+            Games = _context.CompanionGames
+                .Where(cg => cg.CompanionId == companion.Id)
+                .Join(_context.Games, cg => cg.GameId, g => g.Id, (cg, g) => new GameSkillInfo
+                {
+                    Game_id = g.Id,
+                    Game_name = g.Name,
+                    Game_rank = cg.GameLevel ?? ""
+                })
+                .ToList(),
+            Service_times = new List<ServiceTimeInfo>(),
+            Tags = companion.Tags?.Split(',').ToList() ?? new List<string>(),
+            Bio = companion.Bio ?? "",
+            Strengths = new List<string>(),
+            Created_at = companion.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
+            Recent_reviews = new List<ReviewInfo>(),
+            Statistics = new CompanionStatistics
+            {
+                Total_orders = companion.TotalOrders,
+                Total_hours = 0,
+                Avg_response_time = 5,
+                Completion_rate = 99.2m,
+                On_time_rate = 98.5m
+            }
+        };
+    }
+
+    public async Task<List<GameDetailInfo>> GetGamesAsync()
+    {
+        return await _context.Games
+            .Where(g => g.Status == "active")
+            .OrderBy(g => g.SortOrder)
+            .Select(g => new GameDetailInfo
+            {
+                Id = g.Id,
+                Name = g.Name,
+                Icon_url = g.Icon ?? "https://cdn.example.com/game/default.png",
+                Companion_count = _context.CompanionGames.Count(cg => cg.GameId == g.Id),
+                Online_companion_count = _context.CompanionGames
+                    .Join(_context.Companions, cg => cg.CompanionId, c => c.Id, (cg, c) => new { cg, c })
+                    .Count(x => x.cg.GameId == g.Id && x.c.OnlineStatus == "online" && x.c.Status == "certified"),
+                Description = g.Description ?? "",
+                Is_hot = g.SortOrder <= 3
+            })
+            .ToListAsync();
+    }
+
+    public async Task<PagedResponse<CompanionSimpleInfo>> SearchCompanionsAsync(string keyword, int page, int pageSize)
+    {
+        var query = _context.Companions
+            .Where(c => c.Status == "certified")
+            .Where(c => c.Nickname.Contains(keyword) || c.Bio.Contains(keyword) || (c.Tags != null && c.Tags.Contains(keyword)));
+
+        var total = await query.CountAsync();
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(c => new CompanionSimpleInfo
+            {
+                Id = c.Id,
+                Nickname = c.Nickname,
+                Avatar_url = c.Avatar ?? "https://cdn.example.com/avatar/default.png",
+                Level = GetLevelText(c.Level),
+                Service_type = GetServiceTypeText(c.ServiceType),
+                Price = c.PricePerGame,
+                Price_unit = "局",
+                Rating = c.Rating,
+                Online_status = c.OnlineStatus == "online" ? 1 : 0,
+                Online_status_text = c.OnlineStatus == "online" ? "在线接单" : "离线",
+                Tags = c.Tags?.Split(',').ToList() ?? new List<string>()
+            })
+            .ToListAsync();
+
+        return new PagedResponse<CompanionSimpleInfo>
+        {
+            Items = items,
+            Pagination = new PaginationInfo
+            {
+                Page = page,
+                PageSize = pageSize,
+                Total = total,
+                TotalPages = (int)Math.Ceiling((double)total / pageSize)
+            }
+        };
+    }
+
+    // 辅助方法
+    private string GetLevelText(string? level)
+    {
+        return level?.ToLower() switch
+        {
+            "silver" => "银牌",
+            "gold" => "金牌",
+            "diamond" => "钻石",
+            "king" => "王者",
+            _ => "银牌"
+        };
+    }
+
+    private string GetServiceTypeText(string? serviceType)
+    {
+        return serviceType?.ToLower() switch
+        {
+            "tech" => "技术陪玩",
+            "entertainment" => "娱乐陪玩",
+            "voice" => "语音陪伴",
+            _ => "技术陪玩"
+        };
+    }
+
+    private string GetFriendlyTime(DateTime dateTime)
+    {
+        var span = DateTime.Now - dateTime;
+        if (span.TotalMinutes < 60)
+            return $"{(int)span.TotalMinutes}分钟前";
+        if (span.TotalHours < 24)
+            return $"{(int)span.TotalHours}小时前";
+        if (span.TotalDays < 30)
+            return $"{(int)span.TotalDays}天前";
+        return dateTime.ToString("yyyy-MM-dd");
     }
 }

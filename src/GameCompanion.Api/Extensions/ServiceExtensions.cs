@@ -42,6 +42,7 @@ public static class ServiceExtensions
         services.AddScoped<IPostService, PostService>();
         services.AddScoped<IMessageService, MessageService>();
         services.AddScoped<ISettingService, SettingService>();
+        services.AddScoped<IHomeService, HomeService>();
 
         return services;
     }
