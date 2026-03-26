@@ -142,7 +142,7 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // 配置HTTP请求管道
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || true)
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
@@ -163,12 +163,12 @@ app.UseAuthorization();
 app.MapControllers();
 
 // 自动创建数据库（开发环境）
-if (app.Environment.IsDevelopment())
-{
-    using var scope = app.Services.CreateScope();
-    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    dbContext.Database.EnsureCreated();
-}
+// if (app.Environment.IsDevelopment())
+// {
+//     using var scope = app.Services.CreateScope();
+//     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+//     dbContext.Database.EnsureCreated();
+// }
 
 try
 {
