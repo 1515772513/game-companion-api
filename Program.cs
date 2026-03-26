@@ -81,8 +81,13 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // 配置Redis
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
-    var configuration = ConfigurationOptions.Parse(builder.Configuration.GetConnectionString("Redis"), true);
-    return ConnectionMultiplexer.Connect(configuration);
+    var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
+    if (!string.IsNullOrEmpty(redisConnectionString))
+    {
+        var configuration = ConfigurationOptions.Parse(redisConnectionString, true);
+        return ConnectionMultiplexer.Connect(configuration);
+    }
+    throw new InvalidOperationException("Redis连接字符串未配置");
 });
 
 // 配置JWT认证

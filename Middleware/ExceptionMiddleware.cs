@@ -46,12 +46,11 @@ public class ExceptionMiddleware
             _ => (int)HttpStatusCode.InternalServerError
         };
 
-        var response = new ApiResponse
+        var response = new ApiResponse()
         {
             Code = context.Response.StatusCode,
-            Message = "服务器内部错误",
-            Error = _env.IsDevelopment() ? exception.Message : "处理请求时发生错误"
-        };
+            Message = "服务器内部错误"
+        }.WithError(_env.IsDevelopment() ? exception.Message : "处理请求时发生错误");
 
         var json = JsonSerializer.Serialize(response, new JsonSerializerOptions
         {

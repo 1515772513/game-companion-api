@@ -80,11 +80,23 @@ public class ApiResponse : ApiResponse<object>
 
     public new static ApiResponse Error(int code, string error, string message = "操作失败")
     {
-        return new ApiResponse
+        return new ApiResponse()
         {
             Code = code,
-            Message = message,
-            Error = error
-        };
+            Message = message
+        }.WithError(error);
+    }
+}
+
+/// <summary>
+/// ApiResponse扩展方法
+/// </summary>
+public static class ApiResponseExtensions
+{
+    public static T WithError<T>(this T response, string error) where T : ApiResponse
+    {
+        var errorProperty = typeof(T).GetProperty("Error");
+        errorProperty?.SetValue(response, error);
+        return response;
     }
 }
