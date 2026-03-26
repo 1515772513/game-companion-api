@@ -61,6 +61,32 @@ public class ApiResponse<T>
             Error = error
         };
     }
+
+    /// <summary>
+    /// 创建成功响应(带消息)
+    /// </summary>
+    public static ApiResponse<T> SuccessResponse(T data, string message = "操作成功")
+    {
+        return new ApiResponse<T>
+        {
+            Code = 200,
+            Message = message,
+            Data = data
+        };
+    }
+
+    /// <summary>
+    /// 创建错误响应(带错误消息)
+    /// </summary>
+    public static ApiResponse<T> ErrorResponse(int code, string error, string message = "操作失败")
+    {
+        return new ApiResponse<T>
+        {
+            Code = code,
+            Message = message,
+            Error = error
+        };
+    }
 }
 
 /// <summary>
@@ -85,6 +111,19 @@ public class ApiResponse : ApiResponse<object>
             Code = code,
             Message = message
         }.WithError(error);
+    }
+
+    /// <summary>
+    /// 创建成功响应(带数据)
+    /// </summary>
+    public static ApiResponse SuccessResponse(object data, string message = "操作成功")
+    {
+        return new ApiResponse
+        {
+            Code = 200,
+            Message = message,
+            Data = data
+        };
     }
 }
 
