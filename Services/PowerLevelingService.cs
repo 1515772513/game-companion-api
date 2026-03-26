@@ -35,7 +35,7 @@ public class PowerLevelingService : IPowerLevelingService
             }
 
             var games = await query
-                .Where(g => g.IsActive) // 假设有IsActive字段
+                .Where(g => g.IsActive == 1)
                 .OrderBy(g => g.SortOrder)
                 .ToListAsync();
 

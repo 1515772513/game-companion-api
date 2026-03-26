@@ -31,7 +31,7 @@ public class HomeService : IHomeService
 
             // 获取热门陪玩师
             response.HotCompanions = await _context.Companions
-                .Where(c => c.OnlineStatus == "online" && c.Rating >= 4.5)
+                .Where(c => c.OnlineStatus == "online" && c.Rating.HasValue && c.Rating.Value >= 4.5m)
                 .OrderByDescending(c => c.Rating)
                 .Take(6)
                 .Select(c => new CompanionSummaryDto
@@ -70,7 +70,9 @@ public class HomeService : IHomeService
                 .Where(p => p.Status == "published")
                 .OrderByDescending(p => p.LikeCount + p.CommentCount)
                 .Take(5)
-                .Select(p => new PostDto
+                .ToListAsync();
+
+            var postDtos = posts.Select(p => new PostDto
                 {
                     Id = p.Id,
                     UserId = p.UserId,
@@ -82,7 +84,7 @@ public class HomeService : IHomeService
                     CommentCount = p.CommentCount ?? 0,
                     CreatedAt = GetRelativeTime(p.CreatedAt)
                 })
-                .ToListAsync();
+                .ToList();
 
             return ApiResponse<HomeDataResponse>.SuccessResponse(response, "获取成功");
         }

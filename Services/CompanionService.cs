@@ -63,7 +63,7 @@ public class CompanionService : ICompanionService
                 ServiceType = request.ServiceType,
                 PricePerGame = request.Price,
                 Bio = request.Bio,
-                Tags = request.Tags?.Join(","),
+                Tags = request.Tags != null ? string.Join(",", request.Tags) : null,
                 Status = "审核中",
                 OnlineStatus = "离线",
                 CreatedAt = DateTime.UtcNow,

@@ -43,8 +43,7 @@ public class PostService : IPostService
 
         if (recentPosts >= 10)
         {
-            return ApiResponse<CreatePostResponse>.ErrorResponse(429, "发布过于频繁，请稍后再试",
-                new { retry_after = 60, limit = "10次/小时" });
+            return ApiResponse<CreatePostResponse>.ErrorResponse(429, "发布过于频繁，请稍后再试");
         }
 
         // 创建动态实体
@@ -163,7 +162,7 @@ public class PostService : IPostService
     /// <summary>
     /// 获取动态详情
     /// </summary>
-    public async Task<ApiResponse<GetPostDetailResponse>> GetPostDetailAsync(long postId, int userId)
+    public async Task<ApiResponse<GetPostDetailResponse>> GetPostDetailAsync(int postId, int userId)
     {
         var post = await _context.Posts
             .Include(p => p.User)
@@ -253,7 +252,7 @@ public class PostService : IPostService
     /// <summary>
     /// 点赞动态
     /// </summary>
-    public async Task<ApiResponse<LikePostResponse>> LikePostAsync(long postId, LikePostRequest request, int userId)
+    public async Task<ApiResponse<LikePostResponse>> LikePostAsync(int postId, LikePostRequest request, int userId)
     {
         var post = await _context.Posts.FindAsync(postId);
         if (post == null)
@@ -313,7 +312,7 @@ public class PostService : IPostService
     /// <summary>
     /// 收藏动态
     /// </summary>
-    public async Task<ApiResponse<CollectPostResponse>> CollectPostAsync(long postId, CollectPostRequest request, int userId)
+    public async Task<ApiResponse<CollectPostResponse>> CollectPostAsync(int postId, CollectPostRequest request, int userId)
     {
         var post = await _context.Posts.FindAsync(postId);
         if (post == null)
@@ -348,7 +347,7 @@ public class PostService : IPostService
     /// <summary>
     /// 评论动态
     /// </summary>
-    public async Task<ApiResponse<CommentPostResponse>> CommentPostAsync(long postId, CommentPostRequest request, int userId)
+    public async Task<ApiResponse<CommentPostResponse>> CommentPostAsync(int postId, CommentPostRequest request, int userId)
     {
         var post = await _context.Posts.FindAsync(postId);
         if (post == null)
@@ -363,8 +362,7 @@ public class PostService : IPostService
 
         if (recentComments >= 10)
         {
-            return ApiResponse<CommentPostResponse>.ErrorResponse(429, "评论过于频繁，请稍后再试",
-                new { retry_after = 30 });
+            return ApiResponse<CommentPostResponse>.ErrorResponse(429, "评论过于频繁，请稍后再试");
         }
 
         var comment = new PostComment
@@ -459,7 +457,7 @@ public class PostService : IPostService
     /// <summary>
     /// 删除动态
     /// </summary>
-    public async Task<ApiResponse> DeletePostAsync(long postId, int userId)
+    public async Task<ApiResponse> DeletePostAsync(int postId, int userId)
     {
         var post = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId && p.UserId == userId);
         if (post == null)

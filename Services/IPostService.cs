@@ -30,7 +30,7 @@ public interface IPostService
     /// <param name="postId">动态ID</param>
     /// <param name="userId">用户ID</param>
     /// <returns>动态详情响应</returns>
-    Task<ApiResponse<GetPostDetailResponse>> GetPostDetailAsync(long postId, int userId);
+    Task<ApiResponse<GetPostDetailResponse>> GetPostDetailAsync(int postId, int userId);
 
     /// <summary>
     /// 点赞动态
@@ -39,7 +39,7 @@ public interface IPostService
     /// <param name="request">点赞请求</param>
     /// <param name="userId">用户ID</param>
     /// <returns>点赞响应</returns>
-    Task<ApiResponse<LikePostResponse>> LikePostAsync(long postId, LikePostRequest request, int userId);
+    Task<ApiResponse<LikePostResponse>> LikePostAsync(int postId, LikePostRequest request, int userId);
 
     /// <summary>
     /// 收藏动态
@@ -48,7 +48,7 @@ public interface IPostService
     /// <param name="request">收藏请求</param>
     /// <param name="userId">用户ID</param>
     /// <returns>收藏响应</returns>
-    Task<ApiResponse<CollectPostResponse>> CollectPostAsync(long postId, CollectPostRequest request, int userId);
+    Task<ApiResponse<CollectPostResponse>> CollectPostAsync(int postId, CollectPostRequest request, int userId);
 
     /// <summary>
     /// 评论动态
@@ -57,7 +57,7 @@ public interface IPostService
     /// <param name="request">评论请求</param>
     /// <param name="userId">用户ID</param>
     /// <returns>评论响应</returns>
-    Task<ApiResponse<CommentPostResponse>> CommentPostAsync(long postId, CommentPostRequest request, int userId);
+    Task<ApiResponse<CommentPostResponse>> CommentPostAsync(int postId, CommentPostRequest request, int userId);
 
     /// <summary>
     /// 获取我的发布
@@ -73,7 +73,7 @@ public interface IPostService
     /// <param name="postId">动态ID</param>
     /// <param name="userId">用户ID</param>
     /// <returns>删除响应</returns>
-    Task<ApiResponse> DeletePostAsync(long postId, int userId);
+    Task<ApiResponse> DeletePostAsync(int postId, int userId);
 
     /// <summary>
     /// 保存草稿
