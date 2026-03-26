@@ -1,8 +1,0 @@
-D:\工作\2026\游玩\game-companion-api\src\GameCompanion.Api\obj\Debug\net8.0\GameCompanion.Api.csproj.AssemblyReference.cache
-D:\工作\2026\游玩\game-companion-api\src\GameCompanion.Api\obj\Debug\net8.0\GameCompanion.Api.GeneratedMSBuildEditorConfig.editorconfig
-D:\工作\2026\游玩\game-companion-api\src\GameCompanion.Api\obj\Debug\net8.0\GameCompanion.Api.AssemblyInfoInputs.cache
-D:\工作\2026\游玩\game-companion-api\src\GameCompanion.Api\obj\Debug\net8.0\GameCompanion.Api.AssemblyInfo.cs
-D:\工作\2026\游玩\game-companion-api\src\GameCompanion.Api\obj\Debug\net8.0\GameCompanion.Api.csproj.CoreCompileInputs.cache
-D:\工作\2026\游玩\game-companion-api\src\GameCompanion.Api\obj\Debug\net8.0\GameCompanion.Api.MvcApplicationPartsAssemblyInfo.cs
-D:\工作\2026\游玩\game-companion-api\src\GameCompanion.Api\obj\Debug\net8.0\GameCompanion.Api.MvcApplicationPartsAssemblyInfo.cache
-D:\工作\2026\游玩\game-companion-api\src\GameCompanion.Api\obj\Debug\net8.0\GameCompanion.Api.sourcelink.json
