@@ -1,4 +1,5 @@
 using GameCompanion.Api.DTOs.Settings;
+using GameCompanion.Api.Models;
 using GameCompanion.Api.Models.Entities;
 
 namespace GameCompanion.Api.Services;

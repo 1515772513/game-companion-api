@@ -201,7 +201,7 @@ public class EarningsResponse
 }
 
 /// <summary>
-申请提现请求DTO
+// 申请提现请求DTO
 /// </summary>
 public class WithdrawRequest
 {

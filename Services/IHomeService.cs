@@ -1,6 +1,7 @@
 namespace GameCompanion.Api.Services;
 
 using GameCompanion.Api.DTOs.Home;
+using GameCompanion.Api.Models;
 
 /// <summary>
 /// 首页服务接口

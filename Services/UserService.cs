@@ -1,4 +1,6 @@
+using GameCompanion.Api.Data;
 using GameCompanion.Api.DTOs.User;
+using GameCompanion.Api.Models;
 using GameCompanion.Api.Models.Entities;
 using GameCompanion.Api.Services;
 

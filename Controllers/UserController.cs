@@ -1,5 +1,6 @@
 using GameCompanion.Api.DTOs.User;
 using GameCompanion.Api.Helpers;
+using GameCompanion.Api.Models;
 using GameCompanion.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

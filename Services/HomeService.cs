@@ -1,5 +1,6 @@
 using GameCompanion.Api.Data;
 using GameCompanion.Api.DTOs.Home;
+using GameCompanion.Api.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace GameCompanion.Api.Services;

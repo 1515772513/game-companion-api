@@ -1,4 +1,5 @@
 using GameCompanion.Api.DTOs.Posts;
+using GameCompanion.Api.Models;
 using GameCompanion.Api.Models.Entities;
 using GameCompanion.Api.Services;
 using Microsoft.EntityFrameworkCore;

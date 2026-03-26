@@ -1,4 +1,5 @@
 using GameCompanion.Api.DTOs.Posts;
+using GameCompanion.Api.Models;
 
 namespace GameCompanion.Api.Services;
 

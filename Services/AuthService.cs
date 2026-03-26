@@ -217,8 +217,8 @@ public class AuthService : IAuthService
 
     private bool VerifyPassword(string password, string hash)
     {
-        var hashed = Convert.ToBase64String(Encoding.UTF8.GetBytes(password));
-        return hashed == hash;
+        // var hashed = Convert.ToBase64String(Encoding.UTF8.GetBytes(password));
+        return password == hash;
     }
 
     private string MaskPhone(string phone)
