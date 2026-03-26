@@ -44,4 +44,8 @@ public class Message
 
     [ForeignKey("ConversationId")]
     public virtual Conversation Conversation { get; set; } = null!;
+
+    // 为向后兼容添加的导航属性
+    public virtual ICollection<Message> SentMessages { get; set; } = new List<Message>();
+    public virtual ICollection<Message> ReceivedMessages { get; set; } = new List<Message>();
 }

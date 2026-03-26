@@ -60,8 +60,17 @@ public class ApplicationDbContext : DbContext
     // 收藏表
     public DbSet<Collection> Collections { get; set; }
 
+    // 用户收藏表
+    public DbSet<UserCollection> UserCollections { get; set; }
+
     // 关注表
     public DbSet<Follow> Follows { get; set; }
+
+    // 交易记录表
+    public DbSet<Transaction> Transactions { get; set; }
+
+    // 陪玩师申请表
+    public DbSet<CompanionApplication> CompanionApplications { get; set; }
 
     // 优惠券表
     public DbSet<Coupon> Coupons { get; set; }
@@ -98,6 +107,71 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.Phone).IsUnique();
             entity.HasIndex(e => e.Username).IsUnique();
             entity.Property(e => e.Balance).HasPrecision(10, 2);
+        });
+
+        // 配置关注关系
+        modelBuilder.Entity<Follow>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.FollowerId, e.FollowingId }).IsUnique();
+            entity.HasOne(e => e.Follower)
+                  .WithMany()
+                  .HasForeignKey(e => e.FollowerId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Following)
+                  .WithMany()
+                  .HasForeignKey(e => e.FollowingId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // 配置用户收藏
+        modelBuilder.Entity<UserCollection>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => new { e.UserId, e.ItemType, e.ItemId }).IsUnique();
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // 配置交易记录
+        modelBuilder.Entity<Transaction>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.OrderId);
+            entity.Property(e => e.Amount).HasPrecision(10, 2);
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // 配置陪玩师申请
+        modelBuilder.Entity<CompanionApplication>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.Status);
+            entity.Property(e => e.HourlyRate).HasPrecision(10, 2);
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // 配置意见反馈
+        modelBuilder.Entity<Feedback>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.Status);
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
     }
 
@@ -147,6 +221,42 @@ public class ApplicationDbContext : DbContext
                   .WithMany()
                   .HasForeignKey(e => e.UserId)
                   .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<PostLike>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasOne(e => e.Post)
+                  .WithMany()
+                  .HasForeignKey(e => e.PostId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => e.PostId);
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => new { e.PostId, e.UserId }).IsUnique();
+        });
+
+        modelBuilder.Entity<PostComment>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasOne(e => e.Post)
+                  .WithMany()
+                  .HasForeignKey(e => e.PostId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Parent)
+                  .WithMany()
+                  .HasForeignKey(e => e.ParentId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => e.PostId);
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.ParentId);
         });
     }
 

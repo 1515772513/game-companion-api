@@ -39,7 +39,7 @@ public class ApiResponse<T>
     /// <summary>
     /// 创建成功响应
     /// </summary>
-    public static ApiResponse<T> SuccessResponse(T data, string message = "操作成功")
+    public static ApiResponse<T> Success(T data, string message = "操作成功")
     {
         return new ApiResponse<T>
         {
@@ -52,7 +52,7 @@ public class ApiResponse<T>
     /// <summary>
     /// 创建失败响应
     /// </summary>
-    public static ApiResponse<T> ErrorResponse(int code, string error, string message = "操作失败")
+    public static ApiResponse<T> Fail(int code, string message, string error = "")
     {
         return new ApiResponse<T>
         {
@@ -88,15 +88,3 @@ public class ApiResponse : ApiResponse<object>
     }
 }
 
-/// <summary>
-/// ApiResponse扩展方法
-/// </summary>
-public static class ApiResponseExtensions
-{
-    public static T WithError<T>(this T response, string error) where T : ApiResponse
-    {
-        var errorProperty = typeof(T).GetProperty("Error");
-        errorProperty?.SetValue(response, error);
-        return response;
-    }
-}

@@ -45,5 +45,8 @@ public class Conversation
     [ForeignKey("UserId")]
     public virtual User User { get; set; } = null!;
 
+    [ForeignKey("CompanionId")]
+    public virtual Companion? Companion { get; set; }
+
     public virtual ICollection<Message> Messages { get; set; } = new List<Message>();
 }
