@@ -60,4 +60,10 @@ public class GameDetailDto
     /// </summary>
     [JsonPropertyName("is_hot")]
     public bool IsHot { get; set; }
+
+    /// <summary>
+    /// 排序
+    /// </summary>
+    [JsonPropertyName("sort_order")]
+    public int SortOrder { get; set; }
 }
