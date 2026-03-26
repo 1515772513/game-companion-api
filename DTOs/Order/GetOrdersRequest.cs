@@ -8,6 +8,11 @@ namespace GameCompanion.Api.DTOs.Order;
 public class GetOrdersRequest
 {
     /// <summary>
+    /// 用户ID
+    /// </summary>
+    public int UserId { get; set; }
+
+    /// <summary>
     /// 页码，从1开始
     /// </summary>
     public int Page { get; set; } = 1;
