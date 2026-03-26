@@ -16,7 +16,7 @@ public class ApiResponse<T>
     /// <summary>
     /// 响应消息
     /// </summary>
-    public string Message { get; set; } = "success";
+    public string Message { get; set; } = string.Empty;
 
     /// <summary>
     /// 响应数据
@@ -26,7 +26,7 @@ public class ApiResponse<T>
     /// <summary>
     /// 时间戳
     /// </summary>
-    public long Timestamp { get; set; } = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+    public long Timestamp { get; set; }
 
     /// <summary>
     /// 请求ID
@@ -37,6 +37,16 @@ public class ApiResponse<T>
     /// 错误信息（失败时返回）
     /// </summary>
     public string? Error { get; set; }
+
+    /// <summary>
+    /// 无参构造函数
+    /// </summary>
+    public ApiResponse()
+    {
+        Code = 200;
+        Message = "success";
+        Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+    }
 
     /// <summary>
     /// 创建成功响应
@@ -96,6 +106,13 @@ public class ApiResponse<T>
 /// </summary>
 public class ApiResponse : ApiResponse<object>
 {
+    /// <summary>
+    /// 无参构造函数
+    /// </summary>
+    public ApiResponse() : base()
+    {
+    }
+
     public static ApiResponse Success(string message = "操作成功")
     {
         return new ApiResponse
