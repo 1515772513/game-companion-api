@@ -211,7 +211,7 @@ public class CompanionService : ICompanionService
             var userId = GetCurrentUserId();
             if (userId == 0)
             {
-                return ApiResponse.Error(401, "未授权，请先登录");
+                return ApiResponse.Fail(401, "未授权，请先登录");
             }
 
             var companion = await _context.Companions
@@ -219,7 +219,7 @@ public class CompanionService : ICompanionService
 
             if (companion == null || companion.Status != "已认证")
             {
-                return ApiResponse.Error(404, "未找到陪玩师信息或未认证");
+                return ApiResponse.Fail(404, "未找到陪玩师信息或未认证");
             }
 
             // 更新信息
@@ -238,7 +238,7 @@ public class CompanionService : ICompanionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "更新陪玩师信息失败");
-            return ApiResponse.Error(500, "更新信息失败");
+            return ApiResponse.Fail(500, "更新信息失败");
         }
     }
 
@@ -252,7 +252,7 @@ public class CompanionService : ICompanionService
             var userId = GetCurrentUserId();
             if (userId == 0)
             {
-                return ApiResponse.Error(401, "未授权，请先登录");
+                return ApiResponse.Fail(401, "未授权，请先登录");
             }
 
             var companion = await _context.Companions
@@ -260,7 +260,7 @@ public class CompanionService : ICompanionService
 
             if (companion == null || companion.Status != "已认证")
             {
-                return ApiResponse.Error(404, "未找到陪玩师信息或未认证");
+                return ApiResponse.Fail(404, "未找到陪玩师信息或未认证");
             }
 
             // 转换在线状态
@@ -281,7 +281,7 @@ public class CompanionService : ICompanionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "切换在线状态失败");
-            return ApiResponse.Error(500, "切换状态失败");
+            return ApiResponse.Fail(500, "切换状态失败");
         }
     }
 
@@ -376,7 +376,7 @@ public class CompanionService : ICompanionService
             var userId = GetCurrentUserId();
             if (userId == 0)
             {
-                return ApiResponse.Error(401, "未授权，请先登录");
+                return ApiResponse.Fail(401, "未授权，请先登录");
             }
 
             var order = await _context.Orders
@@ -384,12 +384,12 @@ public class CompanionService : ICompanionService
 
             if (order == null)
             {
-                return ApiResponse.Error(404, "未找到订单");
+                return ApiResponse.Fail(404, "未找到订单");
             }
 
             if (order.Status != "待接单")
             {
-                return ApiResponse.Error(400, "订单状态不正确，无法接受");
+                return ApiResponse.Fail(400, "订单状态不正确，无法接受");
             }
 
             order.Status = "服务中";
@@ -402,7 +402,7 @@ public class CompanionService : ICompanionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "接受订单失败");
-            return ApiResponse.Error(500, "接受订单失败");
+            return ApiResponse.Fail(500, "接受订单失败");
         }
     }
 
@@ -416,7 +416,7 @@ public class CompanionService : ICompanionService
             var userId = GetCurrentUserId();
             if (userId == 0)
             {
-                return ApiResponse.Error(401, "未授权，请先登录");
+                return ApiResponse.Fail(401, "未授权，请先登录");
             }
 
             var order = await _context.Orders
@@ -424,12 +424,12 @@ public class CompanionService : ICompanionService
 
             if (order == null)
             {
-                return ApiResponse.Error(404, "未找到订单");
+                return ApiResponse.Fail(404, "未找到订单");
             }
 
             if (order.Status != "待接单")
             {
-                return ApiResponse.Error(400, "订单状态不正确，无法拒绝");
+                return ApiResponse.Fail(400, "订单状态不正确，无法拒绝");
             }
 
             order.Status = "已取消";
@@ -441,7 +441,7 @@ public class CompanionService : ICompanionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "拒绝订单失败");
-            return ApiResponse.Error(500, "拒绝订单失败");
+            return ApiResponse.Fail(500, "拒绝订单失败");
         }
     }
 
@@ -455,7 +455,7 @@ public class CompanionService : ICompanionService
             var userId = GetCurrentUserId();
             if (userId == 0)
             {
-                return ApiResponse.Error(401, "未授权，请先登录");
+                return ApiResponse.Fail(401, "未授权，请先登录");
             }
 
             var order = await _context.Orders
@@ -463,12 +463,12 @@ public class CompanionService : ICompanionService
 
             if (order == null)
             {
-                return ApiResponse.Error(404, "未找到订单");
+                return ApiResponse.Fail(404, "未找到订单");
             }
 
             if (order.Status != "服务中")
             {
-                return ApiResponse.Error(400, "订单状态不正确，无法开始服务");
+                return ApiResponse.Fail(400, "订单状态不正确，无法开始服务");
             }
 
             order.Status = "服务中";
@@ -481,7 +481,7 @@ public class CompanionService : ICompanionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "开始服务失败");
-            return ApiResponse.Error(500, "开始服务失败");
+            return ApiResponse.Fail(500, "开始服务失败");
         }
     }
 
@@ -495,7 +495,7 @@ public class CompanionService : ICompanionService
             var userId = GetCurrentUserId();
             if (userId == 0)
             {
-                return ApiResponse.Error(401, "未授权，请先登录");
+                return ApiResponse.Fail(401, "未授权，请先登录");
             }
 
             var order = await _context.Orders
@@ -503,12 +503,12 @@ public class CompanionService : ICompanionService
 
             if (order == null)
             {
-                return ApiResponse.Error(404, "未找到订单");
+                return ApiResponse.Fail(404, "未找到订单");
             }
 
             if (order.Status != "服务中")
             {
-                return ApiResponse.Error(400, "订单状态不正确，无法完成服务");
+                return ApiResponse.Fail(400, "订单状态不正确，无法完成服务");
             }
 
             order.Status = "已完成";
@@ -521,7 +521,7 @@ public class CompanionService : ICompanionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "完成服务失败");
-            return ApiResponse.Error(500, "完成服务失败");
+            return ApiResponse.Fail(500, "完成服务失败");
         }
     }
 
@@ -606,7 +606,7 @@ public class CompanionService : ICompanionService
             var userId = GetCurrentUserId();
             if (userId == 0)
             {
-                return ApiResponse.Error(401, "未授权，请先登录");
+                return ApiResponse.Fail(401, "未授权，请先登录");
             }
 
             // 获取陪玩师信息
@@ -615,13 +615,13 @@ public class CompanionService : ICompanionService
 
             if (companion == null)
             {
-                return ApiResponse.Error(404, "未找到陪玩师信息");
+                return ApiResponse.Fail(404, "未找到陪玩师信息");
             }
 
             // 检查是否已认证
             if (companion.Status != "已认证")
             {
-                return ApiResponse.Error(400, "未认证的陪玩师无法申请提现");
+                return ApiResponse.Fail(400, "未认证的陪玩师无法申请提现");
             }
 
             // 检查可提现金额（这里简化处理，实际需要计算已完成订单的金额）
@@ -631,7 +631,7 @@ public class CompanionService : ICompanionService
 
             if (availableAmount < request.Amount)
             {
-                return ApiResponse.Error(400, "可提现金额不足");
+                return ApiResponse.Fail(400, "可提现金额不足");
             }
 
             // 创建提现记录（这里简化处理，实际需要创建提现记录表）
@@ -643,7 +643,7 @@ public class CompanionService : ICompanionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "申请提现失败");
-            return ApiResponse.Error(500, "申请提现失败");
+            return ApiResponse.Fail(500, "申请提现失败");
         }
     }
 

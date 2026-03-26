@@ -47,7 +47,7 @@ public class ConversationsController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "获取会话列表失败");
-            return StatusCode(500, ApiResponse.Error(500, "服务器内部错误"));
+            return StatusCode(500, ApiResponse.Fail(500, "服务器内部错误"));
         }
     }
 
@@ -83,7 +83,7 @@ public class ConversationsController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "获取聊天详情失败");
-            return StatusCode(500, ApiResponse.Error(500, "服务器内部错误"));
+            return StatusCode(500, ApiResponse.Fail(500, "服务器内部错误"));
         }
     }
 
@@ -126,7 +126,7 @@ public class ConversationsController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "发送消息失败");
-            return StatusCode(500, ApiResponse.Error(500, "服务器内部错误"));
+            return StatusCode(500, ApiResponse.Fail(500, "服务器内部错误"));
         }
     }
 
@@ -156,7 +156,7 @@ public class ConversationsController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "上传图片失败");
-            return StatusCode(500, ApiResponse.Error(500, "服务器内部错误"));
+            return StatusCode(500, ApiResponse.Fail(500, "服务器内部错误"));
         }
     }
 

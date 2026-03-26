@@ -67,7 +67,7 @@ public class HomeController : ControllerBase
         // 验证参数
         if (page_size < 1 || page_size > 50)
         {
-            var errorResponse = ApiResponse.Error(400, "page_size参数超出范围，最大允许50", "请求参数错误");
+            var errorResponse = ApiResponse.Fail(400, "page_size参数超出范围，最大允许50", "请求参数错误");
             return BadRequest(errorResponse);
         }
 
@@ -135,13 +135,13 @@ public class HomeController : ControllerBase
         // 验证参数
         if (string.IsNullOrWhiteSpace(keyword) || keyword.Length < 2)
         {
-            var errorResponse = ApiResponse.Error(400, "搜索关键词至少需要2个字符", "请求参数错误");
+            var errorResponse = ApiResponse.Fail(400, "搜索关键词至少需要2个字符", "请求参数错误");
             return BadRequest(errorResponse);
         }
 
         if (page_size < 1 || page_size > 50)
         {
-            var errorResponse = ApiResponse.Error(400, "page_size参数超出范围，最大允许50", "请求参数错误");
+            var errorResponse = ApiResponse.Fail(400, "page_size参数超出范围，最大允许50", "请求参数错误");
             return BadRequest(errorResponse);
         }
 
@@ -173,7 +173,7 @@ public class HomeController : ControllerBase
         // 验证参数
         if (page_size < 1 || page_size > 50)
         {
-            var errorResponse = ApiResponse.Error(400, "page_size参数超出范围，最大允许50", "请求参数错误");
+            var errorResponse = ApiResponse.Fail(400, "page_size参数超出范围，最大允许50", "请求参数错误");
             return BadRequest(errorResponse);
         }
 

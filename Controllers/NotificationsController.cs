@@ -47,7 +47,7 @@ public class NotificationsController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "获取通知列表失败");
-            return StatusCode(500, ApiResponse.Error(500, "服务器内部错误"));
+            return StatusCode(500, ApiResponse.Fail(500, "服务器内部错误"));
         }
     }
 
@@ -76,7 +76,7 @@ public class NotificationsController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "标记通知已读失败");
-            return StatusCode(500, ApiResponse.Error(500, "服务器内部错误"));
+            return StatusCode(500, ApiResponse.Fail(500, "服务器内部错误"));
         }
     }
 

@@ -99,12 +99,21 @@ public class ApiResponse<T>
             Error = error
         };
     }
+
+    /// <summary>
+    /// 链式设置错误信息（修复原代码缺失的方法）
+    /// </summary>
+    public ApiResponse<T> WithError(string error)
+    {
+        Error = error;
+        return this;
+    }
 }
 
 /// <summary>
 /// 无数据类型的API响应
 /// </summary>
-public class ApiResponse : ApiResponse<object>
+public class ApiResponse : ApiResponse<object?>
 {
     /// <summary>
     /// 无参构造函数
@@ -113,6 +122,9 @@ public class ApiResponse : ApiResponse<object>
     {
     }
 
+    /// <summary>
+    /// 无数据成功响应
+    /// </summary>
     public static ApiResponse Success(string message = "操作成功")
     {
         return new ApiResponse
@@ -123,19 +135,36 @@ public class ApiResponse : ApiResponse<object>
         };
     }
 
-    public new static ApiResponse Error(int code, string error, string message = "操作失败")
+    /// <summary>
+    /// 无数据错误响应
+    /// </summary>
+    public new static ApiResponse Fail(int code, string message, string error = "")
     {
-        return new ApiResponse()
+        return new ApiResponse
         {
             Code = code,
-            Message = message
-        }.WithError(error);
+            Message = message,
+            Error = error
+        };
+    }
+
+    /// <summary>
+    /// 无数据错误响应
+    /// </summary>
+    public static new ApiResponse ErrorResponse(int code, string error, string message = "操作失败")
+    {
+        return new ApiResponse
+        {
+            Code = code,
+            Message = message,
+            Error = error
+        };
     }
 
     /// <summary>
     /// 创建成功响应(带数据)
     /// </summary>
-    public new static ApiResponse SuccessResponse(object data, string message = "操作成功")
+    public new static ApiResponse SuccessResponse(object? data, string message = "操作成功")
     {
         return new ApiResponse
         {
@@ -145,4 +174,3 @@ public class ApiResponse : ApiResponse<object>
         };
     }
 }
-

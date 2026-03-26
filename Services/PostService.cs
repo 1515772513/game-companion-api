@@ -462,7 +462,7 @@ public class PostService : IPostService
         var post = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId && p.UserId == userId);
         if (post == null)
         {
-            return ApiResponse.Error(403, "您只能删除自己发布的动态");
+            return ApiResponse.Fail(403, "您只能删除自己发布的动态");
         }
 
         post.Status = "已删除";
