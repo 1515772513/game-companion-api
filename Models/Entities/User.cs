@@ -42,7 +42,8 @@ public class User
     public string? Avatar { get; set; }
 
     [Column("gender")]
-    public int Gender { get; set; } = 0; // 0-未知，1-男，2-女
+    [MaxLength(20)]
+    public string? Gender { get; set; } = "未知"; // 未知、男、女
 
     [Column("age")]
     public int Age { get; set; } = 0;
@@ -60,7 +61,8 @@ public class User
     public string? Bio { get; set; }
 
     [Column("vip_level")]
-    public int VipLevel { get; set; } = 0; // 0-普通，1-VIP1，2-VIP2，3-VIP3
+    [MaxLength(20)]
+    public string? VipLevel { get; set; } = "普通"; // 普通、VIP1、VIP2、VIP3
 
     [Column("vip_expire_date")]
     public DateTime? VipExpireDate { get; set; }
@@ -72,7 +74,8 @@ public class User
     public decimal Balance { get; set; } = 0;
 
     [Column("status")]
-    public int Status { get; set; } = 1; // 1-正常，0-禁用
+    [MaxLength(20)]
+    public string? Status { get; set; } = "正常"; // 正常、禁用
 
     [Column("last_login_time")]
     public DateTime? LastLoginTime { get; set; }

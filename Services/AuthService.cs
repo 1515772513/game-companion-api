@@ -40,7 +40,7 @@ public class AuthService : IAuthService
             return ApiResponse<LoginResponse>.ErrorResponse(1002, "密码错误");
         }
 
-        if (user.Status == 0)
+        if (user.Status == "禁用")
         {
             return ApiResponse<LoginResponse>.ErrorResponse(1007, "账号已被禁用");
         }
@@ -93,7 +93,7 @@ public class AuthService : IAuthService
             Password = HashPassword(request.Password),
             Phone = request.Phone,
             Nickname = request.Nickname ?? "用户" + request.Phone.Substring(7),
-            Status = 1,
+            Status = "正常",
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
