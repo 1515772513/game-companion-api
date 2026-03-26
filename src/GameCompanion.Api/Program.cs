@@ -9,7 +9,8 @@ Console.WriteLine("========================================");
 Console.WriteLine("陪玩平台后台管理 API 启动中...");
 Console.WriteLine("========================================");
 Console.WriteLine($"启动时间: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
-Console.WriteLine($"环境: {args.Length > 0 ? string.Join(", ", args) : "默认"}");
+// ✅ 修复：条件表达式用括号包裹
+Console.WriteLine($"环境: {(args.Length > 0 ? string.Join(", ", args) : "默认")}");
 Console.WriteLine();
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,8 +30,6 @@ Console.WriteLine("✓ 控制器和API端点配置完成");
 builder.Services.AddSwaggerGen(options =>
 {
     Console.WriteLine("开始配置Swagger...");
-    options.SwaggerDoc("v1", new OpenApiInfo
-{
     options.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "陪玩平台后台管理 API",
@@ -68,9 +67,6 @@ Console.WriteLine("✓ Swagger配置完成");
 
 // 配置JWT认证
 Console.WriteLine("开始配置JWT认证...");
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-
-// 配置JWT认证
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -113,20 +109,10 @@ Console.WriteLine("开始构建应用程序...");
 var app = builder.Build();
 Console.WriteLine("✓ 应用程序构建完成");
 Console.WriteLine();
-{
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
-    });
-});
-
-var app = builder.Build();
 
 // 配置请求管道
 Console.WriteLine("配置请求管道...");
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || true)
 {
     Console.WriteLine("  - 环境: 开发模式");
     Console.WriteLine("  - 启用Swagger文档");
