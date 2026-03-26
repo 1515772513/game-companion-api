@@ -78,7 +78,7 @@ public class ApiResponse : ApiResponse<object>
         };
     }
 
-    public static ApiResponse Error(int code, string error, string message = "操作失败")
+    public new static ApiResponse Error(int code, string error, string message = "操作失败")
     {
         return new ApiResponse
         {

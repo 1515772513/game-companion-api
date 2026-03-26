@@ -69,7 +69,7 @@ public class User
     public int Points { get; set; } = 0;
 
     [Column("balance")]
-    [Precision(10, 2)]
+    [Column(TypeName = "decimal(10,2)")]
     public decimal Balance { get; set; } = 0;
 
     [Column("status")]

@@ -49,22 +49,22 @@ public class Companion
     public string? ServiceType { get; set; } = "技术陪玩"; // 技术陪玩、娱乐陪玩
 
     [Column("price_per_game")]
-    [Precision(10, 2)]
+    [Column(TypeName = "decimal(10,2)")]
     public decimal PricePerGame { get; set; } = 0;
 
     [Column("price_per_hour")]
-    [Precision(10, 2)]
+    [Column(TypeName = "decimal(10,2)")]
     public decimal? PricePerHour { get; set; }
 
     [Column("rating")]
-    [Precision(3, 2)]
+    [Column(TypeName = "decimal(3,2)")]
     public decimal? Rating { get; set; }
 
     [Column("total_orders")]
     public int? TotalOrders { get; set; }
 
     [Column("good_review_rate")]
-    [Precision(5, 2)]
+    [Column(TypeName = "decimal(5,2)")]
     public decimal? GoodReviewRate { get; set; }
 
     [Column("bio")]

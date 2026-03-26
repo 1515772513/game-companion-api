@@ -41,19 +41,19 @@ public class Order
     public int DurationValue { get; set; }
 
     [Column("unit_price")]
-    [Precision(10, 2)]
+    [Column(TypeName = "decimal(10,2)")]
     public decimal UnitPrice { get; set; }
 
     [Column("total_price")]
-    [Precision(10, 2)]
+    [Column(TypeName = "decimal(10,2)")]
     public decimal TotalPrice { get; set; }
 
     [Column("discount_amount")]
-    [Precision(10, 2)]
+    [Column(TypeName = "decimal(10,2)")]
     public decimal? DiscountAmount { get; set; }
 
     [Column("final_price")]
-    [Precision(10, 2)]
+    [Column(TypeName = "decimal(10,2)")]
     public decimal FinalPrice { get; set; }
 
     [Column("remark")]
