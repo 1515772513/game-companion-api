@@ -3,6 +3,7 @@ using GameCompanion.Api.DTOs.Settings;
 using GameCompanion.Api.Models;
 using GameCompanion.Api.Models.Entities;
 using GameCompanion.Api.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace GameCompanion.Api.Services;
 
@@ -241,8 +242,8 @@ public class SettingsService : ISettingsService
             {
                 UserId = userId,
                 Content = feedbackDto.Content,
-                ContactInfo = feedbackDto.ContactInfo,
-                Type = feedbackDto.Type,
+                Contact = feedbackDto.ContactInfo,
+                FeedbackType = feedbackDto.Type,
                 Status = "待处理",
                 CreatedAt = DateTime.UtcNow
             };
@@ -254,12 +255,12 @@ public class SettingsService : ISettingsService
             {
                 Id = feedback.Id,
                 Content = feedback.Content,
-                ContactInfo = feedback.ContactInfo,
-                Type = feedback.Type,
+                ContactInfo = feedback.Contact,
+                Type = feedback.FeedbackType,
                 Status = feedback.Status,
                 CreatedAt = feedback.CreatedAt,
-                Response = feedback.Response,
-                ResponseAt = feedback.ResponseAt
+                Response = feedback.Reply,
+                ResponseAt = null // Feedback实体没有ResponseAt字段
             };
 
             return ApiResponse<FeedbackResponseDto>.Success(responseDto);

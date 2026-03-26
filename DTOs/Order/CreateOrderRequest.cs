@@ -8,6 +8,11 @@ namespace GameCompanion.Api.DTOs.Order;
 public class CreateOrderRequest
 {
     /// <summary>
+    /// 用户ID（从JWT中提取）
+    /// </summary>
+    public int UserId { get; set; }
+
+    /// <summary>
     /// 陪玩师ID
     /// </summary>
     [Required(ErrorMessage = "陪玩师ID不能为空")]

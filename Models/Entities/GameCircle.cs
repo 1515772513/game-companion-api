@@ -37,6 +37,10 @@ public class GameCircle
     [Column("post_count")]
     public int? PostCount { get; set; } = 0;
 
+    [Column("status")]
+    [MaxLength(20)]
+    public string? Status { get; set; } = "active";
+
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

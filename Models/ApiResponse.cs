@@ -116,7 +116,7 @@ public class ApiResponse : ApiResponse<object>
     /// <summary>
     /// 创建成功响应(带数据)
     /// </summary>
-    public static ApiResponse SuccessResponse(object data, string message = "操作成功")
+    public new static ApiResponse SuccessResponse(object data, string message = "操作成功")
     {
         return new ApiResponse
         {

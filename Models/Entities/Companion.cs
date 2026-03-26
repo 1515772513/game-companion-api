@@ -20,6 +20,10 @@ public class Companion
     [MaxLength(50)]
     public string Nickname { get; set; } = string.Empty;
 
+    [Column("avatar")]
+    [MaxLength(255)]
+    public string? Avatar { get; set; }
+
     [Column("real_name")]
     [MaxLength(50)]
     public string? RealName { get; set; }
@@ -93,4 +97,5 @@ public class Companion
     public virtual User User { get; set; } = null!;
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
     public virtual ICollection<CompanionGame> Games { get; set; } = new List<CompanionGame>();
+    public virtual ICollection<CompanionGame> CompanionGames { get; set; } = new List<CompanionGame>();
 }

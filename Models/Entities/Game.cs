@@ -17,6 +17,10 @@ public class Game
     [MaxLength(100)]
     public string Name { get; set; } = string.Empty;
 
+    [Column("icon")]
+    [MaxLength(255)]
+    public string? Icon { get; set; }
+
     [Column("icon_url")]
     [MaxLength(255)]
     public string? IconUrl { get; set; }
@@ -30,6 +34,13 @@ public class Game
 
     [Column("sort_order")]
     public int? SortOrder { get; set; } = 0;
+
+    [Column("status")]
+    [MaxLength(20)]
+    public string? Status { get; set; } = "active";
+
+    [Column("is_active")]
+    public int? IsActive { get; set; } = 1;
 
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

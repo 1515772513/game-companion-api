@@ -19,6 +19,9 @@ public class Post
     [Column("circle_id")]
     public int? CircleId { get; set; }
 
+    [Column("game_id")]
+    public int? GameId { get; set; }
+
     [Column("content")]
     public string Content { get; set; } = string.Empty;
 
@@ -55,6 +58,9 @@ public class Post
     [Column("share_count")]
     public int? ShareCount { get; set; }
 
+    [Column("collect_count")]
+    public int? CollectCount { get; set; }
+
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -66,4 +72,5 @@ public class Post
     public virtual User User { get; set; } = null!;
     public virtual ICollection<PostComment> Comments { get; set; } = new List<PostComment>();
     public virtual ICollection<PostLike> Likes { get; set; } = new List<PostLike>();
+    public virtual Game? Game { get; set; }
 }

@@ -18,7 +18,7 @@ public static class ApiResponseExtensions
             200 => new OkObjectResult(response),
             400 => new BadRequestObjectResult(response),
             401 => new UnauthorizedObjectResult(response),
-            403 => new ForbidObjectResult(response),
+            403 => new ObjectResult(response) { StatusCode = 403 },
             404 => new NotFoundObjectResult(response),
             500 => new ObjectResult(response)
             {
@@ -41,7 +41,7 @@ public static class ApiResponseExtensions
             200 => new OkObjectResult(response),
             400 => new BadRequestObjectResult(response),
             401 => new UnauthorizedObjectResult(response),
-            403 => new ForbidObjectResult(response),
+            403 => new ObjectResult(response) { StatusCode = 403 },
             404 => new NotFoundObjectResult(response),
             500 => new ObjectResult(response)
             {

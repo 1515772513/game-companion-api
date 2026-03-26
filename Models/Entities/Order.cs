@@ -80,4 +80,7 @@ public class Order
 
     [ForeignKey("CompanionId")]
     public virtual Companion Companion { get; set; } = null!;
+
+    [ForeignKey("GameId")]
+    public virtual Game Game { get; set; } = null!;
 }

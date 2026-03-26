@@ -42,4 +42,5 @@ public class PostComment
     public virtual PostComment? Parent { get; set; }
 
     public virtual ICollection<PostComment> Replies { get; set; } = new List<PostComment>();
+    public virtual ICollection<PostCommentLike> Likes { get; set; } = new List<PostCommentLike>();
 }
