@@ -231,7 +231,7 @@ public class OrderService : IOrderService
                     TotalAmount = o.FinalPrice,
                     CreatedAt = o.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")
                 }).ToList(),
-                Pagination = new GetOrdersResponse.Pagination
+                Pagination = new GetOrdersResponse.OrderPagination
                 {
                     Page = request.Page,
                     PageSize = request.PageSize,
