@@ -878,19 +878,19 @@ public class HomeService : IHomeService
 
         // 获取热门陪玩师
         var hotCompanions = await _context.Companions
-            .Where(c => c.Status == "certified" && c.OnlineStatus == "online")
+            .Where(c => c.CertificationStatus == 1 && c.OnlineStatus == 1)
             .OrderByDescending(c => c.Rating)
             .Take(10)
             .Select(c => new CompanionSimpleInfo
             {
                 Id = c.Id,
                 Nickname = c.Nickname,
-                Avatar_url = c.Avatar ?? "https://cdn.example.com/avatar/default.png",
+                Avatar_url = c.AvatarUrl ?? "https://cdn.example.com/avatar/default.png",
                 Level = GetLevelText(c.Level),
                 Service_type = GetServiceTypeText(c.ServiceType),
-                Price = c.PricePerGame,
+                Price = c.Price,
                 Price_unit = "局",
-                Rating = c.Rating,
+                Rating = c.Rating ?? 0,
                 Online_status = 1,
                 Online_status_text = "在线接单",
                 Tags = c.Tags?.Split(',').ToList() ?? new List<string>()
@@ -899,14 +899,13 @@ public class HomeService : IHomeService
 
         // 获取热门游戏
         var hotGames = await _context.Games
-            .Where(g => g.Status == "active")
             .OrderBy(g => g.SortOrder)
             .Take(10)
             .Select(g => new GameSimpleInfo
             {
                 Id = g.Id,
                 Name = g.Name,
-                Icon_url = g.Icon ?? "https://cdn.example.com/game/default.png",
+                Icon_url = g.IconUrl ?? "https://cdn.example.com/game/default.png",
                 Companion_count = _context.CompanionGames.Count(cg => cg.GameId == g.Id),
                 Description = g.Description ?? ""
             })
@@ -914,7 +913,7 @@ public class HomeService : IHomeService
 
         // 获取热门动态
         var hotPosts = await _context.Posts
-            .Where(p => p.Status == "published")
+            .Where(p => p.Status == 1)
             .OrderByDescending(p => p.LikeCount)
             .Take(10)
             .Select(p => new PostSimpleInfo
@@ -922,7 +921,7 @@ public class HomeService : IHomeService
                 Id = p.Id,
                 User_id = p.UserId,
                 User_name = _context.Users.Where(u => u.Id == p.UserId).Select(u => u.Nickname).FirstOrDefault() ?? "",
-                User_avatar = _context.Users.Where(u => u.Id == p.UserId).Select(u => u.Avatar ?? "https://cdn.example.com/avatar/default.png").FirstOrDefault() ?? "",
+                User_avatar = _context.Users.Where(u => u.Id == p.UserId).Select(u => u.AvatarUrl ?? "https://cdn.example.com/avatar/default.png").FirstOrDefault() ?? "",
                 Content = p.Content.Length > 100 ? p.Content.Substring(0, 100) + "..." : p.Content,
                 Images = p.Images?.Split(',').ToList() ?? new List<string>(),
                 Like_count = p.LikeCount,
@@ -1014,14 +1013,14 @@ public class HomeService : IHomeService
                 Service_type_code = c.ServiceType,
                 Price = c.Price,
                 Price_unit = "局",
-                Rating = c.Rating,
+                Rating = c.Rating ?? 0m,
                 Rating_count = 0, // TODO: 从评价表计算
-                Order_count = c.OrderCount,
-                Positive_rate = c.PositiveRate,
+                Order_count = c.OrderCount ?? 0,
+                Positive_rate = c.PositiveRate ?? 0m,
                 Online_status = c.OnlineStatus == 1 ? 1 : 0,
                 Online_status_text = c.OnlineStatus == 1 ? "在线接单" : "离线",
                 Is_verified = c.CertificationStatus == 1,
-                Verified_at = c.UpdatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
+                Verified_at = c.UpdatedAt.HasValue ? c.UpdatedAt.Value.ToString("yyyy-MM-dd HH:mm:ss") : "",
                 Games = _context.CompanionGames
                     .Where(cg => cg.CompanionId == c.Id)
                     .Join(_context.Games, cg => cg.GameId, g => g.Id, (cg, g) => new GameSkillInfo
@@ -1039,7 +1038,7 @@ public class HomeService : IHomeService
                 Recent_reviews = new List<ReviewInfo>(), // TODO: 从评价表获取
                 Statistics = new CompanionStatistics
                 {
-                    Total_orders = c.OrderCount,
+                    Total_orders = c.OrderCount ?? 0,
                     Total_hours = 0, // TODO: 计算总服务时长
                     Avg_response_time = 5,
                     Completion_rate = 99.2m,
@@ -1082,14 +1081,14 @@ public class HomeService : IHomeService
             Service_type_code = companion.ServiceType,
             Price = companion.Price,
             Price_unit = "局",
-            Rating = companion.Rating,
+            Rating = companion.Rating ?? 0m,
             Rating_count = 0,
-            Order_count = companion.OrderCount,
-            Positive_rate = companion.PositiveRate,
+            Order_count = companion.OrderCount ?? 0,
+            Positive_rate = companion.PositiveRate ?? 0m,
             Online_status = companion.OnlineStatus == 1 ? 1 : 0,
             Online_status_text = companion.OnlineStatus == 1 ? "在线接单" : "离线",
             Is_verified = companion.CertificationStatus == 1,
-            Verified_at = companion.UpdatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
+            Verified_at = companion.UpdatedAt.HasValue ? companion.UpdatedAt.Value.ToString("yyyy-MM-dd HH:mm:ss") : "",
             Games = _context.CompanionGames
                 .Where(cg => cg.CompanionId == companion.Id)
                 .Join(_context.Games, cg => cg.GameId, g => g.Id, (cg, g) => new GameSkillInfo
@@ -1107,7 +1106,7 @@ public class HomeService : IHomeService
             Recent_reviews = new List<ReviewInfo>(),
             Statistics = new CompanionStatistics
             {
-                Total_orders = companion.OrderCount,
+                Total_orders = companion.OrderCount ?? 0,
                 Total_hours = 0,
                 Avg_response_time = 5,
                 Completion_rate = 99.2m,
@@ -1154,7 +1153,7 @@ public class HomeService : IHomeService
                 Service_type = GetServiceTypeText(c.ServiceType),
                 Price = c.Price,
                 Price_unit = "局",
-                Rating = c.Rating,
+                Rating = c.Rating ?? 0m,
                 Online_status = c.OnlineStatus == 1 ? 1 : 0,
                 Online_status_text = c.OnlineStatus == 1 ? "在线接单" : "离线",
                 Tags = c.Tags?.Split(',').ToList() ?? new List<string>()
