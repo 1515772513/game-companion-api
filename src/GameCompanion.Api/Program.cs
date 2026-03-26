@@ -97,15 +97,24 @@ if (app.Environment.IsDevelopment())
         options.RoutePrefix = "swagger";
     });
 }
+try{
+    app.UseMiddleware<ExceptionHandlingMiddleware>();
+    app.UseMiddleware<RequestLoggingMiddleware>();
 
-app.UseMiddleware<ExceptionHandlingMiddleware>();
-app.UseMiddleware<RequestLoggingMiddleware>();
+    // app.UseHttpsRedirection(); // 注释掉
+    app.UseCors("AllowAll");
+    app.UseAuthentication();
+    app.UseAuthorization();
 
-app.UseHttpsRedirection();
-app.UseCors("AllowAll");
-app.UseAuthentication();
-app.UseAuthorization();
+    app.MapControllers();
 
-app.MapControllers();
-
-app.Run();
+    app.Run("http://localhost:5000"); // 强制指定端口
+}
+catch (Exception ex)
+{
+    Console.WriteLine("=============== 启动错误 ===============");
+    Console.WriteLine(ex.Message);
+    Console.WriteLine(ex.StackTrace);
+    Console.WriteLine("========================================");
+    throw;
+}

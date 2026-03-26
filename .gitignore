@@ -1,0 +1,59 @@
+# 标准 .NET / ASP.NET Core 自动生成文件
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# VS 自动生成
+.vs/
+.vscode/
+*.user
+*.userosscache
+*.sln.docstates
+*.ide/
+
+# 构建输出
+*.[Dd]ebug/
+*.[Rr]elease/
+*_i.c
+*_p.c
+*.ilk
+*.meta
+*.obj
+*.pch
+*.pdb
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.tmp_proj
+*.log
+*.vspscc
+*.vssscc
+.builds
+
+# 测试结果
+*.testresult
+*.coverage
+TestResults/
+
+# 发布包
+*.pubxml
+*.publishproj
+
+# NuGet 包
+*.nupkg
+*.nuget.props
+*.nuget.targets
+
+# 前端 / 其他
+node_modules/
+dist/
+.DS_Store
+.env
+.env.*
+!.env.example
