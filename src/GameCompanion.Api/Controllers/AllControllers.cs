@@ -9,7 +9,7 @@ namespace GameCompanion.Api.Controllers;
 /// 数据概览控制器
 /// </summary>
 [ApiController]
-[Route("api/v1/[controller]")]
+[Route("api/[controller]")]
 [Authorize]
 public class DashboardController : ControllerBase
 {
@@ -60,7 +60,7 @@ public class DashboardController : ControllerBase
 /// 用户管理控制器
 /// </summary>
 [ApiController]
-[Route("api/v1/[controller]")]
+[Route("api/[controller]")]
 [Authorize]
 public class UsersController : ControllerBase
 {
@@ -161,7 +161,7 @@ public class UsersController : ControllerBase
 /// 陪玩管理控制器
 /// </summary>
 [ApiController]
-[Route("api/v1/[controller]")]
+[Route("api/[controller]")]
 [Authorize]
 public class CompanionsController : ControllerBase
 {
@@ -251,7 +251,7 @@ public class CompanionsController : ControllerBase
 /// 订单管理控制器
 /// </summary>
 [ApiController]
-[Route("api/v1/[controller]")]
+[Route("api/[controller]")]
 [Authorize]
 public class OrdersController : ControllerBase
 {
@@ -345,7 +345,7 @@ public class OrdersController : ControllerBase
 /// 内容管理控制器
 /// </summary>
 [ApiController]
-[Route("api/v1/[controller]")]
+[Route("api/[controller]")]
 [Authorize]
 public class PostsController : ControllerBase
 {
@@ -423,7 +423,7 @@ public class PostsController : ControllerBase
 /// 消息管理控制器
 /// </summary>
 [ApiController]
-[Route("api/v1/[controller]")]
+[Route("api/[controller]")]
 [Authorize]
 public class MessagesController : ControllerBase
 {
@@ -480,7 +480,7 @@ public class MessagesController : ControllerBase
 /// 系统配置控制器
 /// </summary>
 [ApiController]
-[Route("api/v1/[controller]")]
+[Route("api/[controller]")]
 [Authorize]
 public class SettingsController : ControllerBase
 {

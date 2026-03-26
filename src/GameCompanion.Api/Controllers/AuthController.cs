@@ -11,7 +11,7 @@ namespace GameCompanion.Api.Controllers;
 /// 认证授权控制器
 /// </summary>
 [ApiController]
-[Route("api/v1/[controller]")]
+[Route("api/[controller]")]
 [Authorize]
 public class AuthController : ControllerBase
 {

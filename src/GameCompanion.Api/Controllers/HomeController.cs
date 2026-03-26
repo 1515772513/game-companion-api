@@ -9,7 +9,7 @@ namespace GameCompanion.Api.Controllers;
 /// 首页服务控制器
 /// </summary>
 [ApiController]
-[Route("api/v1/[controller]")]
+[Route("api/[controller]")]
 public class HomeController : ControllerBase
 {
     private readonly IHomeService _homeService;
