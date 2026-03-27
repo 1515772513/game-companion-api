@@ -52,7 +52,7 @@ public class PostService : IPostService
             UserId = userId,
             Content = request.Content,
             Images = request.Images != null ? string.Join(",", request.Images) : null,
-            GameId = request.GameId,
+            Game = await _context.Games.FirstOrDefaultAsync(g => g.Id == request.GameId) ?? null!,
             Visibility = request.Visibility?.ToString(),
             Status = "已发布",
             LikeCount = 0,
@@ -103,7 +103,7 @@ public class PostService : IPostService
         // 游戏筛选
         if (request.GameId.HasValue)
         {
-            query = query.Where(p => p.GameId == request.GameId.Value);
+            query = query.Where(p => p.Game.Id == request.GameId.Value);
         }
 
         // 分页查询
@@ -134,7 +134,7 @@ public class PostService : IPostService
                 {
                     Id = p.Game.Id,
                     Name = p.Game.Name,
-                    IconUrl = p.Game.IconUrl
+                    IconUrl = p.Game.Icon
                 } : null,
                 Location = p.Location,
                 LikeCount = p.LikeCount ?? 0,
@@ -196,7 +196,7 @@ public class PostService : IPostService
                     AvatarUrl = c.User.Avatar
                 },
                 Content = c.Content,
-                LikeCount = c.LikeCount ?? 0,
+                LikeCount = c.LikeCount,
                 IsLiked = post.Likes.Any(l => l.UserId == userId),
                 CreatedAt = c.CreatedAt,
                 Replies = c.Replies.Select(r => new PostCommentReplyDto

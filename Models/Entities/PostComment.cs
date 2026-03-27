@@ -41,4 +41,9 @@ public class PostComment
 
     [ForeignKey("ParentId")]
     public virtual PostComment? Parent { get; set; }
+
+    [Column("like_count")]
+    public int LikeCount { get; set; } = 0;
+
+    public ICollection<PostComment> Replies { get; set; } = new List<PostComment>();
 }

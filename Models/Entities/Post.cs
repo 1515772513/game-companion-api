@@ -49,6 +49,9 @@ public class Post
     [Column("like_count")]
     public int? LikeCount { get; set; }
 
+    [Column("collect_count")]
+    public int? CollectCount { get; set; }
+
     [Column("comment_count")]
     public int? CommentCount { get; set; }
 

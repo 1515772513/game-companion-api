@@ -49,6 +49,9 @@ public class Game
     [Column("updated_at")]
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+    [Column("is_active")]
+    public int IsActive { get; set; } = 1;
+
     // 导航属性
     public virtual ICollection<CompanionGame> CompanionGames { get; set; } = new List<CompanionGame>();
     public virtual ICollection<GameCircle> Circles { get; set; } = new List<GameCircle>();
