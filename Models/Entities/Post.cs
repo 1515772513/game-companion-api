@@ -66,4 +66,6 @@ public class Post
     public virtual User User { get; set; } = null!;
     public virtual ICollection<PostComment> Comments { get; set; } = new List<PostComment>();
     public virtual ICollection<PostLike> Likes { get; set; } = new List<PostLike>();
+
+    public virtual Game Game { get; set; } = null!;
 }

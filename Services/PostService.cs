@@ -232,7 +232,7 @@ public class PostService : IPostService
             {
                 Id = post.Game.Id,
                 Name = post.Game.Name,
-                IconUrl = post.Game.IconUrl
+                IconUrl = post.Game.Icon
             } : null,
             Location = post.Location,
             LikeCount = post.LikeCount ?? 0,
