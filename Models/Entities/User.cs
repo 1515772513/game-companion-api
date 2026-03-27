@@ -89,6 +89,9 @@ public class User
     [Column("updated_at")]
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+    [Column("is_admin")]
+    public int? IsAdmin { get; set; } = 0;
+
     // 导航属性
     public virtual Companion? Companion { get; set; }
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();

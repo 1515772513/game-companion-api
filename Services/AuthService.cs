@@ -28,7 +28,7 @@ public class AuthService : IAuthService
 
     public async Task<ApiResponse<LoginResponse>> LoginAsync(LoginRequest request)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Phone == request.Phone);
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Phone == request.Phone && u.IsAdmin == 1);
 
         if (user == null)
         {

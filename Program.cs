@@ -20,6 +20,12 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
+builder.Services.AddRouting(options =>
+{
+    // 路由小写配置
+    options.LowercaseUrls = true;
+});
+
 // 添加服务到容器
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
