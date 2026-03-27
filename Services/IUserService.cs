@@ -62,5 +62,5 @@ public interface IUserService
     /// <summary>
     /// 获取用户列表
     /// </summary>
-    Task<ApiResponse<UserListListDto>> GetListAsync(int page = 1, int pageSize = 10);
+    Task<ApiResponse<UserListListDto>> GetListAsync(GetUserListDto request);
 }

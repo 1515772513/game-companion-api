@@ -27,13 +27,14 @@ public class UsersController : ControllerBase
     /// <summary>
     /// 获取用户列表
     /// </summary>
-    [HttpGet("list")]
-    [ProducesResponseType(typeof(ApiResponse<UserProfileDto>), 200)]
+    [HttpPost("list")]
+    [ProducesResponseType(typeof(ApiResponse<UserListListDto>), 200)]
     [ProducesResponseType(typeof(ApiResponse<>), 404)]
     [ProducesResponseType(typeof(ApiResponse<>), 500)]
-    public async Task<IActionResult> GetList(int page = 1, int pageSize = 10)
+    public async Task<IActionResult> GetList([FromBody] GetUserListDto? request = null)
     {
-        var result = await _userService.GetListAsync(page, pageSize);
+        request ??= new GetUserListDto();
+        var result = await _userService.GetListAsync(request);
         return result.ToActionResult();
     }
 }

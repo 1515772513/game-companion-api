@@ -167,3 +167,21 @@ public class UserListListDto
     public int PageSize { get; set; }
     public UserListDto[] list { get; set; } = Array.Empty<UserListDto>();
 }
+
+// 请求参数：获取用户列表
+// page：页码，默认1页
+// pageSize：每页数量，默认10条
+// keyword：搜索关键词，默认空字符串
+// status：状态，默认null
+// vipLevel：会员等级，默认空字符串
+// registerTime：注册时间，默认null
+public class GetUserListDto
+{
+    public int Page { get; set; } = 1;
+    public int PageSize { get; set; } = 10;
+    public string? Keyword { get; set; } = string.Empty;
+    public string? Status { get; set; } = string.Empty;
+
+    public string? VipLevel { get; set; } = string.Empty;
+    public string? RegisterTime { get; set; } = string.Empty;
+}
