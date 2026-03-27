@@ -20,10 +20,6 @@ public class Companion
     [MaxLength(50)]
     public string Nickname { get; set; } = string.Empty;
 
-    [Column("avatar")]
-    [MaxLength(255)]
-    public string? Avatar { get; set; }
-
     [Column("real_name")]
     [MaxLength(50)]
     public string? RealName { get; set; }

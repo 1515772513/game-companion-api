@@ -25,11 +25,9 @@ public class PostComment
     [Column("content")]
     public string Content { get; set; } = string.Empty;
 
-    [Column("like_count")]
-    public int? LikeCount { get; set; } = 0;
-
-    [Column("likes")]
-    public int? Likes { get; set; } = 0;
+    [Column("status")]
+    [MaxLength(20)]
+    public string? Status { get; set; } = "normal";
 
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -43,6 +41,4 @@ public class PostComment
 
     [ForeignKey("ParentId")]
     public virtual PostComment? Parent { get; set; }
-
-    public virtual ICollection<PostComment> Replies { get; set; } = new List<PostComment>();
 }

@@ -59,7 +59,6 @@ public class CompanionService : ICompanionService
                 IdCardBack = request.IdCardBackUrl,
                 Phone = request.Phone,
                 Nickname = request.Nickname,
-                Avatar = request.AvatarUrl,
                 ServiceType = request.ServiceType,
                 PricePerGame = request.Price,
                 Bio = request.Bio,

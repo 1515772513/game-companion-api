@@ -291,10 +291,9 @@ public class OrderService : IOrderService
                     Id = order.Companion.Id,
                     UserId = order.Companion.UserId,
                     Nickname = order.Companion.Nickname,
-                    // AvatarUrl = order.Companion.AvatarUrl ?? "",
+                    AvatarUrl = order.Companion.User?.Avatar ?? "",
                     Level = order.Companion.Level ?? "",
-                    Phone = order.Companion.Phone ?? "",
-                    Wechat = order.Companion.User?.Wechat ?? ""
+                    Phone = order.Companion.Phone ?? ""
                 },
                 Game = new GetOrderResponse.GameInfo
                 {

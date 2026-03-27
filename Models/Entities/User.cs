@@ -77,10 +77,6 @@ public class User
     [MaxLength(20)]
     public string? Status { get; set; } = "正常"; // 正常、禁用
 
-    [Column("wechat")]
-    [MaxLength(50)]
-    public string? Wechat { get; set; }
-
     [Column("is_blocked")]
     public int? IsBlocked { get; set; } = 0;
 

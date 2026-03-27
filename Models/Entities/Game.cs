@@ -14,33 +14,34 @@ public class Game
     public int Id { get; set; }
 
     [Column("name")]
-    [MaxLength(100)]
+    [MaxLength(50)]
     public string Name { get; set; } = string.Empty;
+
+    [Column("name_en")]
+    [MaxLength(50)]
+    public string? NameEn { get; set; }
 
     [Column("icon")]
     [MaxLength(255)]
     public string? Icon { get; set; }
 
-    [Column("icon_url")]
+    [Column("cover_image")]
     [MaxLength(255)]
-    public string? IconUrl { get; set; }
+    public string? CoverImage { get; set; }
+
+    [Column("type")]
+    [MaxLength(50)]
+    public string? Type { get; set; }
 
     [Column("description")]
-    [MaxLength(500)]
     public string? Description { get; set; }
-
-    [Column("is_hot")]
-    public int? IsHot { get; set; } = 0;
-
-    [Column("sort_order")]
-    public int? SortOrder { get; set; } = 0;
 
     [Column("status")]
     [MaxLength(20)]
     public string? Status { get; set; } = "active";
 
-    [Column("is_active")]
-    public int? IsActive { get; set; } = 1;
+    [Column("sort_order")]
+    public int? SortOrder { get; set; } = 0;
 
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
