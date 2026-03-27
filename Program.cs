@@ -8,6 +8,8 @@ using Microsoft.OpenApi.Models;
 using Serilog;
 using StackExchange.Redis;
 using System.Text;
+using Swashbuckle.AspNetCore.SwaggerGen;
+using GameCompanion.Api.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -72,20 +74,12 @@ builder.Services.AddSwaggerGen(c =>
     // 忽略循环引用,使用完整的类型名作为Schema ID
     c.CustomSchemaIds(type => type.FullName);
 
-    // 如果需要XML注释,可以取消下面的注释
-    // try
-    // {
-    //     var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    //     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    //     if (File.Exists(xmlPath))
-    //     {
-    //         c.IncludeXmlComments(xmlPath);
-    //     }
-    // }
-    // catch
-    // {
-    //     // XML注释文件不存在,忽略
-    // }
+    // ======================================================
+    c.MapType(typeof(GameCompanion.Api.Models.ApiResponse<>), () => new OpenApiSchema { Type = "object" });
+    c.MapType(typeof(GameCompanion.Api.Models.ApiResponse), () => new OpenApiSchema { Type = "object" });
+
+    c.SchemaFilter<FixSwaggerSchemaFilter>();
+    // ======================================================
 });
 
 // 配置数据库
@@ -186,14 +180,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// 自动创建数据库（开发环境）
-// if (app.Environment.IsDevelopment())
-// {
-//     using var scope = app.Services.CreateScope();
-//     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-//     dbContext.Database.EnsureCreated();
-// }
-
 try
 {
     Log.Information("启动应用程序");
@@ -206,4 +192,17 @@ catch (Exception ex)
 finally
 {
     Log.CloseAndFlush();
+}
+namespace GameCompanion.Api.Filters
+{
+    public class FixSwaggerSchemaFilter : ISchemaFilter
+    {
+        public void Apply(OpenApiSchema schema, SchemaFilterContext context)
+        {
+            if (context.Type.IsGenericType && context.Type.GetGenericTypeDefinition() == typeof(GameCompanion.Api.Models.ApiResponse<>))
+            {
+                schema.Extensions.Clear();
+            }
+        }
+    }
 }

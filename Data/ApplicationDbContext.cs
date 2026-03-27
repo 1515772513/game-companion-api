@@ -90,6 +90,12 @@ public class ApplicationDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        
+        modelBuilder.Entity<Companion>()
+        .HasMany(x => x.CompanionGames)
+        .WithOne()
+        .HasForeignKey(x => x.CompanionId)
+        .OnDelete(DeleteBehavior.Cascade);
 
         // 配置实体关系和约束
         ConfigureUser(modelBuilder);

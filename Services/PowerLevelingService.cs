@@ -219,14 +219,14 @@ public class PowerLevelingService : IPowerLevelingService
             var userId = GetCurrentUserId();
             if (userId == 0)
             {
-                return ApiResponse.Fail(401, "未授权，请先登录");
+                return ApiResponse<object>.Fail(401, "未授权，请先登录");
             }
 
             // 验证服务是否存在
             var service = await GetServiceDetailAsync(request.ServiceId);
             if (service.Code != 200)
             {
-                return ApiResponse.Fail(404, "服务不存在");
+                return ApiResponse<object>.Fail(404, "服务不存在");
             }
 
             // 创建订单
@@ -271,12 +271,12 @@ public class PowerLevelingService : IPowerLevelingService
                 PaymentUrl = $"https://pay.example.com/order/{order.Id}"
             };
 
-            return ApiResponse.SuccessResponse(response, "订单创建成功");
+            return ApiResponse<object>.SuccessResponse(response, "订单创建成功");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "创建代练订单失败");
-            return ApiResponse.Fail(500, "创建订单失败");
+            return ApiResponse<object>.Fail(500, "创建订单失败");
         }
     }
 
@@ -426,7 +426,7 @@ public class PowerLevelingService : IPowerLevelingService
             var userId = GetCurrentUserId();
             if (userId == 0)
             {
-                return ApiResponse.Fail(401, "未授权，请先登录");
+                return ApiResponse<object>.Fail(401, "未授权，请先登录");
             }
 
             var order = await _context.Orders
@@ -434,13 +434,13 @@ public class PowerLevelingService : IPowerLevelingService
 
             if (order == null)
             {
-                return ApiResponse.Fail(404, "订单不存在");
+                return ApiResponse<object>.Fail(404, "订单不存在");
             }
 
             // 检查订单状态
             if (order.Status != "待付款")
             {
-                return ApiResponse.Fail(400, "订单状态不正确，无法取消");
+                return ApiResponse<object>.Fail(400, "订单状态不正确，无法取消");
             }
 
             order.Status = "已取消";
@@ -448,12 +448,12 @@ public class PowerLevelingService : IPowerLevelingService
             order.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            return ApiResponse.Success("订单取消成功");
+            return ApiResponse<object>.Success("订单取消成功");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "取消代练订单失败");
-            return ApiResponse.Fail(500, "取消订单失败");
+            return ApiResponse<object>.Fail(500, "取消订单失败");
         }
     }
 
@@ -467,7 +467,7 @@ public class PowerLevelingService : IPowerLevelingService
             var userId = GetCurrentUserId();
             if (userId == 0)
             {
-                return ApiResponse.Fail(401, "未授权，请先登录");
+                return ApiResponse<object>.Fail(401, "未授权，请先登录");
             }
 
             var order = await _context.Orders
@@ -475,13 +475,13 @@ public class PowerLevelingService : IPowerLevelingService
 
             if (order == null)
             {
-                return ApiResponse.Fail(404, "订单不存在");
+                return ApiResponse<object>.Fail(404, "订单不存在");
             }
 
             // 检查订单状态
             if (order.Status != "代练中" && order.Status != "已完成")
             {
-                return ApiResponse.Fail(400, "订单状态不正确，无法申请退款");
+                return ApiResponse<object>.Fail(400, "订单状态不正确，无法申请退款");
             }
 
             // 创建退款记录（需要创建退款记录表）
@@ -493,12 +493,12 @@ public class PowerLevelingService : IPowerLevelingService
             order.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            return ApiResponse.Success("退款申请已提交");
+            return ApiResponse<object>.Success("退款申请已提交");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "申请代练退款失败");
-            return ApiResponse.Fail(500, "申请退款失败");
+            return ApiResponse<object>.Fail(500, "申请退款失败");
         }
     }
 
@@ -512,7 +512,7 @@ public class PowerLevelingService : IPowerLevelingService
             var userId = GetCurrentUserId();
             if (userId == 0)
             {
-                return ApiResponse.Fail(401, "未授权，请先登录");
+                return ApiResponse<object>.Fail(401, "未授权，请先登录");
             }
 
             var order = await _context.Orders
@@ -520,25 +520,25 @@ public class PowerLevelingService : IPowerLevelingService
 
             if (order == null)
             {
-                return ApiResponse.Fail(404, "订单不存在");
+                return ApiResponse<object>.Fail(404, "订单不存在");
             }
 
             // 检查订单状态
             if (order.Status != "已完成")
             {
-                return ApiResponse.Fail(400, "订单状态不正确，无法评价");
+                return ApiResponse<object>.Fail(400, "订单状态不正确，无法评价");
             }
 
             // 创建评价记录（需要创建评价记录表）
             _logger.LogInformation("用户 {UserId} 订单 {OrderId} 评价：{Rating}星，内容：{Comment}",
                 userId, orderId, request.Rating, request.Comment);
 
-            return ApiResponse.Success("评价成功");
+            return ApiResponse<object>.Success("评价成功");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "代练订单评价失败");
-            return ApiResponse.Fail(500, "评价失败");
+            return ApiResponse<object>.Fail(500, "评价失败");
         }
     }
 
