@@ -18,7 +18,7 @@ public class UserProfileDto
     public int Age { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? Bio { get; set; }
-    public string? VipLevel { get; set; }
+    public int? VipLevel { get; set; }
     public DateTime? VipExpireDate { get; set; }
     public int Points { get; set; }
     public decimal Balance { get; set; }
@@ -151,7 +151,7 @@ public class UserListDto
     public string Nickname { get; set; } = string.Empty;
     public string? Avatar { get; set; }
     public string? Bio { get; set; }
-    public string? VipLevel { get; set; }
+    public int? VipLevel { get; set; }
     public int Points { get; set; }
     public int Status { get; set; }
     public string StatusCn { get; set; } = string.Empty; // 状态:1=正常,0=禁用

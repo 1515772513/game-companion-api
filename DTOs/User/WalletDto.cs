@@ -10,7 +10,7 @@ public class WalletDto
     public int UserId { get; set; }
     public decimal Balance { get; set; }
     public int Points { get; set; }
-    public string? VipLevel { get; set; }
+    public int? VipLevel { get; set; }
     public DateTime? VipExpireDate { get; set; }
 
     public List<TransactionDto> Transactions { get; set; } = new();

@@ -491,10 +491,17 @@ public class UserService : IUserService
             if (status.HasValue)
                 query = query.Where(u => u.Status == status);
                 
-            if (!string.IsNullOrWhiteSpace(request.VipLevel))
+            int? vipLevel = null;
+            if (!string.IsNullOrWhiteSpace(request.VipLevel) && int.TryParse(request.VipLevel, out var v))
             {
-                query = query.Where(u => u.VipLevel == request.VipLevel.Trim());
+                vipLevel = v;
             }
+            
+            if (vipLevel.HasValue)
+            {
+                query = query.Where(u => u.VipLevel == vipLevel);
+            }
+            
             if (!string.IsNullOrWhiteSpace(request.RegisterTime))
             {
                 var start = DateTime.Parse(request.RegisterTime);

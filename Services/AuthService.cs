@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using GameCompanion.Api.Utils;
 
 namespace GameCompanion.Api.Services;
 
@@ -65,7 +66,7 @@ public class AuthService : IAuthService
                 Avatar = user.Avatar,
                 Phone = MaskPhone(user.Phone),
                 Gender = user.Gender,
-                VipLevel = user.VipLevel,
+                VipLevel = user.VipLevel.GetSafeInt(),
                 VipExpireTime = user.VipExpireDate?.ToString("yyyy-MM-dd HH:mm:ss"),
                 Balance = user.Balance,
                 Points = user.Points,

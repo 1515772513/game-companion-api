@@ -62,7 +62,7 @@ public class User
 
     [Column("vip_level")]
     [MaxLength(20)]
-    public string? VipLevel { get; set; } = "普通"; // 普通、VIP1、VIP2、VIP3
+    public int? VipLevel { get; set; } = 0; // VIP等级 0=普通 1=普通会员 2=VIP会员 3=SVIP会员/tinyint(1)
 
     [Column("vip_expire_date")]
     public DateTime? VipExpireDate { get; set; }
