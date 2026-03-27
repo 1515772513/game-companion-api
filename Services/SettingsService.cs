@@ -3,6 +3,7 @@ using GameCompanion.Api.DTOs.Settings;
 using GameCompanion.Api.Models;
 using GameCompanion.Api.Models.Entities;
 using GameCompanion.Api.Services;
+using GameCompanion.Api.Utils;
 using Microsoft.EntityFrameworkCore;
 
 namespace GameCompanion.Api.Services;
@@ -41,7 +42,8 @@ public class SettingsService : ISettingsService
                 Email = "", // 实际项目中应该从用户表获取
                 Phone = user.Phone,
                 Nickname = user.Nickname,
-                Status = user.Status ?? "正常",
+                Status = user.Status.GetSafeInt(),
+                StatusCn = user.Status.GetStatusCn(), // 状态:1=禁用,0=正常
                 CreatedAt = user.CreatedAt,
                 LastLoginTime = user.LastLoginTime ?? user.CreatedAt
             };

@@ -58,4 +58,9 @@ public interface IUserService
     /// 获取钱包信息
     /// </summary>
     Task<ApiResponse<WalletDto>> GetWalletAsync(int userId);
+
+    /// <summary>
+    /// 获取用户列表
+    /// </summary>
+    Task<ApiResponse<UserListListDto>> GetListAsync(int page = 1, int pageSize = 10);
 }

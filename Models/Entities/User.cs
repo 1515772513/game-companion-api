@@ -75,7 +75,7 @@ public class User
 
     [Column("status")]
     [MaxLength(20)]
-    public string? Status { get; set; } = "正常"; // 正常、禁用
+    public int? Status { get; set; } = 0; // 状态:1=正常,0=禁用
 
     [Column("is_blocked")]
     public int? IsBlocked { get; set; } = 0;

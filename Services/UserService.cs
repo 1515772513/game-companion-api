@@ -3,6 +3,7 @@ using GameCompanion.Api.DTOs.User;
 using GameCompanion.Api.Models;
 using GameCompanion.Api.Models.Entities;
 using GameCompanion.Api.Services;
+using GameCompanion.Api.Utils;
 using Microsoft.EntityFrameworkCore;
 
 namespace GameCompanion.Api.Services;
@@ -51,7 +52,8 @@ public class UserService : IUserService
                 VipExpireDate = user.VipExpireDate,
                 Points = user.Points,
                 Balance = user.Balance,
-                Status = user.Status ?? "正常",
+                Status = user.Status.GetSafeInt(),
+                StatusCn = user.Status.GetStatusCn(), // 状态:1=禁用,0=正常
                 LastLoginTime = user.LastLoginTime,
                 CreatedAt = user.CreatedAt,
                 UpdatedAt = user.UpdatedAt
@@ -109,7 +111,8 @@ public class UserService : IUserService
                 VipExpireDate = user.VipExpireDate,
                 Points = user.Points,
                 Balance = user.Balance,
-                Status = user.Status ?? "正常",
+                Status = user.Status.GetSafeInt(),
+                StatusCn = user.Status.GetStatusCn(), // 状态:1=禁用,0=正常
                 LastLoginTime = user.LastLoginTime,
                 CreatedAt = user.CreatedAt,
                 UpdatedAt = user.UpdatedAt
@@ -252,8 +255,10 @@ public class UserService : IUserService
                 Bio = f.Following.Bio,
                 VipLevel = f.Following.VipLevel,
                 Points = f.Following.Points,
-                Status = f.Following.Status ?? "正常",
-                CreatedAt = f.Following.CreatedAt
+                Status = f.Following.Status.GetSafeInt(),
+                StatusCn = f.Following.Status.GetStatusCn(), // 状态:1=禁用,0=正常
+                // 格式化时间格式为yyyy-MM-dd HH:mm:ss
+                CreatedAt = f.Following.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")
             }).ToList();
 
             var responseDto = new FollowingListResponseDto
@@ -302,8 +307,10 @@ public class UserService : IUserService
                 Bio = f.Follower.Bio,
                 VipLevel = f.Follower.VipLevel,
                 Points = f.Follower.Points,
-                Status = f.Follower.Status ?? "正常",
-                CreatedAt = f.Follower.CreatedAt
+                Status = f.Follower.Status.GetSafeInt(),
+                StatusCn = f.Follower.Status.GetStatusCn(), // 状态:1=正常,0=禁用
+                // 格式化时间格式为yyyy-MM-dd HH:mm:ss
+                CreatedAt = f.Follower.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")
             }).ToList();
 
             var responseDto = new FollowersListResponseDto
@@ -460,6 +467,55 @@ public class UserService : IUserService
         {
             _logger.LogError(ex, "获取钱包信息失败");
             return ApiResponse<WalletDto>.Fail(500, "获取钱包信息失败");
+        }
+    }
+
+    /// <summary>
+    /// 获取用户列表 (分页)
+    /// <param name="page">页码</param>
+    /// <param name="pageSize">每页数量</param>
+    /// <returns>用户列表</returns> 
+    /// </summary>
+    public async Task<ApiResponse<UserListListDto>> GetListAsync(int page = 1, int pageSize = 10)
+    {
+        try
+        {
+            var total = await _context.Users.CountAsync();
+            var users = await _context.Users
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // 打印信息
+            _logger.LogInformation($"获取用户列表，总用户数: {total}，当前页码: {page}，每页数量: {pageSize}");
+
+            var userDtos = users.Select(u => new UserListDto
+            {
+                Id = u.Id,
+                Username = u.Username,
+                Nickname = u.Nickname,
+                Avatar = u.Avatar,
+                Bio = u.Bio,
+                VipLevel = u.VipLevel,
+                Points = u.Points,
+                Status = u.Status.GetSafeInt(),
+                StatusCn = u.Status.GetStatusCn(), // 状态:1=禁用,0=正常
+                // 格式化时间格式为yyyy-MM-dd HH:mm:ss
+                CreatedAt = u.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")
+            }).ToArray();
+
+            return ApiResponse<UserListListDto>.Success(new UserListListDto
+            {
+                Total = total,
+                Page = page,
+                PageSize = pageSize,
+                list = userDtos
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "获取用户列表失败");
+            return ApiResponse<UserListListDto>.Fail(500, "获取用户列表失败");
         }
     }
 }

@@ -22,7 +22,8 @@ public class UserProfileDto
     public DateTime? VipExpireDate { get; set; }
     public int Points { get; set; }
     public decimal Balance { get; set; }
-    public string Status { get; set; } = string.Empty;
+    public int Status { get; set; }
+    public string StatusCn { get; set; } = string.Empty; // 状态:1=禁用,0=正常
     public DateTime? LastLoginTime { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
@@ -152,6 +153,17 @@ public class UserListDto
     public string? Bio { get; set; }
     public string? VipLevel { get; set; }
     public int Points { get; set; }
-    public string Status { get; set; } = string.Empty;
-    public DateTime CreatedAt { get; set; }
+    public int Status { get; set; }
+    public string StatusCn { get; set; } = string.Empty; // 状态:1=正常,0=禁用
+    // 格式化时间格式为yyyy-MM-dd HH:mm:ss
+    public string CreatedAt { get; set; } = string.Empty;
+}
+
+// 用户列表列表DTO
+public class UserListListDto
+{
+    public int Total { get; set; }
+    public int Page { get; set; }
+    public int PageSize { get; set; }
+    public UserListDto[] list { get; set; } = Array.Empty<UserListDto>();
 }

@@ -12,7 +12,8 @@ public class AccountSettingsDto
     public string Email { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
     public string Nickname { get; set; } = string.Empty;
-    public string Status { get; set; } = string.Empty;
+    public int Status { get; set; }
+    public string StatusCn { get; set; } = string.Empty; // 状态:1=禁用,0=正常
     public DateTime CreatedAt { get; set; }
     public DateTime LastLoginTime { get; set; }
 }
