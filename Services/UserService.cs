@@ -557,4 +557,84 @@ public class UserService : IUserService
             return ApiResponse<UserListListDto>.Fail(500, "获取用户列表失败");
         }
     }
+
+    /// <summary>
+    /// 获取仪表盘统计卡片（高性能版：仅1次SQL查询）
+    /// </summary>
+    public async Task<ApiResponse<List<StatCardDto>>> GetUserStatCardsAsync()
+    {
+        try
+        {
+            var now = DateTime.UtcNow;
+            var lastWeek = now.AddDays(-7);
+            var twoWeeksAgo = now.AddDays(-14);
+
+            // ==============================================
+            // 🔥 核心优化：一次查询查出所有统计数据
+            // ==============================================
+            var stats = await _context.Users
+                .AsNoTracking()
+                .GroupBy(u => 1) // 全局聚合
+                .Select(g => new
+                {
+                    // 总数
+                    TotalUsers = g.Count(),
+                    ActiveUsers = g.Count(u => u.LastLoginTime >= lastWeek),
+                    VipUsers = g.Count(u => u.VipLevel > 0),
+                    BannedUsers = g.Count(u => u.Status == 0),
+
+                    // 上周对比
+                    TotalLastWeek = g.Count(u => u.CreatedAt <= lastWeek),
+                    ActiveLastWeek = g.Count(u => u.LastLoginTime >= twoWeeksAgo && u.LastLoginTime < lastWeek),
+                    VipLastWeek = g.Count(u => u.VipLevel > 0 && u.CreatedAt <= lastWeek),
+                    BannedLastWeek = g.Count(u => u.Status == 0 && u.UpdatedAt <= lastWeek)
+                })
+                .FirstOrDefaultAsync();
+
+            // 空数据兜底
+            var data = stats ?? new
+            {
+                TotalUsers = 0,
+                ActiveUsers = 0,
+                VipUsers = 0,
+                BannedUsers = 0,
+                TotalLastWeek = 0,
+                ActiveLastWeek = 0,
+                VipLastWeek = 0,
+                BannedLastWeek = 0
+            };
+
+            // ==============================================
+            // 计算变化率
+            // ==============================================
+            static decimal GetRate(int current, int last)
+            {
+                if (last == 0) return current > 0 ? 100.0m : 0.0m;
+                return Math.Round(((current - last) * 100m) / last, 1);
+            }
+
+            var rateTotal = GetRate(data.TotalUsers, data.TotalLastWeek);
+            var rateActive = GetRate(data.ActiveUsers, data.ActiveLastWeek);
+            var rateVip = GetRate(data.VipUsers, data.VipLastWeek);
+            var rateBanned = GetRate(data.BannedUsers, data.BannedLastWeek);
+
+            // ==============================================
+            // 前端卡片结构
+            // ==============================================
+            var cards = new List<StatCardDto>
+            {
+                new() { Title = "总用户", Value = data.TotalUsers.ToString("N0"), Change = $"{(rateTotal >= 0 ? "+" : "")}{rateTotal}%", ChangeClass = rateTotal >= 0 ? "up" : "down", Icon = "👥" },
+                new() { Title = "活跃用户", Value = data.ActiveUsers.ToString("N0"), Change = $"{(rateActive >= 0 ? "+" : "")}{rateActive}%", ChangeClass = rateActive >= 0 ? "up" : "down", Icon = "🚀" },
+                new() { Title = "VIP用户", Value = data.VipUsers.ToString("N0"), Change = $"{(rateVip >= 0 ? "+" : "")}{rateVip}%", ChangeClass = rateVip >= 0 ? "up" : "down", Icon = "⭐" },
+                new() { Title = "已禁用", Value = data.BannedUsers.ToString("N0"), Change = $"{(rateBanned >= 0 ? "+" : "")}{rateBanned}%", ChangeClass = rateBanned >= 0 ? "up" : "down", Icon = "🚫" }
+            };
+
+            return ApiResponse<List<StatCardDto>>.Success(cards);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "获取统计卡片失败");
+            return ApiResponse<List<StatCardDto>>.Fail(500, "获取统计数据失败");
+        }
+    }
 }

@@ -63,4 +63,9 @@ public interface IUserService
     /// 获取用户列表
     /// </summary>
     Task<ApiResponse<UserListListDto>> GetListAsync(GetUserListDto request);
+
+    /// <summary>
+    /// 获取用户统计卡片
+    /// </summary>
+    Task<ApiResponse<List<StatCardDto>>> GetUserStatCardsAsync();
 }

@@ -185,3 +185,15 @@ public class GetUserListDto
     public string? VipLevel { get; set; } = string.Empty;
     public string? RegisterTime { get; set; } = string.Empty;
 }
+
+/// <summary>
+/// 用户统计卡片DTO
+/// </summary>
+public class StatCardDto
+{
+    public string Title { get; set; }
+    public string Value { get; set; }
+    public string Change { get; set; }
+    public string ChangeClass { get; set; }
+    public string Icon { get; set; } = string.Empty;
+}

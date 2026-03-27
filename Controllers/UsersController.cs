@@ -37,4 +37,17 @@ public class UsersController : ControllerBase
         var result = await _userService.GetListAsync(request);
         return result.ToActionResult();
     }
+
+    /// <summary>
+    /// 获取用户统计卡片
+    /// </summary>
+    [HttpGet("stats")]
+    [ProducesResponseType(typeof(ApiResponse<List<StatCardDto>>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<>), 404)]
+    [ProducesResponseType(typeof(ApiResponse<>), 500)]
+    public async Task<IActionResult> GetUserStatCards()
+    {
+        var result = await _userService.GetUserStatCardsAsync();
+        return result.ToActionResult();
+    }
 }
