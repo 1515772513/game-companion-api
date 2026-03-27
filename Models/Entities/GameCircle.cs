@@ -14,26 +14,18 @@ public class GameCircle
     public int Id { get; set; }
 
     [Column("name")]
-    [MaxLength(100)]
+    [MaxLength(50)]
     public string Name { get; set; } = string.Empty;
 
     [Column("game_id")]
     public int GameId { get; set; }
-
-    [Column("avatar_url")]
-    [MaxLength(255)]
-    public string? AvatarUrl { get; set; }
 
     [Column("icon")]
     [MaxLength(255)]
     public string? Icon { get; set; }
 
     [Column("description")]
-    [MaxLength(500)]
     public string? Description { get; set; }
-
-    [Column("is_official")]
-    public int? IsOfficial { get; set; } = 0;
 
     [Column("member_count")]
     public int? MemberCount { get; set; } = 0;

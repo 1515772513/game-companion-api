@@ -79,7 +79,7 @@ public class CompanionService : ICompanionService
                 {
                     CompanionId = companion.Id,
                     GameId = gameId,
-                    GameRank = request.GameRank,
+                    GameLevel = request.GameRank,
                     CreatedAt = DateTime.UtcNow
                 };
                 _context.CompanionGames.Add(companionGame);
@@ -172,7 +172,7 @@ public class CompanionService : ICompanionService
                 Id = companion.Id,
                 UserId = companion.UserId,
                 Nickname = companion.Nickname,
-                AvatarUrl = companion.Avatar ?? "",
+                AvatarUrl = companion.User?.Avatar ?? "",
                 Level = companion.Level ?? "银牌",
                 ServiceType = companion.ServiceType ?? "技术陪玩",
                 Price = companion.PricePerGame,
@@ -183,7 +183,7 @@ public class CompanionService : ICompanionService
                 OnlineStatus = OnlineStatusToInt(companion.OnlineStatus),
                 IsVerified = companion.Status == "已认证",
                 Games = companion.Games.Select(g => g.Game.Name).ToList(),
-                GameRank = companion.Games.FirstOrDefault()?.GameRank ?? "",
+                GameRank = companion.Games.FirstOrDefault()?.GameLevel ?? "",
                 Bio = companion.Bio ?? "",
                 Tags = companion.Tags?.Split(',').ToList() ?? new List<string>(),
                 CertificationTime = companion.UpdatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
@@ -223,7 +223,6 @@ public class CompanionService : ICompanionService
 
             // 更新信息
             if (request.Nickname != null) companion.Nickname = request.Nickname;
-            if (request.AvatarUrl != null) companion.Avatar = request.AvatarUrl;
             if (request.ServiceType != null) companion.ServiceType = request.ServiceType;
             if (request.Price.HasValue) companion.PricePerGame = request.Price.Value;
             if (request.Bio != null) companion.Bio = request.Bio;

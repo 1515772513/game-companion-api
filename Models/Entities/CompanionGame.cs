@@ -19,17 +19,9 @@ public class CompanionGame
     [Column("game_id")]
     public int GameId { get; set; }
 
-    [Column("game_rank")]
-    [MaxLength(50)]
-    public string? GameRank { get; set; }
-
     [Column("game_level")]
     [MaxLength(50)]
     public string? GameLevel { get; set; }
-
-    [Column("level")]
-    [MaxLength(20)]
-    public string? Level { get; set; }
 
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

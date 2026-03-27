@@ -25,19 +25,12 @@ public class OrderReview
     [Column("rating")]
     public int Rating { get; set; }
 
-    [Column("comment")]
-    public string Comment { get; set; } = string.Empty;
-
-    [Column("images")]
-    [MaxLength(1000)]
-    public string? Images { get; set; }
+    [Column("content")]
+    public string? Content { get; set; }
 
     [Column("tags")]
-    [MaxLength(500)]
+    [MaxLength(255)]
     public string? Tags { get; set; }
-
-    [Column("service_date")]
-    public DateTime? ServiceDate { get; set; }
 
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

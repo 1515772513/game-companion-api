@@ -516,8 +516,7 @@ public class OrderService : IOrderService
                 OrderId = orderId,
                 CompanionId = order.CompanionId,
                 Rating = request.Rating,
-                Comment = request.Comment,
-                Images = request.Images != null ? string.Join(",", request.Images) : null,
+                Content = request.Comment,
                 Tags = request.Tags != null ? string.Join(",", request.Tags) : null,
                 CreatedAt = DateTime.UtcNow
             };
