@@ -72,4 +72,9 @@ public interface ICompanionService
     /// 获取提现记录
     /// </summary>
     Task<ApiResponse<WithdrawRecordsResponse>> GetWithdrawRecordsAsync(int? page = 1, int? pageSize = 20);
+
+    /// <summary>
+    /// 获取陪玩师列表
+    /// </summary>
+    Task<ApiResponse<CompanionListResponse>> GetCompanionListAsync(CompanionListRequest request);
 }

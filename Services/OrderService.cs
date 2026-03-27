@@ -31,14 +31,14 @@ public class OrderService : IOrderService
             // 验证陪玩师是否存在
             var companion = await _context.Companions
                 .Include(c => c.User)
-                .FirstOrDefaultAsync(c => c.Id == request.CompanionId && c.Status == "已认证");
+                .FirstOrDefaultAsync(c => c.Id == request.CompanionId && c.Status == 1);
 
             if (companion == null)
             {
                 return ApiResponse<CreateOrderResponse>.ErrorResponse(2001, "陪玩师不存在");
             }
 
-            if (companion.Status != "已认证")
+            if (companion.Status != 1)
             {
                 return ApiResponse<CreateOrderResponse>.ErrorResponse(2002, "陪玩师未认证");
             }

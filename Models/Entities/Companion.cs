@@ -72,7 +72,7 @@ public class Companion
 
     [Column("status")]
     [MaxLength(20)]
-    public string? Status { get; set; } = "审核中"; // 审核中、已认证、已拒绝
+    public int? Status { get; set; } = 0; // 0=待审核,1=审核通过,2=审核拒绝
 
     [Column("reject_reason")]
     [MaxLength(255)]

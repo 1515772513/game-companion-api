@@ -103,7 +103,7 @@ public class HomeService : IHomeService
                 .Include(c => c.User)
                 .Include(c => c.CompanionGames)
                     .ThenInclude(cg => cg.Game)
-                .Where(c => c.Status == "approved");
+                .Where(c => c.Status == 1);
 
             // 游戏筛选
             if (request.GameId.HasValue)
@@ -247,7 +247,7 @@ public class HomeService : IHomeService
                 return ApiResponse<CompanionDetailResponse>.ErrorResponse(2001, "指定的陪玩师ID不存在或已被删除", "陪玩师不存在");
             }
 
-            if (companion.Status != "approved")
+            if (companion.Status != 1)
             {
                 return ApiResponse<CompanionDetailResponse>.ErrorResponse(2002, "该陪玩师尚未通过平台认证", "陪玩师未认证");
             }
@@ -270,7 +270,7 @@ public class HomeService : IHomeService
                 PositiveRate = companion.GoodReviewRate ?? 0,
                 OnlineStatus = companion.OnlineStatus == "online" ? 1 : 0,
                 OnlineStatusText = companion.OnlineStatus == "online" ? "在线接单" : "离线",
-                IsVerified = companion.Status == "approved",
+                IsVerified = companion.Status == 1,
                 VerifiedAt = companion.UpdatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
                 Games = companion.CompanionGames.Select(cg => new GameSkillDto
                 {
@@ -360,7 +360,7 @@ public class HomeService : IHomeService
 
             var query = _context.Companions
                 .Include(c => c.User)
-                .Where(c => c.Status == "approved" &&
+                .Where(c => c.Status == 1 &&
                            (c.Nickname.Contains(request.Keyword) ||
                             (c.Tags != null && c.Tags.Contains(request.Keyword)) ||
                             (c.Bio != null && c.Bio.Contains(request.Keyword))));

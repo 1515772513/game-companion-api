@@ -38,13 +38,13 @@ public class CompanionService : ICompanionService
             var existingApplication = await _context.Companions
                 .FirstOrDefaultAsync(c => c.UserId == userId);
 
-            if (existingApplication != null && existingApplication.Status == "审核中")
+            if (existingApplication != null && existingApplication.Status == 0)
             {
                 return ApiResponse<ApplicationStatusResponse>.ErrorResponse(400, "您已经有待审核的申请，请耐心等待");
             }
 
             // 检查是否已认证
-            if (existingApplication != null && existingApplication.Status == "已认证")
+            if (existingApplication != null && existingApplication.Status == 1)
             {
                 return ApiResponse<ApplicationStatusResponse>.ErrorResponse(400, "您已经是认证陪玩师，无需再次申请");
             }
@@ -63,7 +63,7 @@ public class CompanionService : ICompanionService
                 PricePerGame = request.Price,
                 Bio = request.Bio,
                 Tags = request.Tags != null ? string.Join(",", request.Tags) : null,
-                Status = "审核中",
+                Status = 0,
                 OnlineStatus = "离线",
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
@@ -127,8 +127,8 @@ public class CompanionService : ICompanionService
             var response = new ApplicationStatusResponse
             {
                 ApplicationId = companion.Id,
-                CertificationStatus = GetCertificationStatus(companion.Status),
-                CertificationStatusText = GetCertificationStatusText(companion.Status),
+                CertificationStatus = GetCertificationStatus(companion.Status ?? 0),
+                CertificationStatusText = GetCertificationStatusText(companion.Status ?? 0),
                 CertificationApplyTime = companion.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
                 CertificationTime = companion.UpdatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
                 RejectReason = companion.RejectReason
@@ -162,7 +162,7 @@ public class CompanionService : ICompanionService
                 .ThenInclude(g => g.Game)
                 .FirstOrDefaultAsync(c => c.UserId == userId);
 
-            if (companion == null || companion.Status != "已认证")
+            if (companion == null || companion.Status != 1)
             {
                 return ApiResponse<CompanionInfoResponse>.ErrorResponse(404, "未找到陪玩师信息或未认证");
             }
@@ -181,7 +181,7 @@ public class CompanionService : ICompanionService
                 RatingCount = 0, // 需要根据评价记录计算
                 PositiveRate = companion.GoodReviewRate ?? 0,
                 OnlineStatus = OnlineStatusToInt(companion.OnlineStatus),
-                IsVerified = companion.Status == "已认证",
+                IsVerified = companion.Status == 1,
                 Games = companion.Games.Select(g => g.Game.Name).ToList(),
                 GameRank = companion.Games.FirstOrDefault()?.GameLevel ?? "",
                 Bio = companion.Bio ?? "",
@@ -216,7 +216,7 @@ public class CompanionService : ICompanionService
             var companion = await _context.Companions
                 .FirstOrDefaultAsync(c => c.UserId == userId);
 
-            if (companion == null || companion.Status != "已认证")
+            if (companion == null || companion.Status != 1)
             {
                 return ApiResponse<object>.Fail(404, "未找到陪玩师信息或未认证");
             }
@@ -256,7 +256,7 @@ public class CompanionService : ICompanionService
             var companion = await _context.Companions
                 .FirstOrDefaultAsync(c => c.UserId == userId);
 
-            if (companion == null || companion.Status != "已认证")
+            if (companion == null || companion.Status != 1)
             {
                 return ApiResponse<object>.Fail(404, "未找到陪玩师信息或未认证");
             }
@@ -617,7 +617,7 @@ public class CompanionService : ICompanionService
             }
 
             // 检查是否已认证
-            if (companion.Status != "已认证")
+            if (companion.Status != 1)
             {
                 return ApiResponse<object>.Fail(400, "未认证的陪玩师无法申请提现");
             }
@@ -680,6 +680,105 @@ public class CompanionService : ICompanionService
         }
     }
 
+
+    /// <summary>
+    /// 获取陪玩师列表
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns></returns>/// <summary>
+    /// 获取陪玩师列表
+    /// </summary>
+    public async Task<ApiResponse<CompanionListResponse>> GetCompanionListAsync(CompanionListRequest request)
+    {
+        try
+        {
+            var query = _context.Companions
+                .AsNoTracking()
+                .Include(x => x.User)
+                .Include(x => x.Games)
+                .AsQueryable();
+
+            // 安全转换状态
+            int? status = null;
+            if (!string.IsNullOrWhiteSpace(request.Status) && int.TryParse(request.Status, out var s))
+            {
+                status = s;
+            }
+            // 条件筛选
+            if (status.HasValue)
+                query = query.Where(x => x.Status == status);
+
+            // 关键词：昵称 / 真实姓名 / 电话
+            if (!string.IsNullOrWhiteSpace(request.Keyword))
+            {
+                var k = request.Keyword.Trim();
+                query = query.Where(x =>
+                    x.Nickname.Contains(k) ||
+                    x.RealName.Contains(k) ||
+                    x.Phone.Contains(k) ||
+                    x.User.Nickname.Contains(k) ||   // 搜索用户昵称
+                    x.User.Username.Contains(k));    // 搜索用户名
+            }
+
+            // 游戏筛选
+            if (request.GameId.HasValue)
+                query = query.Where(x => x.Games.Any(g => g.GameId == request.GameId));
+
+            // 服务类型
+            if (!string.IsNullOrWhiteSpace(request.ServiceType))
+                query = query.Where(x => x.ServiceType == request.ServiceType);
+
+            // 申请时间
+            if (request.StartTime.HasValue)
+                query = query.Where(x => x.CreatedAt >= request.StartTime.Value);
+            if (request.EndTime.HasValue)
+                query = query.Where(x => x.CreatedAt <= request.EndTime.Value);
+
+            // 总数
+            var total = await query.CountAsync();
+
+            // 分页 + 映射
+            var list = await query
+                .OrderByDescending(x => x.CreatedAt)
+                .Skip((request.Page - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .Select(x => new CompanionListDto
+                {
+                    Id = x.Id,
+                    UserId = x.UserId,
+                    Nickname = x.Nickname,
+                    RealName = x.User.RealName ?? "",
+                    Phone = x.Phone,
+                    Level = x.Level ?? "",
+                    ServiceType = x.ServiceType ?? "",
+                    PricePerGame = x.PricePerGame,
+                    PricePerHour = x.PricePerHour,
+                    Rating = x.Rating,
+                    TotalOrders = x.TotalOrders,
+                    GoodReviewRate = x.GoodReviewRate,
+                    Tags = x.Tags,
+                    Status = x.Status ?? 0,
+                    OnlineStatus = x.OnlineStatus ?? "",
+                    CreatedAt = x.CreatedAt
+                })
+                .ToListAsync();
+
+            return ApiResponse<CompanionListResponse>.Success(new CompanionListResponse
+            {
+                Total = total,
+                Page = request.Page,
+                PageSize = request.PageSize,
+                list = list
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "获取陪玩师列表失败");
+            return ApiResponse<CompanionListResponse>.Fail(500, "获取列表失败");
+        }
+    }
+    
+
     #region 私有方法
 
     /// <summary>
@@ -695,13 +794,13 @@ public class CompanionService : ICompanionService
     /// <summary>
     /// 转换认证状态为数字
     /// </summary>
-    private int GetCertificationStatus(string status)
+    private int GetCertificationStatus(int status)
     {
         return status switch
         {
-            "待审核" => 0,
-            "已认证" => 1,
-            "已拒绝" => 2,
+            0 => 0,
+            1 => 1,
+            2 => 2,
             _ => 0
         };
     }
@@ -709,13 +808,13 @@ public class CompanionService : ICompanionService
     /// <summary>
     /// 获取认证状态文本
     /// </summary>
-    private string GetCertificationStatusText(string status)
+    private string GetCertificationStatusText(int status)
     {
         return status switch
         {
-            "待审核" => "待审核",
-            "已认证" => "已认证",
-            "已拒绝" => "已拒绝",
+            0 => "待审核",
+            1 => "已认证",
+            2 => "已拒绝",
             _ => "未知"
         };
     }

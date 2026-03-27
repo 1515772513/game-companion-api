@@ -256,4 +256,21 @@ public class CompanionController : ControllerBase
         var result = await _companionService.GetWithdrawRecordsAsync(page, pageSize);
         return Ok(result);
     }
+
+
+    /// <summary>
+    /// 获取陪玩师列表()
+    /// </summary>
+    /// <returns>陪玩师列表</returns>
+    [HttpPost("list")]
+    [ProducesResponseType(typeof(ApiResponse<CompanionListResponse>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<>), 404)]
+    [ProducesResponseType(typeof(ApiResponse<>), 500)]
+    public async Task<ActionResult<ApiResponse<CompanionListResponse>>> GetList([FromBody] CompanionListRequest request)
+    {
+        var result = await _companionService.GetCompanionListAsync(request);
+        return Ok(result);
+    }
+
+
 }
