@@ -10,6 +10,7 @@ using StackExchange.Redis;
 using System.Text;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using GameCompanion.Api.Filters;
+using GameCompanion.Api.Services.DictTranslate;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -162,6 +163,8 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader();
     });
 });
+
+builder.Services.AddScoped<IDictTranslateService, DictTranslateService>();
 
 var app = builder.Build();
 

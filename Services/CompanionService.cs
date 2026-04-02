@@ -4,6 +4,7 @@ using GameCompanion.Api.Models;
 using Microsoft.EntityFrameworkCore;
 using GameCompanion.Api.Data;
 using GameCompanion.Api.Utils;
+using GameCompanion.Api.Services.DictTranslate;
 
 namespace GameCompanion.Api.Services;
 
@@ -14,11 +15,13 @@ public class CompanionService : ICompanionService
 {
     private readonly ApplicationDbContext _context;
     private readonly ILogger<CompanionService> _logger;
+    private readonly IDictTranslateService _dictTranslateService;
 
-    public CompanionService(ApplicationDbContext context, ILogger<CompanionService> logger)
+    public CompanionService(ApplicationDbContext context, ILogger<CompanionService> logger, IDictTranslateService dictTranslateService)
     {
         _context = context;
         _logger = logger;
+        _dictTranslateService = dictTranslateService;
     }
 
     /// <summary>
@@ -683,22 +686,19 @@ public class CompanionService : ICompanionService
 
 
     /// <summary>
-    /// 获取陪玩师列表
+    /// 获取陪玩师列表（高性能优化版）
     /// </summary>
     public async Task<ApiResponse<CompanionListResponse>> GetCompanionListAsync(CompanionListRequest request)
     {
         try
         {
+            // 基础查询（高性能：无跟踪、预生成SQL）
             var query = _context.Companions
                 .AsNoTracking()
                 .AsQueryable();
 
-            int? status = null;
-            if (!string.IsNullOrWhiteSpace(request.Status) && int.TryParse(request.Status, out var s))
-            {
-                status = s;
-            }
-            if (status.HasValue)
+            // 条件过滤
+            if (int.TryParse(request.Status?.Trim(), out int status))
                 query = query.Where(x => x.Status == status);
 
             if (!string.IsNullOrWhiteSpace(request.Keyword))
@@ -712,7 +712,7 @@ public class CompanionService : ICompanionService
                     x.User.Username.Contains(k));
             }
 
-            if (request.GameId.HasValue)
+            if (request.GameId > 0)
                 query = query.Where(x => x.CompanionGames.Any(g => g.GameId == request.GameId));
 
             if (!string.IsNullOrWhiteSpace(request.ServiceType))
@@ -723,14 +723,14 @@ public class CompanionService : ICompanionService
             if (request.EndTime.HasValue)
                 query = query.Where(x => x.CreatedAt <= request.EndTime.Value);
 
+            // 总条数（只查 count，超快）
             var total = await query.CountAsync();
 
+            // 分页查询（只查需要的字段，超快）
             var list = await query
                 .OrderByDescending(x => x.CreatedAt)
                 .Skip((request.Page - 1) * request.PageSize)
                 .Take(request.PageSize)
-
-                // 👇 重要：EF Core 自动在 Select 里加载关联，不需要 Include！
                 .Select(x => new CompanionListDto
                 {
                     Id = x.Id,
@@ -740,6 +740,7 @@ public class CompanionService : ICompanionService
                     Phone = x.Phone,
                     Level = x.Level ?? "",
                     ServiceType = x.ServiceType ?? "",
+                    ServiceTypeName = "", // 先占位，后面批量翻译
                     PricePerGame = x.PricePerGame,
                     PricePerHour = x.PricePerHour,
                     Rating = x.Rating,
@@ -750,17 +751,43 @@ public class CompanionService : ICompanionService
                     OnlineStatus = x.OnlineStatus ?? "",
                     CreatedAt = x.CreatedAt.ToDateTimeString(),
 
-                    // 这里 EF 会自动关联 Game，不会报错！
+                    // 游戏关联（EF自动优化 JOIN，无N+1）
                     Games = x.CompanionGames.Select(cg => new CompanionGameItemDto
                     {
                         GameId = cg.GameId,
                         GameName = cg.Game.Name,
                         GameIcon = cg.Game.Icon ?? "",
-                        GameLevel = cg.GameLevel ?? "",
+                        GameLevel = cg.GameLevel ?? ""
                     }).ToList()
                 })
                 .ToListAsync();
 
+            // ==============================================
+            // 🔥 性能核心：一次性批量翻译（只查1次数据库！）
+            // ==============================================
+            if (list.Count > 0)
+            {
+                // 提取所有不重复的 serviceType
+                var serviceTypeValues = list
+                    .Select(x => x.ServiceType)
+                    .Where(x => !string.IsNullOrEmpty(x))
+                    .Distinct()
+                    .ToList();
+
+                // 批量翻译（超级快）
+                var typeMap = await _dictTranslateService.BatchTranslateAsync(
+                    "serviceType", serviceTypeValues);
+
+                // 内存赋值（无DB，极快）
+                foreach (var item in list)
+                {
+                    item.ServiceTypeName = typeMap.TryGetValue(item.ServiceType!, out var name)
+                        ? name
+                        : item.ServiceType!;
+                }
+            }
+
+            // 返回结果
             return ApiResponse<CompanionListResponse>.Success(new CompanionListResponse
             {
                 Total = total,

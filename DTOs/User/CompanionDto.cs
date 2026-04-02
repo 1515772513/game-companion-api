@@ -29,6 +29,7 @@ public class CompanionListDto
     public string Phone { get; set; } = string.Empty;
     public string Level { get; set; } = string.Empty; // 银牌/金牌/钻石/王者
     public string ServiceType { get; set; } = string.Empty; // 技术陪玩/娱乐陪玩
+    public string ServiceTypeName { get; set; } = string.Empty; // 技术陪玩/娱乐陪玩
     public decimal PricePerGame { get; set; }
     public decimal? PricePerHour { get; set; }
     public decimal? Rating { get; set; }
