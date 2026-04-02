@@ -73,7 +73,7 @@ public class PostListItemDto
     /// <summary>
     /// 发布时间
     /// </summary>
-    public DateTime CreatedAt { get; set; }
+    public string CreatedAt { get; set; } = string.Empty;
 
     /// <summary>
     /// 友好时间显示

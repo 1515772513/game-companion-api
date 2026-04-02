@@ -4,6 +4,7 @@ using GameCompanion.Api.Models;
 using GameCompanion.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
+using GameCompanion.Api.Utils;
 
 namespace GameCompanion.Api.Services;
 
@@ -157,7 +158,7 @@ public class OrderService : IOrderService
                 StatusText = "待付款",
                 PaymentTimeout = 1800, // 30分钟
                 PaymentUrl = paymentUrl,
-                CreatedAt = order.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")
+                CreatedAt = order.CreatedAt.ToDateTimeString()
             };
 
             return ApiResponse<CreateOrderResponse>.SuccessResponse(response, "订单创建成功");
@@ -229,7 +230,7 @@ public class OrderService : IOrderService
                     ServiceCount = o.DurationValue,
                     ServiceTime = o.PlayTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "",
                     TotalAmount = o.FinalPrice,
-                    CreatedAt = o.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")
+                    CreatedAt = o.CreatedAt.ToDateTimeString()
                 }).ToList(),
                 Pagination = new GetOrdersResponse.OrderPagination
                 {
@@ -313,8 +314,8 @@ public class OrderService : IOrderService
                 PaymentMethod = "balance",
                 PaymentMethodText = "余额支付",
                 PaymentTime = order.PayTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "",
-                CreatedAt = order.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
-                UpdatedAt = order.UpdatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
+                CreatedAt = order.CreatedAt.ToDateTimeString(),
+                UpdatedAt = order.UpdatedAt.ToDateTimeString(),
                 Countdown = new GetOrderResponse.CountdownInfo
                 {
                     ServiceStartIn = order.StartTime.HasValue ?
@@ -535,7 +536,7 @@ public class OrderService : IOrderService
                 Tags = request.Tags,
                 RewardAmount = 5.00m, // 固定奖励金额
                 RewardPoints = 100, // 固定奖励积分
-                CreatedAt = review.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")
+                CreatedAt = review.CreatedAt.ToDateTimeString()
             };
 
             return ApiResponse<CreateOrderReviewResponse>.SuccessResponse(response, "评价成功");
@@ -640,7 +641,7 @@ public class OrderService : IOrderService
         timeline.Add(new GetOrderResponse.OrderTimeline
         {
             Status = "待付款",
-            Time = order.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
+            Time = order.CreatedAt.ToDateTimeString(),
             Description = "订单创建成功"
         });
 

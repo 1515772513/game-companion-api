@@ -42,10 +42,10 @@ public class SettingsService : ISettingsService
                 Email = "", // 实际项目中应该从用户表获取
                 Phone = user.Phone,
                 Nickname = user.Nickname,
-                Status = user.Status.GetSafeInt(),
-                StatusCn = user.Status.GetStatusCn(), // 状态:1=禁用,0=正常
-                CreatedAt = user.CreatedAt,
-                LastLoginTime = user.LastLoginTime ?? user.CreatedAt
+                Status = user.Status == true ? 1 : 0,
+                // StatusCn = user.Status.GetStatusCn(), // 状态:1=禁用,0=正常
+                CreatedAt = user.CreatedAt.ToDateTimeString(),
+                LastLoginTime = user.LastLoginTime?.ToDateTimeString() ?? user.CreatedAt.ToDateTimeString()
             };
 
             return ApiResponse<AccountSettingsDto>.Success(settingsDto);
@@ -150,29 +150,14 @@ public class SettingsService : ISettingsService
     {
         try
         {
-            var setting = await _context.UserSettings.FirstOrDefaultAsync(s => s.UserId == userId);
-            if (setting == null)
-            {
-                // 如果设置不存在，创建新的设置
-                setting = new UserSetting
-                {
-                    UserId = userId,
-                    ShowOnlineStatus = privacyDto.ShowOnlineStatus ? 1 : 0,
-                    AllowStrangerMessage = privacyDto.AllowStrangerMessage ? 1 : 0,
-                    ShowGameActivity = privacyDto.ShowGameActivity ? 1 : 0,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                };
-                _context.UserSettings.Add(setting);
-            }
-            else
-            {
-                // 更新现有设置
-                setting.ShowOnlineStatus = privacyDto.ShowOnlineStatus ? 1 : 0;
-                setting.AllowStrangerMessage = privacyDto.AllowStrangerMessage ? 1 : 0;
-                setting.ShowGameActivity = privacyDto.ShowGameActivity ? 1 : 0;
-                setting.UpdatedAt = DateTime.UtcNow;
-            }
+            // 处理 在线状态
+            await SaveOrUpdateSetting(userId, "ShowOnlineStatus", privacyDto.ShowOnlineStatus);
+            
+            // 处理 陌生人消息
+            await SaveOrUpdateSetting(userId, "AllowStrangerMessage", privacyDto.AllowStrangerMessage);
+            
+            // 处理 游戏状态
+            await SaveOrUpdateSetting(userId, "ShowGameActivity", privacyDto.ShowGameActivity);
 
             await _context.SaveChangesAsync();
             return ApiResponse<bool>.Success(true);
@@ -191,31 +176,17 @@ public class SettingsService : ISettingsService
     {
         try
         {
-            var setting = await _context.UserSettings.FirstOrDefaultAsync(s => s.UserId == userId);
-            if (setting == null)
-            {
-                // 如果设置不存在，创建新的设置
-                setting = new UserSetting
-                {
-                    UserId = userId,
-                    OrderNotification = notificationDto.OrderNotification ? 1 : 0,
-                    MessageNotification = notificationDto.MessageNotification ? 1 : 0,
-                    PromotionNotification = notificationDto.PromotionNotification ? 1 : 0,
-                    SystemNotification = notificationDto.SystemNotification ? 1 : 0,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                };
-                _context.UserSettings.Add(setting);
-            }
-            else
-            {
-                // 更新现有设置
-                setting.OrderNotification = notificationDto.OrderNotification ? 1 : 0;
-                setting.MessageNotification = notificationDto.MessageNotification ? 1 : 0;
-                setting.PromotionNotification = notificationDto.PromotionNotification ? 1 : 0;
-                setting.SystemNotification = notificationDto.SystemNotification ? 1 : 0;
-                setting.UpdatedAt = DateTime.UtcNow;
-            }
+            // 处理 订单通知
+            await SaveOrUpdateSetting(userId, "OrderNotification", notificationDto.OrderNotification);
+            
+            // 处理 消息通知
+            await SaveOrUpdateSetting(userId, "MessageNotification", notificationDto.MessageNotification);
+            
+            // 处理 促销通知
+            await SaveOrUpdateSetting(userId, "PromotionNotification", notificationDto.PromotionNotification);
+            
+            // 处理 系统通知
+            await SaveOrUpdateSetting(userId, "SystemNotification", notificationDto.SystemNotification);
 
             await _context.SaveChangesAsync();
             return ApiResponse<bool>.Success(true);
@@ -224,6 +195,33 @@ public class SettingsService : ISettingsService
         {
             _logger.LogError(ex, "更新通知设置失败");
             return ApiResponse<bool>.Fail(500, "更新通知设置失败");
+        }
+    }
+
+    /// <summary>
+    /// 统一保存或更新键值对设置（私有通用方法）
+    /// </summary>
+    private async Task SaveOrUpdateSetting(int userId, string key, bool value)
+    {
+        var setting = await _context.UserSettings
+            .FirstOrDefaultAsync(s => s.UserId == userId && s.SettingKey == key);
+
+        if (setting == null)
+        {
+            setting = new UserSetting
+            {
+                UserId = userId,
+                SettingKey = key,
+                SettingValue = value ? "1" : "0",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            _context.UserSettings.Add(setting);
+        }
+        else
+        {
+            setting.SettingValue = value ? "1" : "0";
+            setting.UpdatedAt = DateTime.UtcNow;
         }
     }
 
@@ -245,7 +243,7 @@ public class SettingsService : ISettingsService
                 UserId = userId,
                 Content = feedbackDto.Content,
                 Contact = feedbackDto.ContactInfo,
-                FeedbackType = feedbackDto.Type,
+                Type = feedbackDto.Type,
                 Status = "待处理",
                 CreatedAt = DateTime.UtcNow
             };
@@ -258,9 +256,9 @@ public class SettingsService : ISettingsService
                 Id = feedback.Id,
                 Content = feedback.Content,
                 ContactInfo = feedback.Contact,
-                Type = feedback.FeedbackType,
+                Type = feedback.Type,
                 Status = feedback.Status,
-                CreatedAt = feedback.CreatedAt,
+                CreatedAt = feedback.CreatedAt.ToDateTimeString(),
                 Response = feedback.Reply,
                 ResponseAt = null // Feedback实体没有ResponseAt字段
             };

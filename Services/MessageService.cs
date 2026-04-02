@@ -2,6 +2,7 @@ using GameCompanion.Api.Data;
 using GameCompanion.Api.DTOs.Messaging;
 using GameCompanion.Api.Models;
 using GameCompanion.Api.Models.Entities;
+using GameCompanion.Api.Utils;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
@@ -35,12 +36,12 @@ public class MessageService : IMessageService
         // 根据类型筛选
         if (type == "user")
         {
-            query = query.Where(c => c.CompanionId.HasValue);
+            query = query.Where(c => c.CompanionId != null);
         }
         else if (type == "system")
         {
             // 系统通知的特殊处理
-            query = query.Where(c => !c.CompanionId.HasValue);
+            query = query.Where(c => c.CompanionId == null);
         }
 
         // 分页查询
@@ -64,7 +65,7 @@ public class MessageService : IMessageService
             items.Add(new ConversationItemDto
             {
                 ConversationId = conv.Id,
-                ConversationType = conv.CompanionId.HasValue ? "user" : "system",
+                ConversationType = conv.CompanionId != null ? "user" : "system",
                 User = conv.Companion != null ? new UserDto
                 {
                     Id = conv.Companion.Id,
@@ -80,14 +81,14 @@ public class MessageService : IMessageService
                     Content = lastMessage.Content,
                     MessageType = ConvertMessageType(lastMessage.MessageType),
                     SenderId = lastMessage.SenderId,
-                    Time = FormatTime(lastMessage.CreatedAt),
-                    Timestamp = new DateTimeOffset(lastMessage.CreatedAt).ToUnixTimeSeconds()
+                    Time = lastMessage.CreatedAt.ToDateTimeString(),
+                    Timestamp = new DateTimeOffset(lastMessage.CreatedAt ?? DateTime.UtcNow).ToUniversalTime().ToUnixTimeSeconds()
                 } : null,
                 UnreadCount = conv.UnreadCount ?? 0,
                 IsOnline = conv.Companion?.OnlineStatus == "在线",
-                IsPinned = conv.IsPinned == 1,
-                IsBlocked = conv.IsBlocked == 1,
-                UpdatedAt = conv.UpdatedAt.ToString("yyyy-MM-dd HH:mm:ss")
+                // IsPinned = conv.IsPinned == true,
+                // IsBlocked = conv.IsBlocked == true,
+                UpdatedAt = conv.UpdatedAt.ToDateTimeString()
             });
         }
 
@@ -146,10 +147,10 @@ public class MessageService : IMessageService
                 SenderNickname = msg.Sender.Nickname,
                 Content = msg.Content,
                 MessageType = ConvertMessageType(msg.MessageType),
-                Time = FormatTime(msg.CreatedAt),
-                Timestamp = new DateTimeOffset(msg.CreatedAt).ToUnixTimeSeconds(),
+                Time = msg.CreatedAt.ToDateTimeString(),
+                Timestamp = new DateTimeOffset(msg.CreatedAt ?? DateTime.UtcNow).ToUniversalTime().ToUnixTimeSeconds(),
                 IsSelf = userId == msg.SenderId,
-                IsRead = msg.IsRead == 1
+                IsRead = msg.IsRead == true
             });
         }
 
@@ -202,11 +203,7 @@ public class MessageService : IMessageService
         }
 
         // 检查是否被对方拉黑
-        if (conversation.UserId == userId && conversation.IsBlocked == 1)
-        {
-            return ApiResponse<SendMessageResponseDto>.ErrorResponse(5003, "已被对方拉黑");
-        }
-        if (conversation.CompanionId == userId && conversation.User.IsBlocked == 1)
+        if (conversation.CompanionId == userId && conversation.User?.IsBlocked == true)
         {
             return ApiResponse<SendMessageResponseDto>.ErrorResponse(5003, "已被对方拉黑");
         }
@@ -222,10 +219,10 @@ public class MessageService : IMessageService
         {
             ConversationId = (int)conversationId,
             SenderId = userId,
-            ReceiverId = conversation.UserId == userId ? conversation.CompanionId.Value : conversation.UserId,
+            ReceiverId = conversation.UserId == userId ? conversation.CompanionId : conversation.UserId,
             Content = request.Content,
             MessageType = ConvertMessageTypeToDb(request.MessageType),
-            IsRead = 0,
+            IsRead = false,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -333,7 +330,7 @@ public class MessageService : IMessageService
 
         // 计算未读数
         var unreadCount = await _context.Notifications
-            .Where(n => n.UserId == userId && n.IsRead != 1)
+            .Where(n => n.UserId == userId && n.IsRead != true)
             .CountAsync();
 
         // 转换为DTO
@@ -347,13 +344,13 @@ public class MessageService : IMessageService
                 Content = notif.Content,
                 Type = ConvertNotificationType(notif.Type),
                 TypeText = GetNotificationTypeText(notif.Type),
-                IsRead = notif.IsRead == 1,
-                Priority = notif.Priority ?? 2,
-                PriorityText = notif.Priority == 1 ? "重要" : "普通",
-                JumpUrl = notif.JumpUrl,
-                JumpType = notif.JumpType,
-                CreatedAt = notif.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
-                TimeText = FormatTime(notif.CreatedAt)
+                IsRead = notif.IsRead == true,
+                // Priority = notif.Priority ?? 2,
+                // PriorityText = notif.Priority == 1 ? "重要" : "普通",
+                // JumpUrl = notif.JumpUrl,
+                // JumpType = notif.JumpType,
+                CreatedAt = notif.CreatedAt.ToDateTimeString(),
+                TimeText = notif.CreatedAt.ToDateTimeString()
             });
         }
 
@@ -389,8 +386,8 @@ public class MessageService : IMessageService
             return ApiResponse<MarkNotificationReadResponseDto>.ErrorResponse(5010, "通知不存在");
         }
 
-        notification.IsRead = 1;
-        notification.ReadAt = DateTime.UtcNow;
+        notification.IsRead = true;
+        // notification.ReadAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
         var response = new MarkNotificationReadResponseDto

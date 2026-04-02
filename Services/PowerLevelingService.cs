@@ -3,6 +3,7 @@ using GameCompanion.Api.Models.Entities;
 using GameCompanion.Api.Models;
 using Microsoft.EntityFrameworkCore;
 using GameCompanion.Api.Data;
+using GameCompanion.Api.Utils;
 
 namespace GameCompanion.Api.Services;
 
@@ -333,7 +334,7 @@ public class PowerLevelingService : IPowerLevelingService
                 TargetRank = "目标段位", // 需要从订单详情获取
                 Progress = 0, // 需要根据进度计算
                 TotalAmount = o.FinalPrice,
-                CreatedAt = o.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
+                CreatedAt = o.CreatedAt.ToDateTimeString(),
                 EstimatedCompleteTime = o.EndTime?.ToString("yyyy-MM-dd HH:mm:ss")
             }).ToList();
 
@@ -404,7 +405,7 @@ public class PowerLevelingService : IPowerLevelingService
                     AvatarUrl = "https://example.com/avatar/leveler.jpg"
                 },
                 ProgressLogs = details.ProgressLogs,
-                CreatedAt = order.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")
+                CreatedAt = order.CreatedAt?.ToDateTimeString() ?? string.Empty
             };
 
             return ApiResponse<PowerLevelingOrderDetail>.SuccessResponse(response);

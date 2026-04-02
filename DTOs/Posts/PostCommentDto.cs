@@ -33,7 +33,7 @@ public class PostCommentDto
     /// <summary>
     /// 评论时间
     /// </summary>
-    public DateTime CreatedAt { get; set; }
+    public string CreatedAt { get; set; } = string.Empty;
 
     /// <summary>
     /// 回复列表

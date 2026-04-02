@@ -73,7 +73,12 @@ public class GetPostDetailResponse
     /// <summary>
     /// 发布时间
     /// </summary>
-    public DateTime CreatedAt { get; set; }
+    public string CreatedAt { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 更新时间
+    /// </summary>
+    public string UpdatedAt { get; set; } = string.Empty;
 
     /// <summary>
     /// 热门评论列表

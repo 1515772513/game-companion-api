@@ -43,5 +43,5 @@ public class MyPostItemDto
     /// <summary>
     /// 发布时间
     /// </summary>
-    public DateTime CreatedAt { get; set; }
+    public string CreatedAt { get; set; }
 }

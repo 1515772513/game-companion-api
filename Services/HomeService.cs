@@ -1,6 +1,7 @@
 using GameCompanion.Api.Data;
 using GameCompanion.Api.DTOs.Home;
 using GameCompanion.Api.Models;
+using GameCompanion.Api.Utils;
 using Microsoft.EntityFrameworkCore;
 
 namespace GameCompanion.Api.Services;
@@ -80,7 +81,7 @@ public class HomeService : IHomeService
                     Images = p.Images != null ? p.Images.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList() : new List<string>(),
                     LikeCount = p.LikeCount ?? 0,
                     CommentCount = p.CommentCount ?? 0,
-                    CreatedAt = GetRelativeTime(p.CreatedAt)
+                    CreatedAt = p.CreatedAt.ToDateTimeString()
                 })
                 .ToListAsync();
 
@@ -271,7 +272,7 @@ public class HomeService : IHomeService
                 OnlineStatus = companion.OnlineStatus == "online" ? 1 : 0,
                 OnlineStatusText = companion.OnlineStatus == "online" ? "在线接单" : "离线",
                 IsVerified = companion.Status == 1,
-                VerifiedAt = companion.UpdatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
+                VerifiedAt = companion.UpdatedAt.ToDateTimeString(),
                 Games = companion.CompanionGames.Select(cg => new GameSkillDto
                 {
                     GameId = cg.GameId,
@@ -293,8 +294,8 @@ public class HomeService : IHomeService
                         UserAvatar = r.User?.Avatar ?? "",
                         Rating = r.Rating,
                         // Comment = r.Content  ?? "",
-                        ServiceDate = r.CreatedAt.ToString("yyyy-MM-dd HH:mm"),
-                        CreatedAt = GetRelativeTime(r.CreatedAt)
+                        ServiceDate = r.CreatedAt.ToDateTimeString(),
+                        CreatedAt = r.CreatedAt.ToDateTimeString()
                     }).ToList(),
                 Statistics = new CompanionStatisticsDto
                 {
@@ -437,7 +438,7 @@ public class HomeService : IHomeService
                     OnlineCount = 0, // 在线人数需要额外计算
                     Description = c.Description ?? "",
                     IsOfficial = c.Name.Contains("官方") || c.Name.Contains("官方群"),
-                    CreatedAt = c.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")
+                    CreatedAt = c.CreatedAt.ToDateTimeString()
                 })
                 .ToListAsync();
 

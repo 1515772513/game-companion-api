@@ -23,5 +23,5 @@ public class PostCommentReplyDto
     /// <summary>
     /// 回复时间
     /// </summary>
-    public DateTime CreatedAt { get; set; }
+    public string CreatedAt { get; set; } = string.Empty;
 }

@@ -1,58 +1,88 @@
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace GameCompanion.Api.Models.Entities;
 
 /// <summary>
-/// 游戏实体
+/// 游戏表
 /// </summary>
 [Table("games")]
-public class Game
+[Index("SortOrder", Name = "idx_sort_order")]
+[Index("Status", Name = "idx_status")]
+[Index("Name", Name = "name", IsUnique = true)]
+public partial class Game
 {
     [Key]
     [Column("id")]
     public int Id { get; set; }
 
+    /// <summary>
+    /// 游戏名称
+    /// </summary>
     [Column("name")]
-    [MaxLength(50)]
-    public string Name { get; set; } = string.Empty;
+    [StringLength(50)]
+    public string Name { get; set; } = null!;
 
+    /// <summary>
+    /// 英文名
+    /// </summary>
     [Column("name_en")]
-    [MaxLength(50)]
+    [StringLength(50)]
     public string? NameEn { get; set; }
 
+    /// <summary>
+    /// 游戏图标
+    /// </summary>
     [Column("icon")]
-    [MaxLength(255)]
+    [StringLength(255)]
     public string? Icon { get; set; }
 
+    /// <summary>
+    /// 封面图片
+    /// </summary>
     [Column("cover_image")]
-    [MaxLength(255)]
+    [StringLength(255)]
     public string? CoverImage { get; set; }
 
+    /// <summary>
+    /// 游戏类型
+    /// </summary>
     [Column("type")]
-    [MaxLength(50)]
+    [StringLength(50)]
     public string? Type { get; set; }
 
-    [Column("description")]
+    /// <summary>
+    /// 游戏描述
+    /// </summary>
+    [Column("description", TypeName = "text")]
     public string? Description { get; set; }
 
-    [Column("status")]
-    [MaxLength(20)]
-    public string? Status { get; set; } = "active";
+    /// <summary>
+    /// 状态
+    /// </summary>
+    [Column("status", TypeName = "enum('active','inactive')")]
+    public string? Status { get; set; }
 
+    /// <summary>
+    /// 排序
+    /// </summary>
     [Column("sort_order")]
-    public int? SortOrder { get; set; } = 0;
+    public int? SortOrder { get; set; }
 
-    [Column("created_at")]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    [Column("created_at", TypeName = "timestamp")]
+    public DateTime? CreatedAt { get; set; }
 
-    [Column("updated_at")]
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    [Column("updated_at", TypeName = "timestamp")]
+    public DateTime? UpdatedAt { get; set; }
 
-    [Column("is_active")]
-    public int IsActive { get; set; } = 1;
+    /// <summary>
+    /// 是否启用
+    /// </summary>
+    public int? IsActive { get; set; }
 
-    // 导航属性
-    public virtual ICollection<CompanionGame> CompanionGames { get; set; } = new List<CompanionGame>();
-    public virtual ICollection<GameCircle> Circles { get; set; } = new List<GameCircle>();
+    [InverseProperty("Game")]
+    public virtual ICollection<GameCircle> GameCircles { get; set; } = new List<GameCircle>();
 }

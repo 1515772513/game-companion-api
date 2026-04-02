@@ -22,4 +22,12 @@ public static class UserStatusExtensions
     {
         return value ?? 0;
     }
+
+    /// <summary>
+    /// 数字decimal判空（空值返回0）
+    /// </summary>
+    public static decimal GetSafeDecimal(this decimal? value)
+    {
+        return value ?? 0;
+    }
 }

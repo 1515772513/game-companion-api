@@ -1,31 +1,46 @@
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace GameCompanion.Api.Models.Entities;
 
 /// <summary>
-/// 收藏实体
+/// 收藏表
 /// </summary>
 [Table("collections")]
-public class Collection
+[Index("TargetType", "TargetId", Name = "idx_target")]
+[Index("UserId", Name = "idx_user_id")]
+[Index("UserId", "TargetType", "TargetId", Name = "uk_user_target", IsUnique = true)]
+public partial class Collection
 {
     [Key]
     [Column("id")]
     public int Id { get; set; }
 
+    /// <summary>
+    /// 收藏用户ID
+    /// </summary>
     [Column("user_id")]
     public int UserId { get; set; }
 
-    [Column("post_id")]
-    public int PostId { get; set; }
+    /// <summary>
+    /// 收藏类型
+    /// </summary>
+    [Column("target_type", TypeName = "enum('post','companion')")]
+    public string TargetType { get; set; } = null!;
 
-    [Column("created_at")]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    /// <summary>
+    /// 目标ID
+    /// </summary>
+    [Column("target_id")]
+    public int TargetId { get; set; }
 
-    // 导航属性
+    [Column("created_at", TypeName = "timestamp")]
+    public DateTime? CreatedAt { get; set; }
+
     [ForeignKey("UserId")]
+    [InverseProperty("Collections")]
     public virtual User User { get; set; } = null!;
-
-    [ForeignKey("PostId")]
-    public virtual Post Post { get; set; } = null!;
 }

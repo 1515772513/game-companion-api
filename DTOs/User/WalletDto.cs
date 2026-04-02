@@ -11,7 +11,7 @@ public class WalletDto
     public decimal Balance { get; set; }
     public int Points { get; set; }
     public int? VipLevel { get; set; }
-    public DateTime? VipExpireDate { get; set; }
+    public string? VipExpireDate { get; set; } = string.Empty;
 
     public List<TransactionDto> Transactions { get; set; } = new();
 }

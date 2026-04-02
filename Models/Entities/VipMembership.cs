@@ -1,41 +1,68 @@
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace GameCompanion.Api.Models.Entities;
 
 /// <summary>
-/// VIP会员实体
+/// VIP会员表
 /// </summary>
 [Table("vip_memberships")]
-public class VipMembership
+[Index("EndDate", Name = "idx_end_date")]
+[Index("Status", Name = "idx_status")]
+[Index("UserId", Name = "idx_user_id")]
+public partial class VipMembership
 {
     [Key]
     [Column("id")]
     public int Id { get; set; }
 
+    /// <summary>
+    /// 用户ID
+    /// </summary>
     [Column("user_id")]
     public int UserId { get; set; }
 
-    [Column("level")]
-    public int Level { get; set; } = 1;
+    /// <summary>
+    /// 会员等级
+    /// </summary>
+    [Column("level", TypeName = "enum('silver','gold','platinum')")]
+    public string Level { get; set; } = null!;
 
-    [Column("start_time")]
-    public DateTime? StartTime { get; set; }
+    /// <summary>
+    /// 开始日期
+    /// </summary>
+    [Column("start_date")]
+    public DateOnly StartDate { get; set; }
 
-    [Column("expire_time")]
-    public DateTime? ExpireTime { get; set; }
+    /// <summary>
+    /// 结束日期
+    /// </summary>
+    [Column("end_date")]
+    public DateOnly EndDate { get; set; }
 
-    [Column("status")]
-    [MaxLength(20)]
-    public string? Status { get; set; } = "激活";
+    /// <summary>
+    /// 状态
+    /// </summary>
+    [Column("status", TypeName = "enum('active','expired','cancelled')")]
+    public string? Status { get; set; }
 
-    [Column("created_at")]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    /// <summary>
+    /// 购买金额
+    /// </summary>
+    [Column("purchase_amount")]
+    [Precision(10, 2)]
+    public decimal? PurchaseAmount { get; set; }
 
-    [Column("updated_at")]
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    [Column("created_at", TypeName = "timestamp")]
+    public DateTime? CreatedAt { get; set; }
 
-    // 导航属性
+    [Column("updated_at", TypeName = "timestamp")]
+    public DateTime? UpdatedAt { get; set; }
+
     [ForeignKey("UserId")]
+    [InverseProperty("VipMemberships")]
     public virtual User User { get; set; } = null!;
 }

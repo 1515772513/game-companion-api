@@ -43,7 +43,7 @@ public class CreatePostResponse
     /// <summary>
     /// 发布时间
     /// </summary>
-    public DateTime CreatedAt { get; set; }
+    public string CreatedAt { get; set; } = string.Empty;
 
     /// <summary>
     /// 预计审核完成时间

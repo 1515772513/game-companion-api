@@ -14,8 +14,8 @@ public class AccountSettingsDto
     public string Nickname { get; set; } = string.Empty;
     public int Status { get; set; }
     public string StatusCn { get; set; } = string.Empty; // 状态:1=禁用,0=正常
-    public DateTime CreatedAt { get; set; }
-    public DateTime LastLoginTime { get; set; }
+    public string CreatedAt { get; set; } = string.Empty;
+    public string LastLoginTime { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -133,7 +133,7 @@ public class FeedbackResponseDto
     public string? ContactInfo { get; set; }
     public string Type { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
-    public DateTime CreatedAt { get; set; }
+    public string CreatedAt { get; set; } = string.Empty;
     public string? Response { get; set; }
     public DateTime? ResponseAt { get; set; }
 }

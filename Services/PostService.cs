@@ -3,6 +3,7 @@ using GameCompanion.Api.DTOs.Posts;
 using GameCompanion.Api.Models;
 using GameCompanion.Api.Models.Entities;
 using GameCompanion.Api.Services;
+using GameCompanion.Api.Utils;
 using Microsoft.EntityFrameworkCore;
 
 namespace GameCompanion.Api.Services;
@@ -75,7 +76,7 @@ public class PostService : IPostService
             AuditStatusText = "审核通过",
             Content = post.Content,
             Images = post.Images?.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList(),
-            CreatedAt = post.CreatedAt,
+            CreatedAt = post.CreatedAt.ToDateTimeString(),
             EstimatedAuditTime = "5-10分钟"
         };
 
@@ -90,7 +91,7 @@ public class PostService : IPostService
         var query = _context.Posts
             .Include(p => p.User)
             .Include(p => p.Comments)
-            .Include(p => p.Likes)
+            .Include(p => p.PostLikes)
             .AsQueryable();
 
         // 根据feed类型过滤
@@ -141,10 +142,10 @@ public class PostService : IPostService
                 CommentCount = p.CommentCount ?? 0,
                 CollectCount = 0, // TODO: 实现收藏数统计
                 ShareCount = p.ShareCount ?? 0,
-                IsLiked = p.Likes.Any(l => l.UserId == userId),
+                IsLiked = p.PostLikes.Any(l => l.UserId == userId),
                 IsCollected = false, // TODO: 实现收藏状态检查
-                CreatedAt = p.CreatedAt,
-                TimeText = GetTimeText(p.CreatedAt)
+                CreatedAt = p.CreatedAt.ToDateTimeString(),
+                TimeText = p.CreatedAt.ToFriendlyTimeString()
             }).ToList(),
             Pagination = new PaginationDto
             {
@@ -168,7 +169,7 @@ public class PostService : IPostService
             .Include(p => p.User)
             .Include(p => p.Comments)
                 .ThenInclude(c => c.User)
-            .Include(p => p.Likes)
+            .Include(p => p.PostLikes)
             .FirstOrDefaultAsync(p => p.Id == postId);
 
         if (post == null)
@@ -196,9 +197,9 @@ public class PostService : IPostService
                     AvatarUrl = c.User.Avatar
                 },
                 Content = c.Content,
-                LikeCount = c.LikeCount,
-                IsLiked = post.Likes.Any(l => l.UserId == userId),
-                CreatedAt = c.CreatedAt,
+                LikeCount = c.LikeCount ?? 0,
+                IsLiked = post.PostLikes.Any(l => l.UserId == userId),
+                CreatedAt = c.CreatedAt.ToDateTimeString(),
                 Replies = c.Replies.Select(r => new PostCommentReplyDto
                 {
                     Id = r.Id,
@@ -209,7 +210,7 @@ public class PostService : IPostService
                         AvatarUrl = r.User.Avatar
                     },
                     Content = r.Content,
-                    CreatedAt = r.CreatedAt
+                    CreatedAt = r.CreatedAt.ToDateTimeString()
                 }).ToList()
             }).ToList();
 
@@ -239,10 +240,11 @@ public class PostService : IPostService
             CommentCount = post.CommentCount ?? 0,
             CollectCount = 0, // TODO: 实现收藏数统计
             ShareCount = post.ShareCount ?? 0,
-            IsLiked = post.Likes.Any(l => l.UserId == userId),
+            IsLiked = post.PostLikes.Any(l => l.UserId == userId),
             IsCollected = false, // TODO: 实现收藏状态检查
             IsAuthor = post.UserId == userId,
-            CreatedAt = post.CreatedAt,
+            CreatedAt = post.CreatedAt.ToDateTimeString(),
+            UpdatedAt = post.UpdatedAt?.ToDateTimeString(),
             HotComments = hotComments
         };
 
@@ -390,8 +392,10 @@ public class PostService : IPostService
                 AvatarUrl = _context.Users.Find(userId)?.Avatar
             },
             LikeCount = 0,
-            CreatedAt = comment.CreatedAt
+            CreatedAt = comment.CreatedAt.ToDateTimeString()
         };
+
+
 
         return ApiResponse<CommentPostResponse>.SuccessResponse(response, "评论成功");
     }
@@ -439,7 +443,7 @@ public class PostService : IPostService
                 StatusText = p.Status,
                 LikeCount = p.LikeCount ?? 0,
                 CommentCount = p.CommentCount ?? 0,
-                CreatedAt = p.CreatedAt
+                CreatedAt = p.CreatedAt.ToDateTimeString()
             }).ToList(),
             Pagination = new PaginationDto
             {
@@ -527,7 +531,7 @@ public class PostService : IPostService
             DraftId = draft.Id,
             Content = draft.Content,
             Images = draft.Images?.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList(),
-            SavedAt = draft.UpdatedAt
+            SavedAt = draft.UpdatedAt.ToDateTimeString()
         };
 
         return ApiResponse<CreateDraftResponse>.SuccessResponse(response, "保存成功");
@@ -550,8 +554,8 @@ public class PostService : IPostService
                 DraftId = d.Id,
                 Content = d.Content,
                 Images = d.Images?.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList(),
-                CreatedAt = d.CreatedAt,
-                UpdatedAt = d.UpdatedAt
+                CreatedAt = d.CreatedAt.ToDateTimeString(),
+                UpdatedAt = d.UpdatedAt.ToDateTimeString()
             }).ToList()
         };
 

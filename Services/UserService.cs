@@ -49,14 +49,14 @@ public class UserService : IUserService
                 Name = user.Name,
                 Bio = user.Bio,
                 VipLevel = user.VipLevel,
-                VipExpireDate = user.VipExpireDate,
-                Points = user.Points,
-                Balance = user.Balance,
-                Status = user.Status.GetSafeInt(),
-                StatusCn = user.Status.GetStatusCn(), // 状态:1=禁用,0=正常
-                LastLoginTime = user.LastLoginTime,
-                CreatedAt = user.CreatedAt,
-                UpdatedAt = user.UpdatedAt
+                VipExpireDate = user.VipExpireDate?.ToDateTimeString(),
+                Points = user.Points.GetSafeInt(),
+                Balance = user.Balance.GetSafeDecimal(),
+                Status = user.Status == true ? 1 : 0,
+                // StatusCn = user.Status.GetStatusCn(), // 状态:1=禁用,0=正常
+                LastLoginTime = user.LastLoginTime?.ToDateTimeString(),
+                CreatedAt = user.CreatedAt.ToDateTimeString(),
+                UpdatedAt = user.UpdatedAt.ToDateTimeString()
             };
 
             return ApiResponse<UserProfileDto>.Success(profileDto);
@@ -108,14 +108,14 @@ public class UserService : IUserService
                 Name = user.Name,
                 Bio = user.Bio,
                 VipLevel = user.VipLevel,
-                VipExpireDate = user.VipExpireDate,
-                Points = user.Points,
-                Balance = user.Balance,
-                Status = user.Status.GetSafeInt(),
-                StatusCn = user.Status.GetStatusCn(), // 状态:1=禁用,0=正常
-                LastLoginTime = user.LastLoginTime,
-                CreatedAt = user.CreatedAt,
-                UpdatedAt = user.UpdatedAt
+                VipExpireDate = user.VipExpireDate.ToDateTimeString(),
+                Points = user.Points.GetSafeInt(),
+                Balance = user.Balance.GetSafeDecimal(),
+                Status = user.Status == true ? 1 : 0,
+                // StatusCn = user.Status.GetStatusCn(), // 状态:1=禁用,0=正常
+                LastLoginTime = user.LastLoginTime?.ToDateTimeString(),
+                CreatedAt = user.CreatedAt.ToDateTimeString(),
+                UpdatedAt = user.UpdatedAt.ToDateTimeString()
             };
 
             return ApiResponse<UserProfileDto>.Success(profileDto);
@@ -254,11 +254,11 @@ public class UserService : IUserService
                 Avatar = f.Following.Avatar,
                 Bio = f.Following.Bio,
                 VipLevel = f.Following.VipLevel,
-                Points = f.Following.Points,
-                Status = f.Following.Status.GetSafeInt(),
-                StatusCn = f.Following.Status.GetStatusCn(), // 状态:1=禁用,0=正常
+                Points = f.Following.Points.GetSafeInt(),
+                Status = f.Following.Status == true ? 1 : 0,
+                // StatusCn = f.Following.Status.GetStatusCn(), // 状态:1=禁用,0=正常
                 // 格式化时间格式为yyyy-MM-dd HH:mm:ss
-                CreatedAt = f.Following.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")
+                CreatedAt = f.Following.CreatedAt.ToDateTimeString()
             }).ToList();
 
             var responseDto = new FollowingListResponseDto
@@ -306,11 +306,11 @@ public class UserService : IUserService
                 Avatar = f.Follower.Avatar,
                 Bio = f.Follower.Bio,
                 VipLevel = f.Follower.VipLevel,
-                Points = f.Follower.Points,
-                Status = f.Follower.Status.GetSafeInt(),
-                StatusCn = f.Follower.Status.GetStatusCn(), // 状态:1=正常,0=禁用
+                Points = f.Follower.Points.GetSafeInt(),
+                Status = f.Follower.Status == true ? 1 : 0,
+                // StatusCn = f.Follower.Status.GetStatusCn(), // 状态:1=正常,0=禁用
                 // 格式化时间格式为yyyy-MM-dd HH:mm:ss
-                CreatedAt = f.Follower.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")
+                CreatedAt = f.Follower.CreatedAt.ToDateTimeString()
             }).ToList();
 
             var responseDto = new FollowersListResponseDto
@@ -454,10 +454,10 @@ public class UserService : IUserService
             var walletDto = new WalletDto
             {
                 UserId = user.Id,
-                Balance = user.Balance,
-                Points = user.Points,
+                Balance = user.Balance ?? 0,
+                Points = user.Points ?? 0,
                 VipLevel = user.VipLevel,
-                VipExpireDate = user.VipExpireDate,
+                VipExpireDate = user.VipExpireDate?.ToDateTimeString(),
                 Transactions = transactionDtos
             };
 
@@ -489,7 +489,7 @@ public class UserService : IUserService
             }
             // 条件筛选
             if (status.HasValue)
-                query = query.Where(u => u.Status == status);
+                query = query.Where(u => u.Status == (status == 1 ? true : false));
                 
             int? vipLevel = null;
             if (!string.IsNullOrWhiteSpace(request.VipLevel) && int.TryParse(request.VipLevel, out var v))
@@ -535,10 +535,10 @@ public class UserService : IUserService
                     Avatar = u.Avatar,
                     Bio = u.Bio,
                     VipLevel = u.VipLevel,
-                    Points = u.Points,
-                    Status = u.Status ?? 0,
-                    StatusCn = u.Status == 1 ? "禁用" : "正常",
-                    CreatedAt = u.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")
+                    Points = u.Points ?? 0,
+                    Status = u.Status == true ? 1 : 0,
+                    StatusCn = u.Status == false ? "禁用" : "正常",
+                    CreatedAt = u.CreatedAt.ToDateTimeString()
                 })
                 .ToArrayAsync();  // 🔥 直接在数据库转DTO，不查全字段
 
@@ -581,13 +581,13 @@ public class UserService : IUserService
                     TotalUsers = g.Count(),
                     ActiveUsers = g.Count(u => u.LastLoginTime >= lastWeek),
                     VipUsers = g.Count(u => u.VipLevel > 0),
-                    BannedUsers = g.Count(u => u.Status == 0),
+                    BannedUsers = g.Count(u => u.Status == false),
 
                     // 上周对比
                     TotalLastWeek = g.Count(u => u.CreatedAt <= lastWeek),
                     ActiveLastWeek = g.Count(u => u.LastLoginTime >= twoWeeksAgo && u.LastLoginTime < lastWeek),
                     VipLastWeek = g.Count(u => u.VipLevel > 0 && u.CreatedAt <= lastWeek),
-                    BannedLastWeek = g.Count(u => u.Status == 0 && u.UpdatedAt <= lastWeek)
+                    BannedLastWeek = g.Count(u => u.Status == false && u.UpdatedAt <= lastWeek)
                 })
                 .FirstOrDefaultAsync();
 

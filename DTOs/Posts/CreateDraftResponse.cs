@@ -23,5 +23,5 @@ public class CreateDraftResponse
     /// <summary>
     /// 保存时间
     /// </summary>
-    public DateTime SavedAt { get; set; }
+    public string SavedAt { get; set; }
 }

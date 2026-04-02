@@ -92,7 +92,7 @@ public class CompanionService : ICompanionService
                 ApplicationId = companion.Id,
                 CertificationStatus = 0,
                 CertificationStatusText = "待审核",
-                CertificationApplyTime = companion.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")
+                CertificationApplyTime = companion.CreatedAt.ToDateTimeString()
             };
 
             return ApiResponse<ApplicationStatusResponse>.SuccessResponse(response, "申请提交成功，请等待审核");
@@ -130,8 +130,8 @@ public class CompanionService : ICompanionService
                 ApplicationId = companion.Id,
                 CertificationStatus = GetCertificationStatus(companion.Status ?? 0),
                 CertificationStatusText = GetCertificationStatusText(companion.Status ?? 0),
-                CertificationApplyTime = companion.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
-                CertificationTime = companion.UpdatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
+                CertificationApplyTime = companion.CreatedAt.ToDateTimeString(),
+                CertificationTime = companion.UpdatedAt.ToDateTimeString(),
                 RejectReason = companion.RejectReason
             };
 
@@ -187,7 +187,7 @@ public class CompanionService : ICompanionService
                 GameRank = companion.Games.FirstOrDefault()?.GameLevel ?? "",
                 Bio = companion.Bio ?? "",
                 Tags = companion.Tags?.Split(',').ToList() ?? new List<string>(),
-                CertificationTime = companion.UpdatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
+                CertificationTime = companion.UpdatedAt.ToDateTimeString(),
                 TodayOrders = 0, // 需要根据订单统计
                 MonthOrders = 0  // 需要根据订单统计
             };
@@ -341,7 +341,7 @@ public class CompanionService : ICompanionService
                 ServiceTime = o.PlayTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "",
                 SpecialRequirements = o.Remark,
                 TotalAmount = o.FinalPrice,
-                CreatedAt = o.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
+                CreatedAt = o.CreatedAt.ToDateTimeString(),
                 Countdown = 0 // 需要根据时间计算
             }).ToList();
 
@@ -685,19 +685,12 @@ public class CompanionService : ICompanionService
     /// <summary>
     /// 获取陪玩师列表
     /// </summary>
-    /// <param name="request"></param>
-    /// <returns></returns>/// <summary>
-    /// 获取陪玩师列表
-    /// </summary>
     public async Task<ApiResponse<CompanionListResponse>> GetCompanionListAsync(CompanionListRequest request)
     {
         try
         {
             var query = _context.Companions
                 .AsNoTracking()
-                .Include(x => x.User)
-                .Include(x => x.CompanionGames)
-                .ThenInclude(cg => cg.Game)
                 .AsQueryable();
 
             int? status = null;
@@ -719,7 +712,6 @@ public class CompanionService : ICompanionService
                     x.User.Username.Contains(k));
             }
 
-            // 👇 修正游戏筛选逻辑（适配新的导航属性）
             if (request.GameId.HasValue)
                 query = query.Where(x => x.CompanionGames.Any(g => g.GameId == request.GameId));
 
@@ -737,6 +729,8 @@ public class CompanionService : ICompanionService
                 .OrderByDescending(x => x.CreatedAt)
                 .Skip((request.Page - 1) * request.PageSize)
                 .Take(request.PageSize)
+
+                // 👇 重要：EF Core 自动在 Select 里加载关联，不需要 Include！
                 .Select(x => new CompanionListDto
                 {
                     Id = x.Id,
@@ -755,7 +749,8 @@ public class CompanionService : ICompanionService
                     Status = x.Status ?? 0,
                     OnlineStatus = x.OnlineStatus ?? "",
                     CreatedAt = x.CreatedAt.ToDateTimeString(),
-                    // 👇 关键：正确映射游戏信息
+
+                    // 这里 EF 会自动关联 Game，不会报错！
                     Games = x.CompanionGames.Select(cg => new CompanionGameItemDto
                     {
                         GameId = cg.GameId,

@@ -19,14 +19,14 @@ public class UserProfileDto
     public string Name { get; set; } = string.Empty;
     public string? Bio { get; set; }
     public int? VipLevel { get; set; }
-    public DateTime? VipExpireDate { get; set; }
+    public string? VipExpireDate { get; set; } = string.Empty;
     public int Points { get; set; }
     public decimal Balance { get; set; }
     public int Status { get; set; }
     public string StatusCn { get; set; } = string.Empty; // 状态:1=禁用,0=正常
-    public DateTime? LastLoginTime { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
+    public string? LastLoginTime { get; set; } = string.Empty;
+    public string CreatedAt { get; set; } = string.Empty;
+    public string UpdatedAt { get; set; } = string.Empty;
 }
 
 /// <summary>

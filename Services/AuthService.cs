@@ -29,7 +29,7 @@ public class AuthService : IAuthService
 
     public async Task<ApiResponse<LoginResponse>> LoginAsync(LoginRequest request)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Phone == request.Phone && u.IsAdmin == 1);
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Phone == request.Phone && u.IsAdmin == true);
 
         if (user == null)
         {
@@ -41,7 +41,7 @@ public class AuthService : IAuthService
             return ApiResponse<LoginResponse>.ErrorResponse(1002, "密码错误");
         }
 
-        if (user.Status != 1)
+        if (user.Status != true)
         {
             return ApiResponse<LoginResponse>.ErrorResponse(1007, "账号已被禁用");
         }
@@ -68,11 +68,11 @@ public class AuthService : IAuthService
                 Gender = user.Gender,
                 VipLevel = user.VipLevel.GetSafeInt(),
                 VipExpireTime = user.VipExpireDate?.ToString("yyyy-MM-dd HH:mm:ss"),
-                Balance = user.Balance,
-                Points = user.Points,
+                Balance = user.Balance.GetSafeDecimal(),
+                Points = user.Points.GetSafeInt(),
                 IsCompanion = false, // TODO: 从陪玩师表查询
                 CompanionStatus = null,
-                CreatedAt = user.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")
+                CreatedAt = user.CreatedAt.ToDateTimeString()
             }
         }, "登录成功");
     }
@@ -94,7 +94,7 @@ public class AuthService : IAuthService
             Password = HashPassword(request.Password),
             Phone = request.Phone,
             Nickname = request.Nickname ?? "用户" + request.Phone.Substring(7),
-            Status = 1,
+            Status = true,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -116,7 +116,7 @@ public class AuthService : IAuthService
                 Username = user.Username,
                 Nickname = user.Nickname,
                 Phone = MaskPhone(user.Phone),
-                CreatedAt = user.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")
+                CreatedAt = user.CreatedAt.ToDateTimeString()
             }
         }, "注册成功");
     }

@@ -12,10 +12,14 @@ public static class DateTimeExtensions
     /// </summary>
     /// <param name="dateTime">时间</param>
     /// <returns>友好时间字符串</returns>
-    public static string ToFriendlyTimeString(this DateTime dateTime)
+    public static string ToFriendlyTimeString(this DateTime? dateTime)
     {
+        if (!dateTime.HasValue)
+        {
+            return string.Empty;
+        }
         var now = DateTime.Now;
-        var diff = now - dateTime;
+        var diff = now - dateTime.Value;
 
         if (diff.TotalMinutes < 1)
         {
@@ -33,13 +37,13 @@ public static class DateTimeExtensions
         {
             return $"{(int)diff.TotalDays}天前";
         }
-        else if (dateTime.Year == now.Year)
+        else if (dateTime.Value.Year == now.Year)
         {
-            return dateTime.ToString("MM-dd");
+            return dateTime.Value.ToDateTimeString();
         }
         else
         {
-            return dateTime.ToString("yyyy-MM-dd");
+            return dateTime.Value.ToDateTimeString();
         }
     }
 
@@ -79,5 +83,31 @@ public static class DateTimeExtensions
         }
         // 解析失败返回原字符串或空，按需处理
         return dateTimeStr;
+    }
+    /// <summary>
+    /// **新增：处理 DateTime? 的核心方法**
+    /// </summary>
+    /// <param name="dateTime"></param>
+    /// <returns></returns>
+    public static string ToDateTimeString(this DateTime? dateTime)
+    {
+        // 如果有值，调用非可空方法；否则返回空字符串
+        return dateTime?.ToDateTimeString() ?? string.Empty;
+    }
+
+    /// <summary>
+    /// 格式化为标准格式（支持 DateOnly）
+    /// </summary>
+    public static string ToDateTimeString(this DateOnly dateOnly)
+    {
+        return dateOnly.ToString("yyyy-MM-dd");
+    }
+
+    /// <summary>
+    /// 格式化为标准格式（支持 DateOnly）
+    /// </summary>
+    public static string ToDateTimeString(this DateOnly? dateOnly)
+    {
+        return dateOnly?.ToString("yyyy-MM-dd") ?? string.Empty;
     }
 }

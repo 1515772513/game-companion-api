@@ -1,51 +1,73 @@
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace GameCompanion.Api.Models.Entities;
 
 /// <summary>
-/// 消息实体
+/// 消息表
 /// </summary>
 [Table("messages")]
-public class Message
+[Index("ConversationId", Name = "idx_conversation_id")]
+[Index("CreatedAt", Name = "idx_created_at")]
+[Index("ReceiverId", Name = "idx_receiver_id")]
+[Index("SenderId", Name = "idx_sender_id")]
+public partial class Message
 {
     [Key]
     [Column("id")]
     public int Id { get; set; }
 
+    /// <summary>
+    /// 会话ID
+    /// </summary>
     [Column("conversation_id")]
     public int ConversationId { get; set; }
 
+    /// <summary>
+    /// 发送者ID
+    /// </summary>
     [Column("sender_id")]
     public int SenderId { get; set; }
 
+    /// <summary>
+    /// 接收者ID
+    /// </summary>
     [Column("receiver_id")]
     public int ReceiverId { get; set; }
 
-    [Column("content")]
-    public string Content { get; set; } = string.Empty;
+    /// <summary>
+    /// 消息内容
+    /// </summary>
+    [Column("content", TypeName = "text")]
+    public string Content { get; set; } = null!;
 
-    [Column("message_type")]
-    [MaxLength(20)]
-    public string? MessageType { get; set; } = "文本";
+    /// <summary>
+    /// 消息类型
+    /// </summary>
+    [Column("message_type", TypeName = "enum('text','image','voice','system')")]
+    public string? MessageType { get; set; }
 
+    /// <summary>
+    /// 是否已读
+    /// </summary>
     [Column("is_read")]
-    public int? IsRead { get; set; } = 0;
+    public bool? IsRead { get; set; }
 
-    [Column("created_at")]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-    // 导航属性
-    [ForeignKey("SenderId")]
-    public virtual User Sender { get; set; } = null!;
-
-    [ForeignKey("ReceiverId")]
-    public virtual User Receiver { get; set; } = null!;
+    [Column("created_at", TypeName = "timestamp")]
+    public DateTime? CreatedAt { get; set; }
 
     [ForeignKey("ConversationId")]
+    [InverseProperty("Messages")]
     public virtual Conversation Conversation { get; set; } = null!;
 
-    // 为向后兼容添加的导航属性
-    public virtual ICollection<Message> SentMessages { get; set; } = new List<Message>();
-    public virtual ICollection<Message> ReceivedMessages { get; set; } = new List<Message>();
+    [ForeignKey("ReceiverId")]
+    [InverseProperty("MessageReceivers")]
+    public virtual User Receiver { get; set; } = null!;
+
+    [ForeignKey("SenderId")]
+    [InverseProperty("MessageSenders")]
+    public virtual User Sender { get; set; } = null!;
 }
