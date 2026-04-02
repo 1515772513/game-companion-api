@@ -159,7 +159,7 @@ public class CompanionService : ICompanionService
 
             var companion = await _context.Companions
                 .Include(c => c.User)
-                .Include(c => c.Games)
+                .Include(c => c.CompanionGames)
                 .ThenInclude(g => g.Game)
                 .FirstOrDefaultAsync(c => c.UserId == userId);
 
@@ -183,8 +183,8 @@ public class CompanionService : ICompanionService
                 PositiveRate = companion.GoodReviewRate ?? 0,
                 OnlineStatus = OnlineStatusToInt(companion.OnlineStatus),
                 IsVerified = companion.Status == 1,
-                Games = companion.Games.Select(g => g.Game.Name).ToList(),
-                GameRank = companion.Games.FirstOrDefault()?.GameLevel ?? "",
+                Games = companion.CompanionGames.Select(g => g.Game.Name).ToList(),
+                GameRank = companion.CompanionGames.FirstOrDefault()?.GameLevel ?? "",
                 Bio = companion.Bio ?? "",
                 Tags = companion.Tags?.Split(',').ToList() ?? new List<string>(),
                 CertificationTime = companion.UpdatedAt.ToDateTimeString(),

@@ -8,6 +8,6 @@ public partial class CompanionGame
     /// <summary>
     /// 软关联：游戏
     /// </summary>
-    [NotMapped] // 👈 最重要！告诉 EF Core：这不是数据库字段
+    [ForeignKey("GameId")]
     public virtual Game? Game { get; set; }
 }
