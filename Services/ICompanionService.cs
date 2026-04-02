@@ -77,4 +77,9 @@ public interface ICompanionService
     /// 获取陪玩师列表
     /// </summary>
     Task<ApiResponse<CompanionListResponse>> GetCompanionListAsync(CompanionListRequest request);
+
+    /// <summary>
+    /// 获取陪玩认证审核统计（tab数量）
+    /// </summary>
+    Task<ApiResponse<List<CompanionStatusCountDto>>> GetCompanionStatusCountAsync();
 }

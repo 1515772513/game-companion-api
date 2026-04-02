@@ -37,6 +37,7 @@ public class CompanionListDto
     public decimal? GoodReviewRate { get; set; }
     public string? Tags { get; set; }
     public int Status { get; set; } = 0; // 0=待审核,1=审核通过,2=审核拒绝
+    public string StatusName { get; set; } = string.Empty; // 待审核/审核通过/审核拒绝
     public string OnlineStatus { get; set; } = string.Empty;
     public string CreatedAt { get; set; } = string.Empty;
     
@@ -200,4 +201,20 @@ public class CompanionListResponse
     public int Page { get; set; }
     public int PageSize { get; set; }
     public List<CompanionListDto> list { get; set; } = new List<CompanionListDto>();
+}
+
+/// <summary>
+/// 陪玩状态统计DTO
+/// </summary>
+public class CompanionStatusCountDto
+{
+    /// <summary>
+    /// 状态：0=待审核,1=审核通过,2=审核拒绝
+    /// </summary>
+    public int Status { get; set; }
+
+    /// <summary>
+    /// 数量
+    /// </summary>
+    public int Count { get; set; }
 }

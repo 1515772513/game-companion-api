@@ -272,5 +272,15 @@ public class CompanionController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// 获取陪玩认证审核统计（tab数量）
+    /// </summary>
+    [HttpGet("stats")]
+    public async Task<IActionResult> GetStatusCount()
+    {
+        var result = await _companionService.GetCompanionStatusCountAsync();
+        return Ok(result);
+    }
+
 
 }

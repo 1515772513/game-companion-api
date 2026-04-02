@@ -686,7 +686,7 @@ public class CompanionService : ICompanionService
 
 
     /// <summary>
-    /// 获取陪玩师列表（高性能优化版）
+    /// 获取陪玩师列表（高性能优化版 - 双字典翻译）
     /// </summary>
     public async Task<ApiResponse<CompanionListResponse>> GetCompanionListAsync(CompanionListRequest request)
     {
@@ -740,18 +740,19 @@ public class CompanionService : ICompanionService
                     Phone = x.Phone,
                     Level = x.Level ?? "",
                     ServiceType = x.ServiceType ?? "",
-                    ServiceTypeName = "", // 先占位，后面批量翻译
+                    ServiceTypeName = "", // 服务类型翻译占位
+                    Status = x.Status ?? 0,
+                    StatusName = "",      // 审核状态翻译占位
                     PricePerGame = x.PricePerGame,
                     PricePerHour = x.PricePerHour,
                     Rating = x.Rating,
                     TotalOrders = x.TotalOrders,
                     GoodReviewRate = x.GoodReviewRate,
                     Tags = x.Tags,
-                    Status = x.Status ?? 0,
                     OnlineStatus = x.OnlineStatus ?? "",
                     CreatedAt = x.CreatedAt.ToDateTimeString(),
 
-                    // 游戏关联（EF自动优化 JOIN，无N+1）
+                    // 游戏关联
                     Games = x.CompanionGames.Select(cg => new CompanionGameItemDto
                     {
                         GameId = cg.GameId,
@@ -763,27 +764,27 @@ public class CompanionService : ICompanionService
                 .ToListAsync();
 
             // ==============================================
-            // 🔥 性能核心：一次性批量翻译（只查1次数据库！）
+            // 🔥 高性能：一次性批量翻译 2 个字典（只查1次DB！）
             // ==============================================
             if (list.Count > 0)
             {
-                // 提取所有不重复的 serviceType
-                var serviceTypeValues = list
-                    .Select(x => x.ServiceType)
-                    .Where(x => !string.IsNullOrEmpty(x))
-                    .Distinct()
-                    .ToList();
+                // 1. 提取所有需要翻译的值（去重）
+                var serviceTypes = list.Select(x => x.ServiceType).Where(x => !string.IsNullOrEmpty(x)).Distinct().ToList();
+                var statusValues = list.Select(x => x.Status.ToString()).Distinct().ToList();
 
-                // 批量翻译（超级快）
-                var typeMap = await _dictTranslateService.BatchTranslateAsync(
-                    "serviceType", serviceTypeValues);
+                // 2. 批量翻译（一次数据库请求）
+                var serviceTypeMap = await _dictTranslateService.BatchTranslateAsync("service_type", serviceTypes);
+                var statusMap = await _dictTranslateService.BatchTranslateAsync("review_status", statusValues);
 
-                // 内存赋值（无DB，极快）
+                // 3. 内存赋值（极快）
                 foreach (var item in list)
                 {
-                    item.ServiceTypeName = typeMap.TryGetValue(item.ServiceType!, out var name)
-                        ? name
-                        : item.ServiceType!;
+                    // 翻译服务类型
+                    item.ServiceTypeName = serviceTypeMap.TryGetValue(item.ServiceType!, out var sName) ? sName : item.ServiceType!;
+                    
+                    // 翻译审核状态
+                    var statusKey = item.Status.ToString();
+                    item.StatusName = statusMap.TryGetValue(statusKey, out var stName) ? stName : statusKey;
                 }
             }
 
@@ -800,6 +801,41 @@ public class CompanionService : ICompanionService
         {
             _logger.LogError(ex, "获取陪玩师列表失败");
             return ApiResponse<CompanionListResponse>.Fail(500, "获取列表失败");
+        }
+    }
+
+    /// <summary>
+    /// 获取陪玩认证审核统计（按状态分组）
+    /// </summary>
+    public async Task<ApiResponse<List<CompanionStatusCountDto>>> GetCompanionStatusCountAsync()
+    {
+        try
+        {
+            // 按状态分组统计数量
+            var countList = await _context.Companions
+                .AsNoTracking()
+                .GroupBy(x => x.Status)
+                .Select(g => new CompanionStatusCountDto
+                {
+                    Status = g.Key ?? 0,
+                    Count = g.Count()
+                })
+                .ToListAsync();
+
+            // 补全 0/1/2 三个状态（即使数量为0也返回）
+            var allStatus = new List<int> { 0, 1, 2 };
+            var result = allStatus.Select(status => new CompanionStatusCountDto
+            {
+                Status = status,
+                Count = countList.FirstOrDefault(x => x.Status == status)?.Count ?? 0
+            }).ToList();
+
+            return ApiResponse<List<CompanionStatusCountDto>>.Success(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "获取陪玩状态统计失败");
+            return ApiResponse<List<CompanionStatusCountDto>>.Fail(500, "获取统计失败");
         }
     }
     
