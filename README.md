@@ -91,3 +91,6 @@ JWT 无状态鉴权
 小程序无法访问：ECS 安全组开放端口
 文件上传失败：检查 OSS 密钥、Bucket 权限
 实时消息不通：检查 WebSocket 配置、端口、Nginx 代理、心跳机制
+
+数据库连接字符串：server=47.98.225.136;port=3306;database=game_companion;user=admin;password=admin123;charset=utf8mb4
+实体类更新：Scaffold-DbContext "server=47.98.225.136;port=3306;database=game_companion;user=admin;password=admin123;charset=utf8mb4;" Pomelo.EntityFrameworkCore.MySql -OutputDir Models -Force

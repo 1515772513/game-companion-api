@@ -62,8 +62,22 @@ public static class DateTimeExtensions
     /// <summary>
     /// 格式化为标准格式
     /// </summary>
-    public static string ToStandardString(this DateTime dateTime)
+    public static string ToDateTimeString(this DateTime dateTime)
     {
         return dateTime.ToString("yyyy-MM-dd HH:mm:ss");
+    }
+
+    /// <summary>
+    /// 字符串格式时间转标准格式
+    /// </summary>
+    public static string ToDateTimeString(this string dateTimeStr)
+    {
+        // 兼容多种输入格式，可根据实际场景调整
+        if (DateTime.TryParse(dateTimeStr, out DateTime dt))
+        {
+            return dt.ToString("yyyy-MM-dd HH:mm:ss");
+        }
+        // 解析失败返回原字符串或空，按需处理
+        return dateTimeStr;
     }
 }

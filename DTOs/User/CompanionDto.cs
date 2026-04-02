@@ -14,6 +14,7 @@ public class CompanionGameItemDto
     public string GameName { get; set; } = string.Empty;
     /// <summary>游戏段位/等级</summary>
     public string GameLevel { get; set; } = string.Empty;
+    public string GameIcon { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -36,7 +37,7 @@ public class CompanionListDto
     public string? Tags { get; set; }
     public int Status { get; set; } = 0; // 0=待审核,1=审核通过,2=审核拒绝
     public string OnlineStatus { get; set; } = string.Empty;
-    public DateTime CreatedAt { get; set; }
+    public string CreatedAt { get; set; } = string.Empty;
     
     public List<CompanionGameItemDto> Games { get; set; } = new();
 }

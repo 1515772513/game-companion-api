@@ -3,6 +3,7 @@ using GameCompanion.Api.Models.Entities;
 using GameCompanion.Api.Models;
 using Microsoft.EntityFrameworkCore;
 using GameCompanion.Api.Data;
+using GameCompanion.Api.Utils;
 
 namespace GameCompanion.Api.Services;
 
@@ -695,20 +696,18 @@ public class CompanionService : ICompanionService
             var query = _context.Companions
                 .AsNoTracking()
                 .Include(x => x.User)
-                .Include(x => x.Games)
+                .Include(x => x.CompanionGames)
+                .ThenInclude(cg => cg.Game)
                 .AsQueryable();
 
-            // 安全转换状态
             int? status = null;
             if (!string.IsNullOrWhiteSpace(request.Status) && int.TryParse(request.Status, out var s))
             {
                 status = s;
             }
-            // 条件筛选
             if (status.HasValue)
                 query = query.Where(x => x.Status == status);
 
-            // 关键词：昵称 / 真实姓名 / 电话
             if (!string.IsNullOrWhiteSpace(request.Keyword))
             {
                 var k = request.Keyword.Trim();
@@ -716,28 +715,24 @@ public class CompanionService : ICompanionService
                     x.Nickname.Contains(k) ||
                     x.RealName.Contains(k) ||
                     x.Phone.Contains(k) ||
-                    x.User.Nickname.Contains(k) ||   // 搜索用户昵称
-                    x.User.Username.Contains(k));    // 搜索用户名
+                    x.User.Nickname.Contains(k) ||
+                    x.User.Username.Contains(k));
             }
 
-            // 游戏筛选
+            // 👇 修正游戏筛选逻辑（适配新的导航属性）
             if (request.GameId.HasValue)
-                query = query.Where(x => x.Games.Any(g => g.GameId == request.GameId));
+                query = query.Where(x => x.CompanionGames.Any(g => g.GameId == request.GameId));
 
-            // 服务类型
             if (!string.IsNullOrWhiteSpace(request.ServiceType))
                 query = query.Where(x => x.ServiceType == request.ServiceType);
 
-            // 申请时间
             if (request.StartTime.HasValue)
                 query = query.Where(x => x.CreatedAt >= request.StartTime.Value);
             if (request.EndTime.HasValue)
                 query = query.Where(x => x.CreatedAt <= request.EndTime.Value);
 
-            // 总数
             var total = await query.CountAsync();
 
-            // 分页 + 映射
             var list = await query
                 .OrderByDescending(x => x.CreatedAt)
                 .Skip((request.Page - 1) * request.PageSize)
@@ -759,7 +754,15 @@ public class CompanionService : ICompanionService
                     Tags = x.Tags,
                     Status = x.Status ?? 0,
                     OnlineStatus = x.OnlineStatus ?? "",
-                    CreatedAt = x.CreatedAt
+                    CreatedAt = x.CreatedAt.ToDateTimeString(),
+                    // 👇 关键：正确映射游戏信息
+                    Games = x.CompanionGames.Select(cg => new CompanionGameItemDto
+                    {
+                        GameId = cg.GameId,
+                        GameName = cg.Game.Name,
+                        GameIcon = cg.Game.Icon ?? "",
+                        GameLevel = cg.GameLevel ?? "",
+                    }).ToList()
                 })
                 .ToListAsync();
 
