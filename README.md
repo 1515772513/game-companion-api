@@ -98,3 +98,5 @@ server=47.98.225.136;port=3306;database=game_companion;user=admin;password=admin
 Scaffold-DbContext "server=47.98.225.136;port=3306;database=game_companion;user=admin;password=admin123;charset=utf8mb4;" Pomelo.EntityFrameworkCore.MySql -OutputDir Models/Entities -Force
 # vscode里面执行 模型会生成注解
 dotnet ef dbcontext scaffold "server=47.98.225.136;port=3306;database=game_companion;user=admin;password=admin123;charset=utf8mb4" Pomelo.EntityFrameworkCore.MySql -o Models/Entities -f --no-build --project GameCompanion.Api.csproj --data-annotations
+# 部署IIS 打包命令
+dotnet publish GameCompanion.Api.csproj --configuration Release --output ./publish --self-contained false
