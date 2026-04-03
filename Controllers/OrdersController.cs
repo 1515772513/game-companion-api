@@ -1,3 +1,4 @@
+using GameCompanion.Api.Dtos;
 using GameCompanion.Api.DTOs.Order;
 using GameCompanion.Api.Models;
 using GameCompanion.Api.Services;
@@ -158,4 +159,35 @@ public class OrdersController : ControllerBase
         var result = await _orderService.ReviewOrderAsync(id, request);
         return Ok(result);
     }
+
+
+    #region PC端接口
+
+    /// <summary>
+    /// 订单分页列表
+    /// </summary>
+    /// <param name="request">订单分页列表请求</param>
+    /// <returns>订单分页列表</returns>
+    [HttpGet("list")]
+    [ProducesResponseType(typeof(ApiResponse<GetOrdersResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ApiResponse<GetOrdersPaginationResponse>>> GetList([FromQuery] GetOrdersPaginationRequest request)
+    {
+        var result = await _orderService.GetListAsync(request);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// 获取订单统计数据
+    /// </summary>
+    /// <returns>订单统计结果</returns>
+    [HttpGet("statistics")]
+    public async Task<ApiResponse<OrderStatisticsDto>> GetStatistics()
+    {
+        return await _orderService.GetStatisticsAsync();
+    }
+
+    #endregion
 }

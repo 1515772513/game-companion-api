@@ -8,6 +8,6 @@ public partial class Order
     /// <summary>
     /// 软关联：订单
     /// </summary>
-    [NotMapped] // 👈 最重要！告诉 EF Core：这不是数据库字段
-    public virtual Game? Game { get; set; }
+    [ForeignKey(nameof(GameId))]
+    public virtual Game? Game { get; set; } = null!; // 👈 最重要！告诉 EF Core：这不是数据库字段
 }

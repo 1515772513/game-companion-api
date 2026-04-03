@@ -1,3 +1,4 @@
+using GameCompanion.Api.Dtos;
 using GameCompanion.Api.DTOs.Order;
 using GameCompanion.Api.Models;
 
@@ -42,4 +43,16 @@ public interface IOrderService
     /// 订单评价
     /// </summary>
     Task<ApiResponse<CreateOrderReviewResponse>> ReviewOrderAsync(int orderId, CreateOrderReviewRequest request);
+
+
+    /// <summary>
+    /// 订单分页列表
+    /// </summary>
+    Task<ApiResponse<GetOrdersPaginationResponse>> GetListAsync(GetOrdersPaginationRequest request);
+
+    /// <summary>
+    /// 获取订单统计数据
+    /// </summary>
+    /// <returns>订单统计结果</returns>
+    Task<ApiResponse<OrderStatisticsDto>> GetStatisticsAsync();
 }

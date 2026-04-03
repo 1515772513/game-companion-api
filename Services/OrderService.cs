@@ -5,6 +5,8 @@ using GameCompanion.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
 using GameCompanion.Api.Utils;
+using GameCompanion.Api.Services.DictTranslate;
+using GameCompanion.Api.Dtos;
 
 namespace GameCompanion.Api.Services;
 
@@ -16,10 +18,13 @@ public class OrderService : IOrderService
     private readonly ApplicationDbContext _context;
     private readonly ILogger<OrderService> _logger;
 
-    public OrderService(ApplicationDbContext context, ILogger<OrderService> logger)
+    private readonly IDictTranslateService _dictTranslateService;
+
+    public OrderService(ApplicationDbContext context, ILogger<OrderService> logger, IDictTranslateService dictTranslateService)
     {
         _context = context;
         _logger = logger;
+        _dictTranslateService = dictTranslateService;
     }
 
     /// <summary>
@@ -212,9 +217,9 @@ public class OrderService : IOrderService
                 {
                     Id = o.Id,
                     OrderNo = o.OrderNo,
-                    OrderType = 1, // 1-陪玩订单
+                    OrderType = "1", // 1-陪玩订单
                     OrderTypeText = "陪玩订单",
-                    Status = GetOrderStatusValue(o.Status),
+                    Status = o.Status,
                     StatusText = o.Status,
                     PaymentStatus = GetPaymentStatusValue(o.Status),
                     PaymentStatusText = GetPaymentStatusText(o.Status),
@@ -547,6 +552,159 @@ public class OrderService : IOrderService
             return ApiResponse<CreateOrderReviewResponse>.ErrorResponse(500, "系统错误");
         }
     }
+
+    #region PC端
+
+    /// <summary>
+    /// 订单分页列表
+    /// </summary>
+    public async Task<ApiResponse<GetOrdersPaginationResponse>> GetListAsync(GetOrdersPaginationRequest request)
+    {
+        try
+        {
+            // 基础查询（高性能：无跟踪、预生成SQL）
+            var query = _context.Orders
+                .AsNoTracking()
+                .Include(x => x.User)
+                .Include(x => x.Companion)
+                .Include(x => x.Game)
+                .AsQueryable();
+
+            // 条件过滤
+            if (!string.IsNullOrWhiteSpace(request.Status))
+                query = query.Where(x => x.Status == request.Status);
+
+            if (!string.IsNullOrWhiteSpace(request.Keyword))
+            {
+                var k = request.Keyword.Trim();
+                query = query.Where(x =>
+                    x.OrderNo.Contains(k) ||
+                    x.User.Nickname.Contains(k) ||
+                    x.User.Username.Contains(k));
+            }
+
+            if (request.GameId > 0)
+                query = query.Where(x => x.GameId == request.GameId);
+
+            if (!string.IsNullOrWhiteSpace(request.OrderType))
+                query = query.Where(x => x.ServiceType == request.OrderType);
+
+            if (request.StartTime.HasValue)
+                query = query.Where(x => x.CreatedAt >= request.StartTime.Value);
+            if (request.EndTime.HasValue)
+                query = query.Where(x => x.CreatedAt <= request.EndTime.Value);
+
+            // 总条数
+            var total = await query.CountAsync();
+
+            // 分页查询
+            var list = await query
+                .OrderByDescending(x => x.CreatedAt)
+                .Skip((request.Page - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .Select(x => new GetOrdersPaginationResponse.OrderItem
+                {
+                    Id = x.Id,
+                    OrderNo = x.OrderNo,
+                    Status = x.Status ?? "",
+                    StatusText = "",
+                    OrderType = x.ServiceType ?? "",
+                    OrderTypeText = "",
+
+                    // ✅ 正确映射 Companion（一对一）
+                    Companion = new GetOrdersPaginationResponse.CompanionInfo
+                    {
+                        Id = x.Companion.Id,
+                        Nickname = x.Companion.Nickname ?? "",
+                        // AvatarUrl = x.Companion.AvatarUrl ?? "",
+                        Level = x.Companion.Level ?? "",
+                        RealName = x.User.RealName ?? ""
+                    },
+
+                    GameName = x.Game.Name ?? "",
+                    Username = x.User.RealName ?? "",
+                    GameRank = "", // 可自己补充
+                    ServiceCount = x.DurationValue,
+                    ServiceTime = x.PlayTime.HasValue ? x.PlayTime.Value.ToString("yyyy-MM-dd HH:mm") : "",
+                    TotalPrice = x.TotalPrice,
+                    DiscountAmount = x.DiscountAmount ?? 0,
+                    FinalPrice = x.FinalPrice,
+                    CreatedAt = x.CreatedAt.HasValue ? x.CreatedAt.Value.ToString("yyyy-MM-dd HH:mm") : ""
+                })
+                .ToListAsync();
+
+            // 批量翻译字典
+            if (list.Count > 0)
+            {
+                var serviceTypes = list.Select(x => x.OrderType).Where(x => !string.IsNullOrEmpty(x)).Distinct().ToList();
+                var statusValues = list.Select(x => x.Status).Distinct().ToList();
+
+                // 2. 批量翻译（一次数据库请求）
+                var serviceTypeMap = await _dictTranslateService.BatchTranslateAsync("service_type", serviceTypes);
+                var statusMap = await _dictTranslateService.BatchTranslateAsync("order_status", statusValues);
+
+                // 3. 内存赋值（极快）
+                foreach (var item in list)
+                {
+                    // 翻译服务类型
+                    item.OrderTypeText = serviceTypeMap.TryGetValue(item.OrderType!, out var sName) ? sName : item.OrderType!;
+                    
+                    // 翻译审核状态
+                    var statusKey = item.Status.ToString();
+                    item.StatusText = statusMap.TryGetValue(statusKey, out var stName) ? stName : statusKey;
+                }
+            }
+
+            return ApiResponse<GetOrdersPaginationResponse>.Success(new GetOrdersPaginationResponse
+            {
+                Total = total,
+                Page = request.Page,
+                PageSize = request.PageSize,
+                list = list
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "获取订单列表失败");
+            return ApiResponse<GetOrdersPaginationResponse>.Fail(500, "获取列表失败");
+        }
+    }
+
+    /// <summary>
+    /// 获取订单统计数据（高性能：单次SQL查询，5种状态一次算出）
+    /// </summary>
+    public async Task<ApiResponse<OrderStatisticsDto>> GetStatisticsAsync()
+    {
+        try
+        {
+            // 🔥 高性能：单次EF Core查询，一次性统计所有状态，只查1次DB！
+            var statistics = await _context.Orders
+                .AsNoTracking() // 无跟踪，极致性能
+                .GroupBy(x => 1) // 虚拟分组，一次性聚合所有数据
+                .Select(g => new OrderStatisticsDto
+                {
+                    TotalOrders = g.Count(),
+                    // 对应你字典的状态值：0=待付款，1=进行中，2=已完成，3=退款/售后
+                    PendingPayment = g.Count(x => x.Status == "0"),
+                    InProgress = g.Count(x => x.Status == "1"),
+                    Completed = g.Count(x => x.Status == "2"),
+                    RefundAfterSale = g.Count(x => x.Status == "3")
+                })
+                .FirstOrDefaultAsync();
+
+            // 兜底：如果没有数据，返回0
+            var result = statistics ?? new OrderStatisticsDto();
+
+            return ApiResponse<OrderStatisticsDto>.Success(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "获取订单统计数据失败");
+            return ApiResponse<OrderStatisticsDto>.Fail(500, "获取统计数据失败");
+        }
+    }
+
+    #endregion
 
     #region 辅助方法
 
