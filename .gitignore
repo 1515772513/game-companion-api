@@ -44,6 +44,7 @@ TestResults/
 # 发布包
 *.pubxml
 *.publishproj
+publish/
 
 # NuGet 包
 *.nupkg
