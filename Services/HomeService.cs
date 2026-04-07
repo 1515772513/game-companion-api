@@ -1,3 +1,4 @@
+using System.Text.Json;
 using GameCompanion.Api.Data;
 using GameCompanion.Api.DTOs.Home;
 using GameCompanion.Api.Models;
@@ -12,10 +13,12 @@ namespace GameCompanion.Api.Services;
 public class HomeService : IHomeService
 {
     private readonly ApplicationDbContext _context;
+    private readonly ISystemConfigService _systemConfigService;
 
-    public HomeService(ApplicationDbContext context)
+    public HomeService(ApplicationDbContext context, ISystemConfigService systemConfigService)
     {
         _context = context;
+        _systemConfigService = systemConfigService;
     }
 
     /// <summary>
@@ -27,8 +30,23 @@ public class HomeService : IHomeService
 
         try
         {
-            // 获取轮播图（目前数据为空，可根据需要添加）
-            response.Banners = new List<BannerDto>();
+            // ========================
+            // 👇 这里是新增：轮播图
+            // ========================
+            var bannerConfig = await _systemConfigService.GetConfigByKeyAsync("home_banners");
+
+            if (!string.IsNullOrWhiteSpace(bannerConfig?.ConfigValue))
+            {
+                try
+                {
+                    // 🔥 自动把字符串转成真实 JSON
+                    response.Banners = JsonSerializer.Deserialize<object>(bannerConfig.ConfigValue);
+                }
+                catch
+                {
+                    response.Banners = new object();
+                }
+            }
 
             // 获取热门陪玩师
             response.HotCompanions = await _context.Companions

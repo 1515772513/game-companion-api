@@ -11,7 +11,7 @@ public class HomeDataResponse
     /// 轮播图列表
     /// </summary>
     [JsonPropertyName("banners")]
-    public List<BannerDto> Banners { get; set; } = new();
+    public object? Banners { get; set; } = null;
 
     /// <summary>
     /// 热门陪玩师列表
@@ -32,40 +32,37 @@ public class HomeDataResponse
     public List<PostDto> HotPosts { get; set; } = new();
 }
 
-/// <summary>
-/// 轮播图DTO
-/// </summary>
 public class BannerDto
 {
     /// <summary>
-    /// 轮播图ID
+    /// 编号
     /// </summary>
-    [JsonPropertyName("id")]
+    [JsonPropertyName("Id")] // 👇 对应 JSON 的 id
     public int Id { get; set; }
+
+    /// <summary>
+    /// 图片地址
+    /// </summary>
+    [JsonPropertyName("ImageUrl")] // 👇 严格对应 JSON 的 ImageUrl
+    public string ImageUrl { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 跳转地址
+    /// </summary>
+    [JsonPropertyName("LinkUrl")] // 👇 严格对应 JSON 的 LinkUrl
+    public string LinkUrl { get; set; } = string.Empty;
 
     /// <summary>
     /// 标题
     /// </summary>
-    [JsonPropertyName("title")]
-    public string Title { get; set; } = "";
+    [JsonPropertyName("Title")] // 👇 严格对应 JSON 的 Title
+    public string Title { get; set; } = string.Empty;
 
     /// <summary>
-    /// 图片URL
+    /// 排序
     /// </summary>
-    [JsonPropertyName("image_url")]
-    public string ImageUrl { get; set; } = "";
-
-    /// <summary>
-    /// 跳转链接
-    /// </summary>
-    [JsonPropertyName("jump_url")]
-    public string JumpUrl { get; set; } = "";
-
-    /// <summary>
-    /// 跳转类型：url-外部链接，internal-内部页面
-    /// </summary>
-    [JsonPropertyName("jump_type")]
-    public string JumpType { get; set; } = "url";
+    [JsonPropertyName("sort")] // 👇 严格对应 JSON 的 Sort
+    public int Sort { get; set; }
 }
 
 /// <summary>
