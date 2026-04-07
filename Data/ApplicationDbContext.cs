@@ -87,6 +87,9 @@ public class ApplicationDbContext : DbContext
     // 草稿表
     public DbSet<Draft> Drafts { get; set; }
 
+    // 文件表
+    public DbSet<SysFile> SysFiles { get; set; }
+
     // 系统配置表（新增）
     public DbSet<SystemConfig> SystemConfigs { get; set; }
 

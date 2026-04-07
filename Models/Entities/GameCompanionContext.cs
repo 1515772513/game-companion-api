@@ -60,6 +60,8 @@ public partial class GameCompanionContext : DbContext
 
     public virtual DbSet<SysDictType> SysDictTypes { get; set; }
 
+    public virtual DbSet<SysFile> SysFiles { get; set; }
+
     public virtual DbSet<SystemConfig> SystemConfigs { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
@@ -621,6 +623,37 @@ public partial class GameCompanionContext : DbContext
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasComment("更新时间");
+        });
+
+        modelBuilder.Entity<SysFile>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.ToTable("sys_file", tb => tb.HasComment("文件上传记录表"));
+
+            entity.Property(e => e.Id).HasComment("主键UUID");
+            entity.Property(e => e.ContentType)
+                .HasDefaultValueSql("''")
+                .HasComment("文件类型");
+            entity.Property(e => e.CreateTime)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasComment("创建时间");
+            entity.Property(e => e.FileExt)
+                .HasDefaultValueSql("''")
+                .HasComment("文件后缀");
+            entity.Property(e => e.FileName).HasComment("原始文件名");
+            entity.Property(e => e.FilePath).HasComment("文件物理路径");
+            entity.Property(e => e.FileSize).HasComment("文件大小（字节）");
+            entity.Property(e => e.FileUrl).HasComment("文件访问URL");
+            entity.Property(e => e.IsDeleted).HasComment("是否删除 0=否 1=是");
+            entity.Property(e => e.UpdateTime)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasComment("更新时间");
+            entity.Property(e => e.UploadPlatform)
+                .HasDefaultValueSql("'web'")
+                .HasComment("上传平台");
+            entity.Property(e => e.UploadUser).HasComment("上传人ID");
         });
 
         modelBuilder.Entity<SystemConfig>(entity =>

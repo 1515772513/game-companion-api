@@ -153,7 +153,7 @@ builder.Services.AddScoped<ISettingsService, SettingsService>();
 builder.Services.AddScoped<ICompanionService, CompanionService>();
 builder.Services.AddScoped<IPowerLevelingService, PowerLevelingService>();
 builder.Services.AddScoped<ISystemConfigService, SystemConfigService>();
-
+builder.Services.AddScoped<IFileService, FileService>();
 
 // 配置CORS
 builder.Services.AddCors(options =>
