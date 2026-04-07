@@ -49,7 +49,7 @@ public partial class Order
     /// <summary>
     /// 服务类型
     /// </summary>
-    [Column("service_type", TypeName = "enum('companion','power_leveling')")]
+    [Column("service_type", TypeName = "enum('1','2','3')")]
     public string? ServiceType { get; set; }
 
     /// <summary>
@@ -105,9 +105,10 @@ public partial class Order
     public string? Remark { get; set; }
 
     /// <summary>
-    /// 订单状态
+    /// 订单状态 空=全部 0=待付款 1=进行中 2=已完成 4=退款/售后
     /// </summary>
-    [Column("status", TypeName = "enum('pending','paid','in_progress','completed','cancelled','refunded')")]
+    [Column("status")]
+    [StringLength(8)]
     public string? Status { get; set; }
 
     /// <summary>

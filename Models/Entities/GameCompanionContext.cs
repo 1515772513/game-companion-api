@@ -60,6 +60,8 @@ public partial class GameCompanionContext : DbContext
 
     public virtual DbSet<SysDictType> SysDictTypes { get; set; }
 
+    public virtual DbSet<SystemConfig> SystemConfigs { get; set; }
+
     public virtual DbSet<User> Users { get; set; }
 
     public virtual DbSet<UserSetting> UserSettings { get; set; }
@@ -407,12 +409,12 @@ public partial class GameCompanionContext : DbContext
             entity.Property(e => e.PlayTime).HasComment("预约时间");
             entity.Property(e => e.Remark).HasComment("备注信息");
             entity.Property(e => e.ServiceType)
-                .HasDefaultValueSql("'companion'")
+                .HasDefaultValueSql("'1'")
                 .HasComment("服务类型");
             entity.Property(e => e.StartTime).HasComment("服务开始时间");
             entity.Property(e => e.Status)
-                .HasDefaultValueSql("'pending'")
-                .HasComment("订单状态");
+                .HasDefaultValueSql("''")
+                .HasComment("订单状态 空=全部 0=待付款 1=进行中 2=已完成 4=退款/售后");
             entity.Property(e => e.TotalPrice).HasComment("总价");
             entity.Property(e => e.UnitPrice).HasComment("单价");
             entity.Property(e => e.UpdatedAt)
@@ -619,6 +621,30 @@ public partial class GameCompanionContext : DbContext
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasComment("更新时间");
+        });
+
+        modelBuilder.Entity<SystemConfig>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.ToTable("system_config", tb => tb.HasComment("系统全局配置表"));
+
+            entity.Property(e => e.Id).HasComment("主键");
+            entity.Property(e => e.ConfigKey).HasComment("配置键（唯一）");
+            entity.Property(e => e.ConfigType)
+                .HasDefaultValueSql("'string'")
+                .HasComment("类型：string/json/banner/number");
+            entity.Property(e => e.ConfigValue).HasComment("配置值");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.Name)
+                .HasDefaultValueSql("''")
+                .HasComment("配置名称");
+            entity.Property(e => e.Remark)
+                .HasDefaultValueSql("''")
+                .HasComment("备注");
+            entity.Property(e => e.UpdatedAt)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
 
         modelBuilder.Entity<User>(entity =>

@@ -87,6 +87,9 @@ public class ApplicationDbContext : DbContext
     // 草稿表
     public DbSet<Draft> Drafts { get; set; }
 
+    // 系统配置表（新增）
+    public DbSet<SystemConfig> SystemConfigs { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -103,6 +106,7 @@ public class ApplicationDbContext : DbContext
         ConfigureOrder(modelBuilder);
         ConfigurePost(modelBuilder);
         ConfigureMessage(modelBuilder);
+        ConfigureSystemConfig(modelBuilder);
     }
 
     private void ConfigureUser(ModelBuilder modelBuilder)
@@ -279,6 +283,19 @@ public class ApplicationDbContext : DbContext
                   .WithMany()
                   .HasForeignKey(e => e.ReceiverId)
                   .OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
+    /// <summary>
+    /// 系统配置表约束（新增）
+    /// </summary>
+    private void ConfigureSystemConfig(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<SystemConfig>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.ConfigKey).IsUnique();
+            entity.Property(e => e.ConfigValue).HasColumnType("text");
         });
     }
 }
