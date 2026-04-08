@@ -77,7 +77,7 @@ public partial class Companion
     /// <summary>
     /// 服务类型:技术陪玩/娱乐陪玩/语音陪伴
     /// </summary>
-    [Column("service_type", TypeName = "enum('technical','entertainment','voice')")]
+    [Column("service_type")]
     public string? ServiceType { get; set; }
 
     /// <summary>
