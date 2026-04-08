@@ -711,14 +711,7 @@ public class CompanionService : ICompanionService
             // 服务类型
             if (!string.IsNullOrWhiteSpace(request.ServiceType))
             {
-                var map = new Dictionary<string, string>
-                {
-                    { "voice", "entertainment" },
-                    { "video", "entertainment" },
-                    { "game", "technical" }
-                };
-                if (map.TryGetValue(request.ServiceType, out var t))
-                    query = query.Where(c => c.ServiceType == t);
+                query = query.Where(c => c.ServiceType == request.ServiceType);
             }
 
             // 在线状态
