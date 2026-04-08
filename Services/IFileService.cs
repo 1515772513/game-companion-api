@@ -8,7 +8,7 @@ namespace GameCompanion.Api.Services
         /// <summary>
         /// 上传文件
         /// </summary>
-        Task<FileUploadRespDto> UploadFileAsync(IFormFile file, string module, long? userId = null);
+        Task<FileUploadRespDto> UploadFileAsync(IFormFile file, string module);
 
         /// <summary>
         /// 下载文件

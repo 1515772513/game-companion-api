@@ -11,6 +11,7 @@ using System.Text;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using GameCompanion.Api.Filters;
 using GameCompanion.Api.Services.DictTranslate;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,11 +24,9 @@ builder.Host.UseSerilog();
 
 builder.Services.AddRouting(options =>
 {
-    // 路由小写配置
     options.LowercaseUrls = true;
 });
 
-// 添加服务到容器
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -37,7 +36,7 @@ builder.Services.AddControllers()
 
 builder.Services.AddEndpointsApiExplorer();
 
-// 配置Swagger
+// Swagger
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
@@ -45,17 +44,12 @@ builder.Services.AddSwaggerGen(c =>
         Title = "陪玩平台 API",
         Version = "v1",
         Description = "陪玩平台后端服务接口文档",
-        Contact = new OpenApiContact
-        {
-            Name = "技术支持",
-            Email = "tech@example.com"
-        }
+        Contact = new OpenApiContact { Name = "技术支持", Email = "tech@example.com" }
     });
 
-    // 添加JWT认证到Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = "JWT授权(数据将在请求头中进行传输) 直接在下框中输入Bearer {token}即可",
+        Description = "JWT授权 直接在下框输入 Bearer {token}",
         Name = "Authorization",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
@@ -68,57 +62,38 @@ builder.Services.AddSwaggerGen(c =>
         {
             new OpenApiSecurityScheme
             {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
             },
             Array.Empty<string>()
         }
     });
 
-    // 忽略循环引用,使用完整的类型名作为Schema ID
     c.CustomSchemaIds(type => type.FullName);
-
-    // ======================================================
     c.MapType(typeof(GameCompanion.Api.Models.ApiResponse<>), () => new OpenApiSchema { Type = "object" });
     c.MapType(typeof(GameCompanion.Api.Models.ApiResponse), () => new OpenApiSchema { Type = "object" });
-
     c.SchemaFilter<FixSwaggerSchemaFilter>();
-    // ======================================================
 });
 
-// 配置数据库
+// 数据库
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
         ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection")),
-        mysqlOptions =>
-        {
-            mysqlOptions.EnableRetryOnFailure(
-                maxRetryCount: 3,
-                maxRetryDelay: TimeSpan.FromSeconds(5),
-                errorNumbersToAdd: null);
-        }
+        mysqlOptions => mysqlOptions.EnableRetryOnFailure(3, TimeSpan.FromSeconds(5), null)
     ));
 
-// 配置Redis
+// Redis
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
     var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
-    if (!string.IsNullOrEmpty(redisConnectionString))
-    {
-        var configuration = StackExchange.Redis.ConfigurationOptions.Parse(redisConnectionString, true);
-        return ConnectionMultiplexer.Connect(configuration);
-    }
-    throw new InvalidOperationException("Redis连接字符串未配置");
+    if (string.IsNullOrEmpty(redisConnectionString)) throw new InvalidOperationException("Redis未配置");
+    var config = ConfigurationOptions.Parse(redisConnectionString, true);
+    return ConnectionMultiplexer.Connect(config);
 });
 
-// 配置JWT认证
+// JWT
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]!);
-
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -139,10 +114,10 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// 配置AutoMapper
+// AutoMapper
 builder.Services.AddAutoMapper(typeof(Program));
 
-// 注册服务
+// 服务注册
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IHomeService, HomeService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
@@ -154,8 +129,9 @@ builder.Services.AddScoped<ICompanionService, CompanionService>();
 builder.Services.AddScoped<IPowerLevelingService, PowerLevelingService>();
 builder.Services.AddScoped<ISystemConfigService, SystemConfigService>();
 builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<IDictTranslateService, DictTranslateService>();
 
-// 配置CORS
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -166,11 +142,11 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddScoped<IDictTranslateService, DictTranslateService>();
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
-// 配置HTTP请求管道
+// 开发环境文档
 if (app.Environment.IsDevelopment() || true)
 {
     app.UseSwagger();
@@ -181,29 +157,51 @@ if (app.Environment.IsDevelopment() || true)
     });
 }
 
+// ==================== 【正确顺序】====================
+app.UseCors("AllowAll");               // 1. CORS 必须第一
+app.UseStaticFiles();                 // 2. 默认 wwwroot
+
+// 3. 配置 uploads 静态文件 + 强制跨域头
+var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
+if (!Directory.Exists(uploadPath)) Directory.CreateDirectory(uploadPath);
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadPath),
+    RequestPath = "/uploads",
+    OnPrepareResponse = ctx =>
+    {
+        ctx.Context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
+        ctx.Context.Response.Headers.Append("Cache-Control", "public, max-age=604800");
+    }
+});
+
+// 4. 自定义中间件
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseMiddleware<RequestLoggingMiddleware>();
 
-app.UseCors("AllowAll");
-
+// 5. 认证
 app.UseAuthentication();
 app.UseAuthorization();
 
+// 6. 路由
 app.MapControllers();
+// ======================================================
 
 try
 {
-    Log.Information("启动应用程序");
+    Log.Information("应用启动成功");
     app.Run();
 }
 catch (Exception ex)
 {
-    Log.Fatal(ex, "应用程序启动失败");
+    Log.Fatal(ex, "应用启动失败");
 }
 finally
 {
     Log.CloseAndFlush();
 }
+
 namespace GameCompanion.Api.Filters
 {
     public class FixSwaggerSchemaFilter : ISchemaFilter

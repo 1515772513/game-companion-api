@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using GameCompanion.Api.Data;
 using GameCompanion.Api.Utils;
 using GameCompanion.Api.Services.DictTranslate;
+using System.Text.Json;
 
 namespace GameCompanion.Api.Services;
 
@@ -177,7 +178,7 @@ public class CompanionService : ICompanionService
                 UserId = companion.UserId,
                 Nickname = companion.Nickname,
                 AvatarUrl = companion.User?.Avatar ?? "",
-                Level = companion.Level ?? "银牌",
+                Level = companion.Level ?? null,
                 ServiceType = companion.ServiceType ?? "技术陪玩",
                 Price = companion.PricePerGame,
                 Rating = companion.Rating ?? 0,
@@ -685,6 +686,187 @@ public class CompanionService : ICompanionService
     }
 
 
+    #region 移动端 mobile
+    
+    /// <summary>
+    /// 适配前端的陪玩师列表查询（游戏筛选/服务类型映射/价格排序）
+    /// </summary>
+    public async Task<ApiResponse<CompanionListFrontResponse>> GetCompanionListForFrontAsync(CompanionListFrontRequest request)
+    {
+        try
+        {
+            var query = _context.Companions
+                .AsNoTracking()
+                .Where(c => c.Status == 1);
+
+            int? filterGameId = request.GameId > 0 ? request.GameId : null;
+
+            // 游戏筛选
+            if (filterGameId.HasValue)
+            {
+                query = query.Where(c => _context.CompanionGames
+                    .Any(g => g.CompanionId == c.Id && g.GameId == filterGameId.Value));
+            }
+
+            // 服务类型
+            if (!string.IsNullOrWhiteSpace(request.ServiceType))
+            {
+                var map = new Dictionary<string, string>
+                {
+                    { "voice", "entertainment" },
+                    { "video", "entertainment" },
+                    { "game", "technical" }
+                };
+                if (map.TryGetValue(request.ServiceType, out var t))
+                    query = query.Where(c => c.ServiceType == t);
+            }
+
+            // 在线状态
+            if (request.OnlineStatus == 1)
+                query = query.Where(c => c.OnlineStatus == "online");
+
+            // 排序
+            query = request.Sort switch
+            {
+                "price_asc" => query.OrderBy(c => c.PricePerGame),
+                "price_desc" => query.OrderByDescending(c => c.PricePerGame),
+                _ => query.OrderByDescending(c => c.Rating)
+            };
+
+            // 总数
+            var total = await query.CountAsync();
+
+            // 🔥 只查需要的字段，性能最高
+            var data = await query
+                .Skip((request.Page - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .Select(c => new
+                {
+                    c.Id,
+                    c.Nickname,
+                    c.UserId,
+                    c.Level,
+                    c.Tags,
+                    c.PricePerGame,
+                    c.Rating,
+                    c.TotalOrders,
+                    c.OnlineStatus,
+                    // 游戏ID（筛选游戏/第一个游戏）
+                    GameId = filterGameId ?? _context.CompanionGames
+                        .Where(g => g.CompanionId == c.Id)
+                        .Select(g => g.GameId)
+                        .FirstOrDefault()
+                })
+                .ToListAsync();
+
+            // ===========================
+            // 批量查用户头像（1次DB）
+            // ===========================
+            var userIds = data.Select(x => x.UserId).Distinct().ToList();
+            var avatarDic = await _context.Users
+                .Where(u => userIds.Contains(u.Id))
+                .ToDictionaryAsync(u => u.Id, u => u.Avatar ?? "");
+
+            // ===========================
+            // 批量查段位等级（优化：确保dictType为game_level_${游戏id}）
+            // ===========================
+            // 1. 按游戏ID分组收集需要翻译的段位值
+            var gameLevelGroups = new Dictionary<int, List<string>>(); // key: GameId, value: 段位值列表
+            var levelDataMap = new Dictionary<string, List<int>>();    // key: "GameId_Level", value: 陪玩师ID列表
+
+            foreach (var x in data.Where(x => x.GameId > 0 && x.Level.HasValue))
+            {
+                var gameId = x.GameId;
+                var levelValue = x.Level.Value.ToString();
+                
+                // 按游戏ID分组存储需要翻译的段位值
+                if (!gameLevelGroups.ContainsKey(gameId))
+                {
+                    gameLevelGroups[gameId] = new List<string>();
+                }
+                if (!gameLevelGroups[gameId].Contains(levelValue))
+                {
+                    gameLevelGroups[gameId].Add(levelValue);
+                }
+
+                // 记录段位值与陪玩师ID的关联
+                var mapKey = $"{gameId}_{levelValue}";
+                if (!levelDataMap.ContainsKey(mapKey))
+                {
+                    levelDataMap[mapKey] = new List<int>();
+                }
+                levelDataMap[mapKey].Add(x.Id);
+            }
+
+            // 2. 按游戏ID批量翻译（dictType = game_level_${游戏id}）
+            var levelTrans = new Dictionary<string, string>(); // key: "GameId_Level", value: 翻译后的段位名称
+            foreach (var (gameId, levels) in gameLevelGroups)
+            {
+                // 确保dictType格式为 game_level_${游戏id}
+                var dictType = $"game_level_{gameId}";
+                var transMap = await _dictTranslateService.BatchTranslateAsync(dictType, levels);
+                
+                // 构建全局段位翻译映射
+                foreach (var level in levels)
+                {
+                    var mapKey = $"{gameId}_{level}";
+                    levelTrans[mapKey] = transMap.TryGetValue(level, out var name) ? name : level;
+                }
+            }
+
+            // ===========================
+            // 组装结果
+            // ===========================
+            var list = data.Select(x =>
+            {
+                string levelName = string.Empty;
+                if (x.GameId > 0 && x.Level.HasValue)
+                {
+                    var mapKey = $"{x.GameId}_{x.Level.Value}";
+                    levelName = levelTrans.TryGetValue(mapKey, out var name) ? name : x.Level.ToString() ?? "";
+                }
+
+                return new CompanionItemFrontResponse
+                {
+                    Id = x.Id,
+                    Nickname = x.Nickname ?? "",
+                    AvatarUrl = avatarDic.TryGetValue(x.UserId, out var url) ? url : "",
+                    Level = x.Level ?? null,
+                    LevelName = levelName,
+                    Tags = x.Tags?.Split(',').Where(t => !string.IsNullOrWhiteSpace(t)).ToList() ?? new List<string>(),
+                    Price = x.PricePerGame,
+                    PriceUnit = "局",
+                    Rating = x.Rating ?? 0,
+                    OrderCount = x.TotalOrders ?? 0,
+                    OnlineStatus = x.OnlineStatus == "online" ? 1 : 0
+                };
+            }).ToList();
+
+            return ApiResponse<CompanionListFrontResponse>.SuccessResponse(new CompanionListFrontResponse
+            {
+                Items = list,
+                Pagination = new cPaginationInfo
+                {
+                    Page = request.Page,
+                    PageSize = request.PageSize,
+                    Total = total,
+                    HasMore = total > request.Page * request.PageSize
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "前端陪玩师列表查询失败");
+            return ApiResponse<CompanionListFrontResponse>.ErrorResponse(500, "获取失败", "获取失败");
+        }
+    }
+
+
+
+    #endregion
+
+    #region 管理端 PC
+
     /// <summary>
     /// 获取陪玩师列表（高性能优化版 - 双字典翻译）
     /// </summary>
@@ -738,7 +920,7 @@ public class CompanionService : ICompanionService
                     Nickname = x.Nickname,
                     RealName = x.User.RealName ?? "",
                     Phone = x.Phone,
-                    Level = x.Level ?? "",
+                    Level = x.Level ?? null,
                     ServiceType = x.ServiceType ?? "",
                     ServiceTypeName = "", // 服务类型翻译占位
                     Status = x.Status ?? 0,
@@ -804,6 +986,7 @@ public class CompanionService : ICompanionService
         }
     }
 
+
     /// <summary>
     /// 获取陪玩认证审核统计（按状态分组）
     /// </summary>
@@ -839,6 +1022,7 @@ public class CompanionService : ICompanionService
         }
     }
     
+    #endregion
 
     #region 私有方法
 

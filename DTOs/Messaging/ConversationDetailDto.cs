@@ -62,7 +62,7 @@ public class UserInfoDto
     /// <summary>
     /// 等级（陪玩师）
     /// </summary>
-    public string? Level { get; set; }
+    public int? Level { get; set; } = null;
 
     /// <summary>
     /// 是否在线

@@ -56,7 +56,7 @@ public class HomeController : ControllerBase
         [FromQuery] int page_size = 20,
         [FromQuery] int? game_id = null,
         [FromQuery] string? service_type = null,
-        [FromQuery] string? level = null,
+        [FromQuery] int? level = null,
         [FromQuery] decimal? min_price = null,
         [FromQuery] decimal? max_price = null,
         [FromQuery] int? online_status = null,

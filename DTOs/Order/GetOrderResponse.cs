@@ -173,7 +173,7 @@ public class GetOrderResponse
         /// <summary>
         /// 陪玩师等级
         /// </summary>
-        public string Level { get; set; } = string.Empty;
+        public int? Level { get; set; } = null;
 
         /// <summary>
         /// 陪玩师联系电话（脱敏）

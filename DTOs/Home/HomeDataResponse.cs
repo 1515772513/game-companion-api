@@ -92,7 +92,7 @@ public class CompanionSummaryDto
     /// 等级
     /// </summary>
     [JsonPropertyName("level")]
-    public string Level { get; set; } = "";
+    public int? Level { get; set; } = null;
 
     /// <summary>
     /// 服务类型

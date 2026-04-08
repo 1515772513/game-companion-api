@@ -28,7 +28,7 @@ public class CompanionListRequest
     /// <summary>
     /// 等级：silver-银牌，gold-金牌，diamond-钻石，king-王者
     /// </summary>
-    public string? Level { get; set; }
+    public int? Level { get; set; } = null;
 
     /// <summary>
     /// 最低价格（元）
@@ -105,12 +105,12 @@ public class CompanionDetailDto
     /// <summary>
     /// 等级名称（中文）
     /// </summary>
-    public string Level { get; set; } = "";
+    public int? Level { get; set; } = null;
 
     /// <summary>
     /// 等级代码
     /// </summary>
-    public string LevelCode { get; set; } = "";
+    public int? LevelCode { get; set; } = null;
 
     /// <summary>
     /// 服务类型名称

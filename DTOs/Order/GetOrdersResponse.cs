@@ -130,7 +130,7 @@ public class CompanionInfoBase
     /// <summary>
     /// 陪玩师等级
     /// </summary>
-    public string Level { get; set; } = string.Empty;
+    public int? Level { get; set; } = null;
 }
 
 

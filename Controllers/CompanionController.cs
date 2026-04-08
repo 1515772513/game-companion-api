@@ -257,7 +257,23 @@ public class CompanionController : ControllerBase
         return Ok(result);
     }
 
+    #region 客户端 mobile
 
+    /// <summary>
+    /// 获取陪玩师列表
+    /// </summary>
+    [HttpGet("list")]
+    [ProducesResponseType(typeof(ApiResponse<CompanionListFrontResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<CompanionListFrontResponse>>> GetCompanionListForFront(
+        [FromQuery] CompanionListFrontRequest request)
+    {
+        var result = await _companionService.GetCompanionListForFrontAsync(request);
+        return Ok(result);
+    }
+
+    #endregion
+
+    #region 管理端 PC
     /// <summary>
     /// 获取陪玩师列表()
     /// </summary>
@@ -282,5 +298,5 @@ public class CompanionController : ControllerBase
         return Ok(result);
     }
 
-
+    #endregion
 }

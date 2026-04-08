@@ -76,7 +76,7 @@ public class UserDto
     /// <summary>
     /// 等级（陪玩师）
     /// </summary>
-    public string? Level { get; set; }
+    public int? Level { get; set; }
 
     /// <summary>
     /// 是否为陪玩师

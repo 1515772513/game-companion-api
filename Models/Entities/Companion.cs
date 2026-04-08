@@ -71,8 +71,8 @@ public partial class Companion
     /// <summary>
     /// 等级
     /// </summary>
-    [Column("level", TypeName = "enum('bronze','silver','gold','diamond','king')")]
-    public string? Level { get; set; }
+    [Column("level")]
+    public int? Level { get; set; }
 
     /// <summary>
     /// 服务类型:技术陪玩/娱乐陪玩/语音陪伴

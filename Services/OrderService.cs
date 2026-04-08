@@ -228,7 +228,7 @@ public class OrderService : IOrderService
                         Id = o.Companion.Id,
                         Nickname = o.Companion.Nickname,
                         // AvatarUrl = o.Companion.AvatarUrl ?? "",
-                        Level = o.Companion.Level ?? ""
+                        Level = o.Companion.Level ?? null,
                     },
                     GameName = o.Game?.Name ?? "",
                     GameRank = "",
@@ -298,7 +298,7 @@ public class OrderService : IOrderService
                     UserId = order.Companion.UserId,
                     Nickname = order.Companion.Nickname,
                     AvatarUrl = order.Companion.User?.Avatar ?? "",
-                    Level = order.Companion.Level ?? "",
+                    Level = order.Companion.Level ?? null,
                     Phone = order.Companion.Phone ?? ""
                 },
                 Game = new GetOrderResponse.GameInfo
@@ -617,7 +617,7 @@ public class OrderService : IOrderService
                         Id = x.Companion.Id,
                         Nickname = x.Companion.Nickname ?? "",
                         // AvatarUrl = x.Companion.AvatarUrl ?? "",
-                        Level = x.Companion.Level ?? "",
+                        Level = x.Companion.Level ?? null,
                         RealName = x.User.RealName ?? ""
                     },
 

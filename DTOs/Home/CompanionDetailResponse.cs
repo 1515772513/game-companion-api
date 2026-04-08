@@ -35,13 +35,13 @@ public class CompanionDetailResponse
     /// 等级名称
     /// </summary>
     [JsonPropertyName("level")]
-    public string Level { get; set; } = "";
+    public int? Level { get; set; } = null;
 
     /// <summary>
     /// 等级代码
     /// </summary>
     [JsonPropertyName("level_code")]
-    public string LevelCode { get; set; } = "";
+    public int? LevelCode { get; set; } = null;
 
     /// <summary>
     /// 服务类型

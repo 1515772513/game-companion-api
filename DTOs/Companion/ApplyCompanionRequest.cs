@@ -81,7 +81,7 @@ public class CompanionInfoResponse
     public int UserId { get; set; }
     public string Nickname { get; set; } = string.Empty;
     public string AvatarUrl { get; set; } = string.Empty;
-    public string Level { get; set; } = string.Empty;
+    public int? Level { get; set; } = null;
     public string ServiceType { get; set; } = string.Empty;
     public decimal Price { get; set; }
     public decimal Rating { get; set; }

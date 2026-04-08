@@ -58,7 +58,7 @@ public class HomeService : IHomeService
                     Id = c.Id,
                     Nickname = c.Nickname,
                     AvatarUrl = c.User == null ? "" : c.User.Avatar ?? "",
-                    Level = c.Level ?? "银牌",
+                    Level = c.Level ?? null,
                     ServiceType = c.ServiceType ?? "娱乐陪玩",
                     Price = c.PricePerGame,
                     PriceUnit = "局",
@@ -137,9 +137,9 @@ public class HomeService : IHomeService
             }
 
             // 等级筛选
-            if (!string.IsNullOrEmpty(request.Level))
+            if (request.Level.HasValue)
             {
-                query = query.Where(c => c.Level == request.Level);
+                query = query.Where(c => c.Level == request.Level.Value);
             }
 
             // 价格区间筛选
@@ -208,8 +208,8 @@ public class HomeService : IHomeService
                     UserId = c.UserId,
                     Nickname = c.Nickname,
                     AvatarUrl = c.User == null ? "" : c.User.Avatar,
-                    Level = c.Level ?? "银牌",
-                    LevelCode = c.Level ?? "silver",
+                    Level = c.Level ?? null,
+                    LevelCode = c.Level ?? null,
                     ServiceType = c.ServiceType == "tech" ? "技术陪玩" : "娱乐陪玩",
                     ServiceTypeCode = c.ServiceType ?? "entertainment",
                     Price = c.PricePerGame,
@@ -277,8 +277,8 @@ public class HomeService : IHomeService
                 UserId = companion.UserId,
                 Nickname = companion.Nickname,
                 AvatarUrl = companion.User?.Avatar ?? "",
-                Level = companion.Level ?? "银牌",
-                LevelCode = companion.Level ?? "silver",
+                Level = companion.Level ?? null,
+                LevelCode = companion.Level ?? null,
                 ServiceType = companion.ServiceType == "tech" ? "技术陪玩" : "娱乐陪玩",
                 ServiceTypeCode = companion.ServiceType ?? "entertainment",
                 Price = companion.PricePerGame,
@@ -393,7 +393,7 @@ public class HomeService : IHomeService
                     Id = c.Id,
                     Nickname = c.Nickname,
                     AvatarUrl = c.User == null ? "" : (c.User.Avatar == null ? "" : c.User.Avatar),
-                    Level = c.Level ?? "银牌",
+                    Level = c.Level ?? null,
                     ServiceType = c.ServiceType == "tech" ? "技术陪玩" : "娱乐陪玩",
                     Price = c.PricePerGame,
                     PriceUnit = "局",

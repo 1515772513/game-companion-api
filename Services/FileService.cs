@@ -1,3 +1,5 @@
+using System.Net.Http;
+using System.Security.Claims;
 using GameCompanion.Api.Data;
 using GameCompanion.Api.DTO.File;
 using GameCompanion.Api.Models.Entities;
@@ -12,43 +14,59 @@ namespace GameCompanion.Api.Services
     {
         private readonly IWebHostEnvironment _webHostEnv;
         private readonly ApplicationDbContext _dbContext;
-        private readonly IFileService _fileService;
-        
+        private readonly ILogger<FileService> _logger;
+        private readonly string _wwwRootPath;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+
         public FileService(
             IWebHostEnvironment webHostEnv,
             ApplicationDbContext dbContext,
-            IFileService fileService)
+            ILogger<FileService> logger,
+            IHttpContextAccessor httpContextAccessor)
         {
             _webHostEnv = webHostEnv;
             _dbContext = dbContext;
-            _fileService = fileService;
+            _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
+
+            // 🔥 自动获取 wwwroot 路径，彻底避免 null
+            _wwwRootPath = Path.Combine(_webHostEnv.ContentRootPath, "wwwroot");
+            if (!Directory.Exists(_wwwRootPath))
+                Directory.CreateDirectory(_wwwRootPath);
         }
 
-        public async Task<FileUploadRespDto> UploadFileAsync(IFormFile file, string module, long? userId = null)
+        public async Task<FileUploadRespDto> UploadFileAsync(IFormFile file, string module)
         {
             if (file == null || file.Length == 0)
-                throw new Exception("上传文件不能为空");
+                throw new ArgumentException("上传文件不能为空");
 
-            // 路径
-            var root = _webHostEnv.WebRootPath;
-            var moduleDir = Path.Combine("uploads", module.ToLower());
-            var saveDir = Path.Combine(root, moduleDir);
+            // 模块默认值兜底
+            module = string.IsNullOrWhiteSpace(module) ? "common" : module.ToLower();
 
-            if (!Directory.Exists(saveDir))
-                Directory.CreateDirectory(saveDir);
+            long? userId = null;
+            var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext?.User.Identity?.IsAuthenticated == true)
+            {
+                var userIdStr = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                long.TryParse(userIdStr, out long uid);
+                userId = uid;
+            }
 
-            // 文件信息
+            var moduleFolder = Path.Combine("uploads", module);
+            var saveFolder = Path.Combine(_wwwRootPath, moduleFolder);
+            if (!Directory.Exists(saveFolder))
+                Directory.CreateDirectory(saveFolder);
+
             var ext = Path.GetExtension(file.FileName).Trim('.').ToLower();
-            var uuidFileName = $"{Guid.NewGuid():N}.{ext}";
-            var relativePath = Path.Combine(moduleDir, uuidFileName);
-            var fullPath = Path.Combine(root, relativePath);
+            var fileName = $"{Guid.NewGuid():N}{(string.IsNullOrEmpty(ext) ? "" : $".{ext}")}";
+            var relativePath = Path.Combine(moduleFolder, fileName);
+            var fullPath = Path.Combine(_wwwRootPath, relativePath);
             var fileUrl = $"/{relativePath.Replace("\\", "/")}";
 
-            // 保存文件
+            // 🔥 修复：正确枚举 FileMode.Create
             using var stream = new FileStream(fullPath, FileMode.Create);
             await file.CopyToAsync(stream);
 
-            // 入库
             var entity = new SysFile
             {
                 Id = Guid.NewGuid(),
@@ -59,21 +77,25 @@ namespace GameCompanion.Api.Services
                 FileExt = ext,
                 ContentType = file.ContentType,
                 UploadUser = userId,
+                UploadPlatform = "Web",
                 CreateTime = DateTime.Now,
-                UpdateTime = DateTime.Now
+                UpdateTime = DateTime.Now,
             };
 
             _dbContext.SysFiles.Add(entity);
             await _dbContext.SaveChangesAsync();
-
+            
+            var req = _httpContextAccessor.HttpContext.Request;
+            var baseUrl = $"{req.Scheme}://{req.Host.Value}";
+            _logger.LogInformation($"上传文件成功：{_httpContextAccessor.HttpContext.Request.PathBase.Value}");
             return new FileUploadRespDto
             {
                 Id = entity.Id,
                 FileName = entity.FileName,
-                FileUrl = entity.FileUrl,
+                FileUrl = $"{baseUrl}{entity.FileUrl}",
                 FileSize = entity.FileSize,
-                FileExt = entity.FileExt,
-                ContentType = entity.ContentType
+                FileExt = entity.FileExt ?? "",
+                ContentType = entity.ContentType ?? ""
             };
         }
 
@@ -82,11 +104,10 @@ namespace GameCompanion.Api.Services
             var file = await _dbContext.SysFiles
                 .FirstOrDefaultAsync(f => f.FileUrl == fileUrl && f.IsDeleted == 0);
 
-            if (file == null || !System.IO.File.Exists(file.FilePath))
+            if (file == null || !File.Exists(file.FilePath))
                 return new FileDownloadRespDto();
 
-            var bytes = await System.IO.File.ReadAllBytesAsync(file.FilePath);
-
+            var bytes = await File.ReadAllBytesAsync(file.FilePath);
             return new FileDownloadRespDto
             {
                 FileBytes = bytes,
@@ -104,19 +125,18 @@ namespace GameCompanion.Api.Services
 
                 if (file == null) return false;
 
-                // 逻辑删除
                 file.IsDeleted = 1;
                 file.UpdateTime = DateTime.Now;
 
-                // 物理删除
-                if (System.IO.File.Exists(file.FilePath))
-                    System.IO.File.Delete(file.FilePath);
+                if (File.Exists(file.FilePath))
+                    File.Delete(file.FilePath);
 
                 await _dbContext.SaveChangesAsync();
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "删除文件失败：{fileUrl}", fileUrl);
                 return false;
             }
         }

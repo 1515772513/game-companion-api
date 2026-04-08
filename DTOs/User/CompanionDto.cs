@@ -27,7 +27,8 @@ public class CompanionListDto
     public string Nickname { get; set; } = string.Empty;
     public string? RealName { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
-    public string Level { get; set; } = string.Empty; // 银牌/金牌/钻石/王者
+    public int? Level { get; set; } = null; // 银牌/金牌/钻石/王者
+    public string LevelName { get; set; } = string.Empty;
     public string ServiceType { get; set; } = string.Empty; // 技术陪玩/娱乐陪玩
     public string ServiceTypeName { get; set; } = string.Empty; // 技术陪玩/娱乐陪玩
     public decimal PricePerGame { get; set; }
@@ -40,6 +41,11 @@ public class CompanionListDto
     public string StatusName { get; set; } = string.Empty; // 待审核/审核通过/审核拒绝
     public string OnlineStatus { get; set; } = string.Empty;
     public string CreatedAt { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 主游戏ID
+    /// </summary>
+    public int MainGameId { get; set; }
     
     public List<CompanionGameItemDto> Games { get; set; } = new();
 }
