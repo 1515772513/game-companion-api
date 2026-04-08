@@ -130,6 +130,7 @@ builder.Services.AddScoped<IPowerLevelingService, PowerLevelingService>();
 builder.Services.AddScoped<ISystemConfigService, SystemConfigService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IDictTranslateService, DictTranslateService>();
+builder.Services.AddScoped<IGameService, GameService>();
 
 // CORS
 builder.Services.AddCors(options =>
