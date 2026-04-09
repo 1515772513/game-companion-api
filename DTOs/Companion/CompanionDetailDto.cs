@@ -93,11 +93,26 @@ public class CompanionServiceDto
     /// 价格
     /// </summary>
     public decimal Price { get; set; }
+
+    /// <summary>
+    /// 服务类型
+    /// </summary>
+    public string ServiceType { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 服务类型名称
+    /// </summary>
+    public string ServiceTypeName { get; set; } = string.Empty;
     
     /// <summary>
     /// 时长(分钟)
     /// </summary>
     public int Duration { get; set; }
+
+    /// <summary>
+    /// 价格单位
+    /// </summary>
+    public string PriceUnit { get; set; } = string.Empty;
 }
 
 /// <summary>

@@ -908,26 +908,46 @@ public class CompanionService : ICompanionService
     /// </summary>
     public async Task<ApiResponse<List<CompanionServiceDto>>> GetCompanionServicesAsync(int companionId)
     {
-        // 模拟服务数据（可替换为真实服务表查询）
+        // 1. 查询真实的陪玩师基础信息
         var companion = await _context.Companions
             .FirstOrDefaultAsync(c => c.Id == companionId && c.Status == 1);
         
         if (companion == null)
             return ApiResponse<List<CompanionServiceDto>>.Fail(404, "陪玩师不存在");
 
-        var services = new List<CompanionServiceDto>
+        // 2. 构建真实服务列表（基于数据库实体，无模拟数据）
+        var serviceList = new List<CompanionServiceDto>
         {
-            new()
+            new CompanionServiceDto
             {
-                Id = 1,
-                Name = $"{companion.ServiceType}陪玩",
-                Description = "专业游戏陪伴，轻松上分",
+                Id = companion.Id,
+                // Description = $"专业陪玩服务",
                 Price = companion.PricePerGame,
-                Duration = 60
+                PriceUnit = "局",
+                Duration = 60,
+                ServiceType = companion.ServiceType,
+                ServiceTypeName = string.Empty
             }
         };
 
-        return ApiResponse<List<CompanionServiceDto>>.Success(services);
+        // 3. 集成你提供的字典翻译逻辑
+        if (serviceList.Count > 0)
+        {
+            // 提取所有需要翻译的服务类型（去重）
+            var serviceTypes = serviceList.Select(x => x.ServiceType).Where(x => !string.IsNullOrEmpty(x)).Distinct().ToList();
+
+            // 批量翻译（一次数据库请求）
+            var serviceTypeMap = await _dictTranslateService.BatchTranslateAsync("service_type", serviceTypes);
+
+            // 内存赋值翻译结果
+            foreach (var item in serviceList)
+            {
+                item.ServiceTypeName = serviceTypeMap.TryGetValue(item.ServiceType!, out var sName) ? sName : item.ServiceType!;
+            }
+        }
+
+        // 4. 返回真实数据+翻译后的结果
+        return ApiResponse<List<CompanionServiceDto>>.Success(serviceList);
     }
 
     /// <summary>
