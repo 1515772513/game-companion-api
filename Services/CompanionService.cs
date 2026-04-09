@@ -868,6 +868,94 @@ public class CompanionService : ICompanionService
         }
     }
 
+    /// <summary>
+    /// 获取陪玩师详情（适配前端）
+    /// </summary>
+    public async Task<ApiResponse<CompanionListDetailDto>> GetCompanionDetailAsync(int companionId, int userId)
+    {
+        var companion = await _context.Companions
+            .Include(c => c.User)
+            .FirstOrDefaultAsync(c => c.Id == companionId && c.Status == 1);
+
+        if (companion == null)
+            return ApiResponse<CompanionListDetailDto>.Fail(404, "陪玩师不存在或未认证");
+
+        // 检查是否收藏
+        var isFavorite = await _context.UserCollections
+            .AnyAsync(f => f.UserId == userId && f.ItemId == companionId && f.ItemType == "companion");
+
+        var detail = new CompanionListDetailDto
+        {
+            Id = companion.Id,
+            Nickname = companion.Nickname,
+            Avatar = companion.User?.Avatar ?? string.Empty,
+            IsOnline = companion.OnlineStatus == "online",
+            IsVip = companion.User?.VipLevel > 0,
+            Rating = companion.Rating ?? 0,
+            OrderCount = companion.TotalOrders ?? 0,
+            GoodRate = companion.GoodReviewRate ?? 100,
+            Tags = companion.Tags?.Split(',').Where(t => !string.IsNullOrWhiteSpace(t)).ToList() ?? new(),
+            Intro = companion.Bio ?? "这个人很懒，什么都没留下~",
+            Gallery = new List<string>(), // 可扩展相册字段
+            IsFavorite = isFavorite
+        };
+
+        return ApiResponse<CompanionListDetailDto>.Success(detail);
+    }
+
+    /// <summary>
+    /// 获取陪玩师服务列表
+    /// </summary>
+    public async Task<ApiResponse<List<CompanionServiceDto>>> GetCompanionServicesAsync(int companionId)
+    {
+        // 模拟服务数据（可替换为真实服务表查询）
+        var companion = await _context.Companions
+            .FirstOrDefaultAsync(c => c.Id == companionId && c.Status == 1);
+        
+        if (companion == null)
+            return ApiResponse<List<CompanionServiceDto>>.Fail(404, "陪玩师不存在");
+
+        var services = new List<CompanionServiceDto>
+        {
+            new()
+            {
+                Id = 1,
+                Name = $"{companion.ServiceType}陪玩",
+                Description = "专业游戏陪伴，轻松上分",
+                Price = companion.PricePerGame,
+                Duration = 60
+            }
+        };
+
+        return ApiResponse<List<CompanionServiceDto>>.Success(services);
+    }
+
+    /// <summary>
+    /// 获取陪玩师评价列表
+    /// </summary>
+    public async Task<ApiResponse<List<CompanionReviewDto>>> GetCompanionReviewsAsync(int companionId, int page, int pageSize)
+    {
+        var reviews = await _context.OrderReviews
+            .Include(r => r.User)
+            .Where(r => r.CompanionId == companionId)
+            .OrderByDescending(r => r.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        var reviewList = reviews.Select(r => new CompanionReviewDto
+        {
+            Id = r.Id,
+            UserAvatar = r.User?.Avatar ?? string.Empty,
+            UserName = r.User?.Nickname ?? "匿名用户",
+            Score = r.Rating == null ? 5 : (int)r.Rating,
+            Content = r.Content ?? "好评",
+            // Images = r.Images?.Split(',').Where(i => !string.IsNullOrWhiteSpace(i)).ToList() ?? new(),
+            CreateTime = r.CreatedAt?.ToString("yyyy-MM-dd HH:mm") ?? string.Empty
+        }).ToList();
+
+        return ApiResponse<List<CompanionReviewDto>>.Success(reviewList);
+    }
 
 
     #endregion

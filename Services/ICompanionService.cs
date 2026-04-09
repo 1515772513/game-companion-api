@@ -88,4 +88,19 @@ public interface ICompanionService
     /// </summary>
     /// <returns></returns>
     Task<ApiResponse<CompanionListFrontResponse>> GetCompanionListForFrontAsync(CompanionListFrontRequest request);
+    
+    /// <summary>
+    /// 获取陪玩师详情（适配前端）
+    /// </summary>
+    Task<ApiResponse<CompanionListDetailDto>> GetCompanionDetailAsync(int companionId, int userId);
+
+    /// <summary>
+    /// 获取陪玩师服务列表
+    /// </summary>
+    Task<ApiResponse<List<CompanionServiceDto>>> GetCompanionServicesAsync(int companionId);
+
+    /// <summary>
+    /// 获取陪玩师评价列表
+    /// </summary>
+    Task<ApiResponse<List<CompanionReviewDto>>> GetCompanionReviewsAsync(int companionId, int page, int pageSize);
 }

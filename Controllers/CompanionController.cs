@@ -271,6 +271,51 @@ public class CompanionController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// 获取陪玩师详情
+    /// </summary>
+    [HttpGet("{id}")]
+    public async Task<ActionResult<ApiResponse<CompanionListDetailDto>>> GetCompanionDetail(int id)
+    {
+        var userId = GetUserIdFromClaims();
+        var result = await _companionService.GetCompanionDetailAsync(id, userId);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// 获取陪玩师服务列表
+    /// </summary>
+    [HttpGet("{id}/services")]
+    public async Task<ActionResult<ApiResponse<List<CompanionServiceDto>>>> GetCompanionServices(int id)
+    {
+        var result = await _companionService.GetCompanionServicesAsync(id);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// 获取陪玩师评价列表
+    /// </summary>
+    [HttpGet("{id}/reviews")]
+    public async Task<ActionResult<ApiResponse<List<CompanionReviewDto>>>> GetCompanionReviews(
+        int id, 
+        [FromQuery] int page = 1, 
+        [FromQuery] int pageSize = 10)
+    {
+        var result = await _companionService.GetCompanionReviewsAsync(id, page, pageSize);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// 从Token获取用户ID
+    /// </summary>
+    private int GetUserIdFromClaims()
+    {
+        var userIdClaim = User.FindFirst("userId");
+        if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+            return userId;
+        return 0;
+    }
+
     #endregion
 
     #region 管理端 PC

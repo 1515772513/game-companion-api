@@ -187,20 +187,40 @@ public class ApplicationDbContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
         });
     }
-
     private void ConfigureCompanion(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Companion>(entity =>
         {
             entity.HasKey(e => e.Id);
+
+            // 🔥 核心修复：强制绑定 UserId → user_id，禁止EF生成影子字段
+            entity.Property(e => e.UserId)
+                .HasColumnName("user_id")  // 数据库真实列名
+                .IsRequired();
+
+            // 🔥 修复关系冲突：匹配 User 实体的 Companions 集合导航
             entity.HasOne(e => e.User)
-                  .WithOne()
-                  .HasForeignKey<Companion>(e => e.UserId)
-                  .OnDelete(DeleteBehavior.Cascade);
+                .WithMany(u => u.Companions)  // 关键！对应User里的ICollection<Companion>
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // 原有精度保留
             entity.Property(e => e.PricePerGame).HasPrecision(10, 2);
             entity.Property(e => e.PricePerHour).HasPrecision(10, 2);
             entity.Property(e => e.Rating).HasPrecision(3, 2);
             entity.Property(e => e.GoodReviewRate).HasPrecision(5, 2);
+        });
+
+        // 🔥 修复 CompanionGame 外键，消除 CompanionId1
+        modelBuilder.Entity<CompanionGame>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CompanionId)
+                .HasColumnName("companion_id")
+                .IsRequired();
+            entity.Property(e => e.GameId)
+                .HasColumnName("game_id")
+                .IsRequired();
         });
     }
 

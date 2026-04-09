@@ -637,4 +637,80 @@ public class UserService : IUserService
             return ApiResponse<List<StatCardDto>>.Fail(500, "获取统计数据失败");
         }
     }
+
+    #region 客户端 mobile
+
+    /// <summary>
+    /// 添加收藏
+    /// </summary>
+    public async Task<ApiResponse<FavoriteResultDto>> AddFavoriteAsync(int userId, AddFavoriteDto dto)
+    {
+        // 1. 参数校验
+        if (userId <= 0 || dto.CompanionId <= 0)
+            return ApiResponse<FavoriteResultDto>.Fail(400, "参数异常");
+
+        // 2. 校验陪玩师是否存在
+        var companionExists = await _context.Companions
+            .AnyAsync(c => c.Id == dto.CompanionId && c.Status == 1);
+        if (!companionExists)
+            return ApiResponse<FavoriteResultDto>.Fail(404, "陪玩师不存在或未上线");
+
+        // 3. 校验是否已收藏
+        var isExist = await _context.UserCollections
+            .AnyAsync(f => f.UserId == userId 
+                         && f.ItemId == dto.CompanionId 
+                         && f.ItemType == "companion");
+        if (isExist)
+            return ApiResponse<FavoriteResultDto>.Fail(400, "已收藏该陪玩师");
+
+        // 4. 新增收藏记录
+        var favorite = new UserCollection
+        {
+            UserId = userId,
+            ItemId = dto.CompanionId,
+            ItemType = "companion",
+            CreatedAt = DateTime.Now
+        };
+
+        _context.UserCollections.Add(favorite);
+        await _context.SaveChangesAsync();
+
+        // 5. 返回结果
+        return ApiResponse<FavoriteResultDto>.Success(new FavoriteResultDto
+        {
+            Success = true,
+            Message = "收藏成功"
+        });
+    }
+
+    /// <summary>
+    /// 取消收藏
+    /// </summary>
+    public async Task<ApiResponse<FavoriteResultDto>> RemoveFavoriteAsync(int userId, int companionId)
+    {
+        // 1. 参数校验
+        if (userId <= 0 || companionId <= 0)
+            return ApiResponse<FavoriteResultDto>.Fail(400, "参数异常");
+
+        // 2. 查询收藏记录
+        var favorite = await _context.UserCollections
+            .FirstOrDefaultAsync(f => f.UserId == userId 
+                                    && f.ItemId == companionId 
+                                    && f.ItemType == "companion");
+        if (favorite == null)
+            return ApiResponse<FavoriteResultDto>.Fail(400, "未收藏该陪玩师");
+
+        // 3. 删除收藏
+        _context.UserCollections.Remove(favorite);
+        await _context.SaveChangesAsync();
+
+        // 4. 返回结果
+        return ApiResponse<FavoriteResultDto>.Success(new FavoriteResultDto
+        {
+            Success = true,
+            Message = "取消收藏成功"
+        });
+    }
+
+    #endregion
 }

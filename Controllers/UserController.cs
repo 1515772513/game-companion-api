@@ -236,4 +236,42 @@ public class UserController : ControllerBase
         }
         return 0;
     }
+
+
+    #region 客户端 mobile
+    
+    /// <summary>
+    /// 添加收藏
+    /// </summary>
+    [HttpPost("favorite")]
+    public async Task<ActionResult<ApiResponse<FavoriteResultDto>>> AddFavorite([FromBody] AddFavoriteDto dto)
+    {
+        var userId = GetUserId();
+        var result = await _userService.AddFavoriteAsync(userId, dto);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// 取消收藏
+    /// </summary>
+    [HttpDelete("favorite/{companionId}")]
+    public async Task<ActionResult<ApiResponse<FavoriteResultDto>>> RemoveFavorite(int companionId)
+    {
+        var userId = GetUserId();
+        var result = await _userService.RemoveFavoriteAsync(userId, companionId);
+        return Ok(result);
+    }
+
+    #endregion
+
+    #region 私有方法
+    /// <summary>
+    /// 从Token获取当前登录用户ID
+    /// </summary>
+    private int GetUserId()
+    {
+        var claim = User.FindFirst("userId");
+        return claim != null && int.TryParse(claim.Value, out int id) ? id : 0;
+    }
+    #endregion
 }

@@ -68,4 +68,14 @@ public interface IUserService
     /// 获取用户统计卡片
     /// </summary>
     Task<ApiResponse<List<StatCardDto>>> GetUserStatCardsAsync();
+
+    /// <summary>
+    /// 添加陪玩师收藏
+    /// </summary>
+    Task<ApiResponse<FavoriteResultDto>> AddFavoriteAsync(int userId, AddFavoriteDto dto);
+
+    /// <summary>
+    /// 取消陪玩师收藏
+    /// </summary>
+    Task<ApiResponse<FavoriteResultDto>> RemoveFavoriteAsync(int userId, int companionId);
 }
