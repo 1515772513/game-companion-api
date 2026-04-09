@@ -22,6 +22,12 @@ namespace GameCompanion.Api.DTOs.Companion
     public int PageSize { get; set; } = 10;
 
     /// <summary>
+    /// 搜索关键词：昵称/真实姓名
+    /// </summary>
+    [FromQuery(Name = "keyword")]
+    public string? Keyword { get; set; }
+
+    /// <summary>
     /// 游戏ID
     /// </summary>
     [FromQuery(Name = "game_id")]
@@ -32,6 +38,12 @@ namespace GameCompanion.Api.DTOs.Companion
     /// </summary>
     [FromQuery(Name = "service_type")]
     public string? ServiceType { get; set; }
+
+    /// <summary>
+    /// 等级
+    /// </summary>
+    [FromQuery(Name = "level")]
+    public int? Level { get; set; }
 
     /// <summary>
     /// 排序：default/price_asc/price_desc

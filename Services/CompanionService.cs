@@ -701,6 +701,12 @@ public class CompanionService : ICompanionService
 
             int? filterGameId = request.GameId > 0 ? request.GameId : null;
 
+            // 搜索关键词
+            if (!string.IsNullOrWhiteSpace(request.Keyword))
+            {
+                query = query.Where(c => c.Nickname.Contains(request.Keyword) || c.User.RealName.Contains(request.Keyword));
+            }
+
             // 游戏筛选
             if (filterGameId.HasValue)
             {
@@ -714,6 +720,10 @@ public class CompanionService : ICompanionService
                 query = query.Where(c => c.ServiceType == request.ServiceType);
             }
 
+            // 等级
+            if (request.Level.HasValue)
+                query = query.Where(c => c.Level == request.Level.Value);
+
             // 在线状态
             if (request.OnlineStatus == 1)
                 query = query.Where(c => c.OnlineStatus == "online");
@@ -723,6 +733,10 @@ public class CompanionService : ICompanionService
             {
                 "price_asc" => query.OrderBy(c => c.PricePerGame),
                 "price_desc" => query.OrderByDescending(c => c.PricePerGame),
+                "rating_asc" => query.OrderBy(c => c.Rating),
+                "rating_desc" => query.OrderByDescending(c => c.Rating),
+                "total_orders_asc" => query.OrderBy(c => c.TotalOrders),
+                "total_orders_desc" => query.OrderByDescending(c => c.TotalOrders),
                 _ => query.OrderByDescending(c => c.Rating)
             };
 
