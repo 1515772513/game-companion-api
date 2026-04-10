@@ -68,7 +68,7 @@ public class UserInfo
     public decimal Balance { get; set; }
     public int Points { get; set; }
     public bool IsCompanion { get; set; }
-    public string? CompanionStatus { get; set; }
+    public int? CompanionStatus { get; set; }
     public string CreatedAt { get; set; } = string.Empty;
 }
 
@@ -108,4 +108,15 @@ public class RefreshTokenRequest
 {
     [Required]
     public string RefreshToken { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// 手机号一键登录请求DTO（无验证码）
+/// </summary>
+public class SmsLoginRequest
+{
+    [Required(ErrorMessage = "手机号不能为空")]
+    [Phone(ErrorMessage = "手机号格式不正确")]
+    [StringLength(11, MinimumLength = 11, ErrorMessage = "手机号必须为11位")]
+    public string Phone { get; set; } = string.Empty;
 }

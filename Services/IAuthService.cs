@@ -37,4 +37,9 @@ public interface IAuthService
     /// 退出登录
     /// </summary>
     Task<ApiResponse<object>> LogoutAsync(int userId);
+
+    /// <summary>
+    /// 手机号一键登录（无验证码）
+    /// </summary>
+    Task<ApiResponse<LoginResponse>> SmsLoginAsync(SmsLoginRequest request);
 }

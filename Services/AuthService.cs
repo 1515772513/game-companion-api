@@ -230,4 +230,89 @@ public class AuthService : IAuthService
         }
         return phone;
     }
+
+    #region 客户端 mobile
+
+    /// <summary>
+    /// 手机号一键登录（无验证码 + 无账号自动创建）
+    /// </summary>
+    public async Task<ApiResponse<LoginResponse>> SmsLoginAsync(SmsLoginRequest request)
+    {
+        try
+        {
+            // 1. 根据手机号查询用户
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Phone == request.Phone);
+
+            // 2. 如果用户不存在 → 自动创建账号
+            if (user == null)
+            {
+                user = new User
+                {
+                    Phone = request.Phone,
+                    Username = $"user_{request.Phone}", // 默认用户名
+                    Nickname = $"用户{request.Phone[^4..]}", // 尾号4位
+                    Status = true, // 启用
+                    IsBlocked = false,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    LastLoginTime = DateTime.UtcNow
+                    // 你有其他默认字段，在这里继续加
+                };
+
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                // 3. 已有账号 → 校验状态
+                if (user.Status != true)
+                    return ApiResponse<LoginResponse>.ErrorResponse(1007, "账号已被禁用");
+
+                if (user.IsBlocked == true)
+                    return ApiResponse<LoginResponse>.ErrorResponse(1008, "账号已被封禁");
+            }
+
+            // 4. 统一更新登录时间
+            user.LastLoginTime = DateTime.UtcNow;
+            user.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            // 5. 生成 Token
+            var token = GenerateJwtToken(user);
+            var refreshToken = GenerateRefreshToken();
+
+            // 6. 返回登录成功
+            return ApiResponse<LoginResponse>.SuccessResponse(new LoginResponse
+            {
+                AccessToken = token,
+                RefreshToken = refreshToken,
+                ExpiresIn = 7200,
+                UserInfo = new UserInfo
+                {
+                    Id = user.Id,
+                    Username = user.Username,
+                    Nickname = user.Nickname,
+                    Avatar = user.Avatar,
+                    Phone = MaskPhone(user.Phone),
+                    Gender = user.Gender ?? "未知",
+                    VipLevel = user.VipLevel.GetSafeInt(),
+                    VipExpireTime = user.VipExpireDate?.ToString("yyyy-MM-dd HH:mm:ss"),
+                    Balance = user.Balance.GetSafeDecimal(),
+                    Points = user.Points.GetSafeInt(),
+                    IsCompanion = user.Companions.Any(),
+                    CompanionStatus = user.Companions.FirstOrDefault()?.Status,
+                    CreatedAt = user.CreatedAt?.ToDateTimeString() ?? string.Empty
+                }
+            }, "登录成功");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "一键登录异常：{Phone}", request.Phone);
+            return ApiResponse<LoginResponse>.ErrorResponse(500, "服务器异常");
+        }
+    }
+
+
+
+    #endregion
 }
