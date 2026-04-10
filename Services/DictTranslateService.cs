@@ -10,7 +10,7 @@ public class DictTranslateService : IDictTranslateService
     private GameCompanionContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<GameCompanionContext>()
-            .UseMySql("server=47.98.225.136;port=3306;database=game_companion;user=admin;password=admin123;charset=utf8mb4",
+            .UseMySql("server=47.93.230.189;port=3306;database=game_companion;user=admin;password=admin123;charset=utf8mb4",
             Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.37-mysql"))
             .Options;
 
