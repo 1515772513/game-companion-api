@@ -114,9 +114,9 @@ namespace GameCompanion.Api.DTOs.Companion
     public int OrderCount { get; set; }
 
     /// <summary>
-    /// 在线状态 1-在线 0-离线
+    /// 在线状态
     /// </summary>
-    public int OnlineStatus { get; set; }
+    public string OnlineStatus { get; set; } = string.Empty;
   }
 
   /// <summary>

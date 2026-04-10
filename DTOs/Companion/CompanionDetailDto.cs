@@ -26,7 +26,7 @@ public class CompanionListDetailDto
     /// <summary>
     /// 是否在线
     /// </summary>
-    public bool IsOnline { get; set; }
+    public string OnlineStatus { get; set; } = string.Empty;
     
     /// <summary>
     /// 是否VIP

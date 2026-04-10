@@ -845,7 +845,7 @@ public class CompanionService : ICompanionService
                     PriceUnit = "局",
                     Rating = x.Rating ?? 0,
                     OrderCount = x.TotalOrders ?? 0,
-                    OnlineStatus = x.OnlineStatus == "online" ? 1 : 0
+                    OnlineStatus = x.OnlineStatus
                 };
             }).ToList();
 
@@ -889,7 +889,7 @@ public class CompanionService : ICompanionService
             Id = companion.Id,
             Nickname = companion.Nickname,
             Avatar = companion.User?.Avatar ?? string.Empty,
-            IsOnline = companion.OnlineStatus == "online",
+            OnlineStatus = companion.OnlineStatus,
             IsVip = companion.User?.VipLevel > 0,
             Rating = companion.Rating ?? 0,
             OrderCount = companion.TotalOrders ?? 0,
