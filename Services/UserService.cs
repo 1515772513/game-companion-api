@@ -608,9 +608,18 @@ public class UserService : IUserService
                 return ApiResponse<UserProfileDto>.Fail(404, "用户不存在");
             }
 
-            // ✅ 仅新增：统计该用户的收藏总数，完全不改动你原有查询和映射逻辑
+            // 收藏总数
             var collectionCount = await _context.UserCollections
                 .CountAsync(c => c.UserId == user.Id);
+
+            // 订单总数
+            var orderCount = await _context.Orders
+                .CountAsync(o => o.UserId == user.Id);
+
+            // 优惠券数
+            var couponCount = await _context.Coupons
+                .CountAsync(c => c.UserId == user.Id);
+
 
             var profileDto = new UserProfileDto
             {
@@ -634,8 +643,9 @@ public class UserService : IUserService
                 CreatedAt = user.CreatedAt.ToDateTimeString(),
                 UpdatedAt = user.UpdatedAt.ToDateTimeString(),
                 
-                // ✅ 仅修改这一行：用统计结果替换错误的 .Count 调用
                 UserCollectionCount = collectionCount,
+                OrderCount = orderCount,
+                CouponCount = couponCount,
             };
 
             return ApiResponse<UserProfileDto>.Success(profileDto);

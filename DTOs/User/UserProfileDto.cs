@@ -32,6 +32,16 @@ public class UserProfileDto
     /// 收藏项目数量
     /// </summary>
     public int UserCollectionCount { get; set; } = 0;
+
+    /// <summary>
+    /// 订单数量
+    /// </summary>
+    public int OrderCount { get; set; } = 0;
+
+    /// <summary>
+    /// 优惠券数量
+    /// </summary>
+    public int CouponCount { get; set; } = 0;
 }
 
 /// <summary>
