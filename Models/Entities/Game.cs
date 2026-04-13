@@ -63,7 +63,8 @@ public partial class Game
     /// <summary>
     /// 状态
     /// </summary>
-    [Column("status", TypeName = "enum('active','inactive')")]
+    [Column("status")]
+    [StringLength(1)]
     public string? Status { get; set; }
 
     /// <summary>

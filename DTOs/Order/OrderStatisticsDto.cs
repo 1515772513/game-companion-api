@@ -30,3 +30,29 @@ public class OrderStatisticsDto
     /// </summary>
     public long RefundAfterSale { get; set; }
 }
+
+/// <summary>
+/// 订单状态统计响应DTO
+/// </summary>
+public class OrderStatusDto
+{
+    /// <summary>
+    /// 待付款
+    /// </summary>
+    public long PendingPayment { get; set; }
+    
+    /// <summary>
+    /// 进行中
+    /// </summary>
+    public long InProgress { get; set; }
+    
+    /// <summary>
+    /// 已完成
+    /// </summary>
+    public long Completed { get; set; }
+    
+    /// <summary>
+    /// 退款/售后
+    /// </summary>
+    public long RefundAfterSale { get; set; }
+}

@@ -55,4 +55,10 @@ public interface IOrderService
     /// </summary>
     /// <returns>订单统计结果</returns>
     Task<ApiResponse<OrderStatisticsDto>> GetStatisticsAsync();
+
+    /// <summary>
+    /// 获取订单状态统计数据
+    /// </summary>
+    /// <returns>订单状态统计结果</returns>
+    Task<ApiResponse<OrderStatusDto>> GetOrderStatusAsync(string openId);
 }

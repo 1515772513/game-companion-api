@@ -62,7 +62,7 @@ public class UserInfo
     public string Nickname { get; set; } = string.Empty;
     public string? Avatar { get; set; }
     public string Phone { get; set; } = string.Empty;
-    public string Gender { get; set; } = "未知";
+    public int Gender { get; set; } = 0;
     public int VipLevel { get; set; } = 0;
     public string? VipExpireTime { get; set; }
     public decimal Balance { get; set; }
@@ -119,4 +119,21 @@ public class SmsLoginRequest
     [Phone(ErrorMessage = "手机号格式不正确")]
     [StringLength(11, MinimumLength = 11, ErrorMessage = "手机号必须为11位")]
     public string Phone { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// 微信一键登录请求DTO
+/// </summary>
+public class WechatLoginRequest
+{
+    [Required(ErrorMessage = "openid不能为空")]
+    public string Openid { get; set; } = string.Empty;
+    
+    public string Nickname { get; set; } = string.Empty;
+
+    public string? Avatar { get; set; }
+
+    public string? Gender { get; set; } = "未知";
+
+
 }

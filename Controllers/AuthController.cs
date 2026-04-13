@@ -124,4 +124,20 @@ public class AuthController : ControllerBase
         var result = await _authService.SmsLoginAsync(request);
         return Ok(result);
     }
+
+
+    /// <summary>
+    /// 微信一键登录
+    /// </summary>
+    /// <param name="request">微信一键登录请求</param>
+    /// <returns>登录结果</returns>
+    [HttpPost("login-wechat")]
+    [ProducesResponseType(typeof(ApiResponse<LoginResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<ApiResponse<LoginResponse>>> WechatLogin([FromBody] WechatLoginRequest request)
+    {
+        var result = await _authService.WechatLoginAsync(request);
+        return Ok(result);
+    }
 }

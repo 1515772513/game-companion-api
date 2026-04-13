@@ -14,7 +14,7 @@ public class UserProfileDto
     public string? IdCard { get; set; }
     public string Phone { get; set; } = string.Empty;
     public string? Avatar { get; set; }
-    public string? Gender { get; set; }
+    public int? Gender { get; set; } = 0;
     public int Age { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? Bio { get; set; }
@@ -27,6 +27,11 @@ public class UserProfileDto
     public string? LastLoginTime { get; set; } = string.Empty;
     public string CreatedAt { get; set; } = string.Empty;
     public string UpdatedAt { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 收藏项目数量
+    /// </summary>
+    public int UserCollectionCount { get; set; } = 0;
 }
 
 /// <summary>
@@ -50,7 +55,7 @@ public class UpdateProfileDto
     public string Phone { get; set; } = string.Empty;
 
     [MaxLength(20)]
-    public string? Gender { get; set; }
+    public int? Gender { get; set; } = 0;
 
     public int Age { get; set; }
 

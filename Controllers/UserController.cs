@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using System.Text.Json;
 using GameCompanion.Api.DTOs.User;
 using GameCompanion.Api.Helpers;
 using GameCompanion.Api.Models;
@@ -27,19 +29,20 @@ public class UserController : ControllerBase
     /// <summary>
     /// 获取用户个人信息
     /// </summary>
-    [HttpGet("profile")]
+    [HttpGet("info")]
     [ProducesResponseType(typeof(ApiResponse<UserProfileDto>), 200)]
     [ProducesResponseType(typeof(ApiResponse<>), 404)]
     [ProducesResponseType(typeof(ApiResponse<>), 500)]
     public async Task<IActionResult> GetProfile()
     {
-        var userId = GetUserIdFromClaims();
-        if (userId == 0)
+        var openId = GetOpenId();
+        _logger.LogInformation($"openId: {openId}");
+        if (string.IsNullOrEmpty(openId))
         {
             return ApiResponse<UserProfileDto>.Fail(401, "用户未授权").ToActionResult();
         }
 
-        var result = await _userService.GetProfileAsync(userId);
+        var result = await _userService.GetProfileAsync(openId);
         return result.ToActionResult();
     }
 
@@ -254,11 +257,11 @@ public class UserController : ControllerBase
     /// <summary>
     /// 取消收藏
     /// </summary>
-    [HttpDelete("favorite/{companionId}")]
-    public async Task<ActionResult<ApiResponse<FavoriteResultDto>>> RemoveFavorite(int companionId)
+    [HttpPost("favorite-remove")]
+    public async Task<ActionResult<ApiResponse<FavoriteResultDto>>> RemoveFavorite([FromBody] RemoveFavoriteDto dto)
     {
         var userId = GetUserId();
-        var result = await _userService.RemoveFavoriteAsync(userId, companionId);
+        var result = await _userService.RemoveFavoriteAsync(userId, dto);
         return Ok(result);
     }
 
@@ -270,8 +273,17 @@ public class UserController : ControllerBase
     /// </summary>
     private int GetUserId()
     {
-        var claim = User.FindFirst("userId");
+        var claim = User.FindFirst(ClaimTypes.NameIdentifier);
         return claim != null && int.TryParse(claim.Value, out int id) ? id : 0;
+    }
+
+    /// <summary>
+    /// 从Token获取当前登录用户OpenID
+    /// </summary>
+    private string GetOpenId()
+    {
+        var claim = User.FindFirst("openId");
+        return claim != null ? claim.Value : string.Empty;
     }
     #endregion
 }

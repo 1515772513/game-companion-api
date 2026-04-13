@@ -3,6 +3,7 @@ using GameCompanion.Api.Models;
 using GameCompanion.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using GameCompanion.Api.Data;
+using System.Security.Claims;
 
 namespace GameCompanion.Api.Controllers;
 
@@ -310,7 +311,7 @@ public class CompanionController : ControllerBase
     /// </summary>
     private int GetUserIdFromClaims()
     {
-        var userIdClaim = User.FindFirst("userId");
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
         if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
             return userId;
         return 0;

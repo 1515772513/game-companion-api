@@ -8,6 +8,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using GameCompanion.Api.Utils;
+using System.Text.Json;
 
 namespace GameCompanion.Api.Services;
 
@@ -65,7 +66,7 @@ public class AuthService : IAuthService
                 Nickname = user.Nickname,
                 Avatar = user.Avatar,
                 Phone = MaskPhone(user.Phone),
-                Gender = user.Gender,
+                Gender = user.Gender.GetSafeInt(),
                 VipLevel = user.VipLevel.GetSafeInt(),
                 VipExpireTime = user.VipExpireDate?.ToString("yyyy-MM-dd HH:mm:ss"),
                 Balance = user.Balance.GetSafeDecimal(),
@@ -185,9 +186,10 @@ public class AuthService : IAuthService
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Name, user.Username),
-            new Claim(ClaimTypes.MobilePhone, user.Phone),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new Claim(ClaimTypes.Name, user.Username ?? string.Empty),
+            new Claim(ClaimTypes.MobilePhone, user.Phone ?? string.Empty),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim("Openid", user.Openid ?? string.Empty)
         };
 
         var tokenDescriptor = new SecurityTokenDescriptor
@@ -294,7 +296,7 @@ public class AuthService : IAuthService
                     Nickname = user.Nickname,
                     Avatar = user.Avatar,
                     Phone = MaskPhone(user.Phone),
-                    Gender = user.Gender ?? "未知",
+                    Gender = user.Gender ?? 0,
                     VipLevel = user.VipLevel.GetSafeInt(),
                     VipExpireTime = user.VipExpireDate?.ToString("yyyy-MM-dd HH:mm:ss"),
                     Balance = user.Balance.GetSafeDecimal(),
@@ -312,7 +314,136 @@ public class AuthService : IAuthService
         }
     }
 
+    /// <summary>
+    /// 微信一键登录
+    /// </summary>
+    public async Task<ApiResponse<LoginResponse>> WechatLoginAsync(WechatLoginRequest request)
+    {
+        try
+        {
+            // 1. 根据 code 获取 openid ✅
+            var wechatResult = await GetWechatOpenIdAsync(request.Openid);
+            string openid = wechatResult.openid;
 
+            // 1. 根据Openid查询用户
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Openid == openid);
+
+            // 2. 如果用户不存在 → 自动创建账号
+            if (user == null)
+            {
+                user = new User
+                {
+                    Openid = openid,
+                    Nickname = request.Nickname ?? $"用户{request.Openid[^4..]}", // 后4位
+                    Avatar = request.Avatar ?? string.Empty,
+                    Status = true, // 启用
+                    IsBlocked = false,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    LastLoginTime = DateTime.UtcNow,
+                    Phone = string.Empty,
+                };
+
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                // 3. 已有账号 → 校验状态
+                if (user.Status != true)
+                    return ApiResponse<LoginResponse>.ErrorResponse(1007, "账号已被禁用");
+
+                if (user.IsBlocked == true)
+                    return ApiResponse<LoginResponse>.ErrorResponse(1008, "账号已被封禁");
+            }
+
+            // 4. 统一更新登录时间
+            user.LastLoginTime = DateTime.UtcNow;
+            user.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            // 5. 生成 Token
+            var token = GenerateJwtToken(user);
+            var refreshToken = GenerateRefreshToken();
+
+            // 6. 返回登录成功
+            return ApiResponse<LoginResponse>.SuccessResponse(new LoginResponse
+            {
+                AccessToken = token,
+                RefreshToken = refreshToken,
+                ExpiresIn = 7200,
+                UserInfo = new UserInfo
+                {
+                    Id = user.Id,
+                    Username = user.Username,
+                    Nickname = user.Nickname,
+                    Avatar = user.Avatar,
+                    Phone = MaskPhone(user.Phone),
+                    Gender = user.Gender ?? 0,
+                    VipLevel = user.VipLevel.GetSafeInt(),
+                    VipExpireTime = user.VipExpireDate?.ToString("yyyy-MM-dd HH:mm:ss"),
+                    Balance = user.Balance.GetSafeDecimal(),
+                    Points = user.Points.GetSafeInt(),
+                    IsCompanion = user.Companions.Any(),
+                    CompanionStatus = user.Companions.FirstOrDefault()?.Status,
+                    CreatedAt = user.CreatedAt?.ToDateTimeString() ?? string.Empty
+                }
+            }, "登录成功");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "一键登录异常：{Openid}", request.Openid);
+            return ApiResponse<LoginResponse>.ErrorResponse(500, "服务器异常");
+        }
+    }
+    
+    #endregion
+
+
+    #region 私有方法
+
+    /// <summary>
+    /// 根据微信小程序 code 获取 openid
+    /// </summary>
+    private async Task<WechatSessionResponse> GetWechatOpenIdAsync(string code)
+    {
+        // 你小程序的 appid 和 secret（从微信公众平台拿）
+        string appId = "wx0cbe906910dac8d2";
+        string secret = "8a43a08a58fa33f72f0c77118cbc92f0";
+
+        // 微信官方接口
+        string url = $"https://api.weixin.qq.com/sns/jscode2session" +
+            $"?appid={appId}" +
+            $"&secret={secret}" +
+            $"&js_code={code}" +
+            $"&grant_type=authorization_code";
+
+        using var http = new HttpClient();
+        var response = await http.GetAsync(url);
+        var json = await response.Content.ReadAsStringAsync();
+
+        // 解析返回结果
+        var result = JsonSerializer.Deserialize<WechatSessionResponse>(json);
+
+        // 如果 errcode 不为 0，说明获取失败
+        if (!string.IsNullOrEmpty(result.errcode) && result.errcode != "0")
+        {
+            throw new Exception($"微信授权失败：{result.errmsg}");
+        }
+
+        return result;
+    }
+
+    // 接收微信返回的模型
+    public class WechatSessionResponse
+    {
+        public string openid { get; set; } = "";
+        public string session_key { get; set; } = "";
+        public string errcode { get; set; } = "";
+        public string errmsg { get; set; } = "";
+    }
 
     #endregion
+
+
 }

@@ -6,9 +6,32 @@ namespace GameCompanion.Api.DTOs.User;
 public class AddFavoriteDto
 {
     /// <summary>
-    /// 陪玩师ID
+    /// 关联项目ID
     /// </summary>
-    public int CompanionId { get; set; }
+    public int ItemId { get; set; }
+
+    /// <summary>
+    /// 关联项目类型(companion/post等)
+    /// </summary>
+    public string ItemType { get; set; } = "companion";
+    
+}
+
+/// <summary>
+/// 取消收藏请求DTO
+/// </summary>
+public class RemoveFavoriteDto
+{
+    /// <summary>
+    /// 关联项目ID
+    /// </summary>
+    public int ItemId { get; set; }
+
+    /// <summary>
+    /// 关联项目类型(companion/post等)
+    /// </summary>
+    public string ItemType { get; set; } = "companion";
+    
 }
 
 /// <summary>

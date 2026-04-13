@@ -553,6 +553,44 @@ public class OrderService : IOrderService
         }
     }
 
+    #region 客户端 mobile
+    /// <summary>
+    /// 获取订单统计数据（高性能：单次SQL查询，5种状态一次算出）
+    /// </summary>
+    public async Task<ApiResponse<OrderStatusDto>> GetOrderStatusAsync(string openId)
+    {
+        try
+        {
+            // 🔥 高性能：单次EF Core查询，一次性统计所有状态，只查1次DB！
+            var statistics = await _context.Orders
+                .Where(x => x.User.Openid == openId)
+                .AsNoTracking() // 无跟踪，极致性能
+                .GroupBy(x => 1) // 虚拟分组，一次性聚合所有数据
+                .Select(g => new OrderStatusDto
+                {
+                    // TotalOrders = g.Count(),
+                    // 对应你字典的状态值：0=待付款，1=进行中，2=已完成，3=退款/售后
+                    PendingPayment = g.Count(x => x.Status == "0"),
+                    InProgress = g.Count(x => x.Status == "1"),
+                    Completed = g.Count(x => x.Status == "2"),
+                    RefundAfterSale = g.Count(x => x.Status == "3")
+                })
+                .FirstOrDefaultAsync();
+
+            // 兜底：如果没有数据，返回0
+            var result = statistics ?? new OrderStatusDto();
+
+            return ApiResponse<OrderStatusDto>.Success(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "获取订单统计数据失败");
+            return ApiResponse<OrderStatusDto>.Fail(500, "获取统计数据失败");
+        }
+    }
+
+    #endregion
+
     #region PC端
 
     /// <summary>

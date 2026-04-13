@@ -75,9 +75,10 @@ public partial class Companion
     public int? Level { get; set; }
 
     /// <summary>
-    /// 服务类型:技术陪玩/娱乐陪玩/语音陪伴
+    /// 服务类型
     /// </summary>
     [Column("service_type")]
+    [StringLength(1)]
     public string? ServiceType { get; set; }
 
     /// <summary>

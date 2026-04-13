@@ -24,55 +24,55 @@ public partial class User
     /// </summary>
     [Column("username")]
     [StringLength(50)]
-    public string Username { get; set; } = null!;
+    public string Username { get; set; } = string.Empty;
 
     /// <summary>
     /// 密码
     /// </summary>
     [Column("password")]
     [StringLength(255)]
-    public string Password { get; set; } = null!;
+    public string Password { get; set; } = string.Empty;
 
     /// <summary>
     /// 昵称
     /// </summary>
     [Column("nickname")]
     [StringLength(50)]
-    public string Nickname { get; set; } = null!;
+    public string Nickname { get; set; } = string.Empty;
 
     /// <summary>
     /// 真实姓名
     /// </summary>
     [Column("real_name")]
     [StringLength(50)]
-    public string? RealName { get; set; }
+    public string? RealName { get; set; } = string.Empty;
 
     /// <summary>
     /// 身份证号
     /// </summary>
     [Column("id_card")]
     [StringLength(18)]
-    public string? IdCard { get; set; }
+    public string? IdCard { get; set; } = string.Empty;
 
     /// <summary>
     /// 手机号
     /// </summary>
     [Column("phone")]
     [StringLength(11)]
-    public string Phone { get; set; } = null!;
+    public string Phone { get; set; } = string.Empty;
 
     /// <summary>
     /// 头像URL
     /// </summary>
     [Column("avatar")]
     [StringLength(255)]
-    public string? Avatar { get; set; }
+    public string? Avatar { get; set; } = string.Empty;
 
     /// <summary>
     /// 性别
     /// </summary>
-    [Column("gender", TypeName = "enum('male','female','other')")]
-    public string? Gender { get; set; }
+    [Column("gender")]
+    public int? Gender { get; set; } = 0;
 
     /// <summary>
     /// 年龄
@@ -85,21 +85,21 @@ public partial class User
     /// </summary>
     [Column("name")]
     [StringLength(100)]
-    public string Name { get; set; } = null!;
+    public string Name { get; set; } = string.Empty;
 
     /// <summary>
     /// 用户ID(如10086888)
     /// </summary>
     [Column("user_id")]
     [StringLength(20)]
-    public string? UserId { get; set; }
+    public string? UserId { get; set; } = string.Empty;
 
     /// <summary>
     /// 个人简介
     /// </summary>
     [Column("bio")]
     [StringLength(500)]
-    public string? Bio { get; set; }
+    public string? Bio { get; set; } = string.Empty;
 
     /// <summary>
     /// VIP等级 0=普通 1=普通会员 2=VIP会员 3=SVIP会员
@@ -155,6 +155,13 @@ public partial class User
     /// </summary>
     [Column("is_admin")]
     public bool? IsAdmin { get; set; }
+
+    /// <summary>
+    /// 微信openid
+    /// </summary>
+    [Column("openid")]
+    [StringLength(100)]
+    public string? Openid { get; set; } = string.Empty;
 
     public virtual ICollection<Collection> Collections { get; set; } = new List<Collection>();
 

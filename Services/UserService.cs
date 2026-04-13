@@ -23,52 +23,6 @@ public class UserService : IUserService
     }
 
     /// <summary>
-    /// 获取用户个人信息
-    /// </summary>
-    public async Task<ApiResponse<UserProfileDto>> GetProfileAsync(int userId)
-    {
-        try
-        {
-            var user = await _context.Users.FindAsync(userId);
-            if (user == null)
-            {
-                return ApiResponse<UserProfileDto>.Fail(404, "用户不存在");
-            }
-
-            var profileDto = new UserProfileDto
-            {
-                Id = user.Id,
-                Username = user.Username,
-                Nickname = user.Nickname,
-                RealName = user.RealName,
-                IdCard = user.IdCard,
-                Phone = user.Phone,
-                Avatar = user.Avatar,
-                Gender = user.Gender,
-                Age = user.Age,
-                Name = user.Name,
-                Bio = user.Bio,
-                VipLevel = user.VipLevel,
-                VipExpireDate = user.VipExpireDate?.ToDateTimeString(),
-                Points = user.Points.GetSafeInt(),
-                Balance = user.Balance.GetSafeDecimal(),
-                Status = user.Status == true ? 1 : 0,
-                // StatusCn = user.Status.GetStatusCn(), // 状态:1=禁用,0=正常
-                LastLoginTime = user.LastLoginTime?.ToDateTimeString(),
-                CreatedAt = user.CreatedAt.ToDateTimeString(),
-                UpdatedAt = user.UpdatedAt.ToDateTimeString()
-            };
-
-            return ApiResponse<UserProfileDto>.Success(profileDto);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "获取用户个人信息失败");
-            return ApiResponse<UserProfileDto>.Fail(500, "获取用户个人信息失败");
-        }
-    }
-
-    /// <summary>
     /// 更新用户个人资料
     /// </summary>
     public async Task<ApiResponse<UserProfileDto>> UpdateProfileAsync(int userId, UpdateProfileDto updateDto)
@@ -641,34 +595,105 @@ public class UserService : IUserService
     #region 客户端 mobile
 
     /// <summary>
+    /// 获取用户个人信息
+    /// </summary>
+    public async Task<ApiResponse<UserProfileDto>> GetProfileAsync(string openId)
+    {
+        try
+        {
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Openid == openId);
+            if (user == null)
+            {
+                return ApiResponse<UserProfileDto>.Fail(404, "用户不存在");
+            }
+
+            // ✅ 仅新增：统计该用户的收藏总数，完全不改动你原有查询和映射逻辑
+            var collectionCount = await _context.UserCollections
+                .CountAsync(c => c.UserId == user.Id);
+
+            var profileDto = new UserProfileDto
+            {
+                Id = user.Id,
+                Username = user.Username,
+                Nickname = user.Nickname,
+                RealName = user.RealName,
+                IdCard = user.IdCard,
+                Phone = user.Phone,
+                Avatar = user.Avatar,
+                Gender = user.Gender,
+                Age = user.Age,
+                Name = user.Name,
+                Bio = user.Bio,
+                VipLevel = user.VipLevel,
+                VipExpireDate = user.VipExpireDate?.ToDateTimeString(),
+                Points = user.Points.GetSafeInt(),
+                Balance = user.Balance.GetSafeDecimal(),
+                Status = user.Status == true ? 1 : 0,
+                LastLoginTime = user.LastLoginTime?.ToDateTimeString(),
+                CreatedAt = user.CreatedAt.ToDateTimeString(),
+                UpdatedAt = user.UpdatedAt.ToDateTimeString(),
+                
+                // ✅ 仅修改这一行：用统计结果替换错误的 .Count 调用
+                UserCollectionCount = collectionCount,
+            };
+
+            return ApiResponse<UserProfileDto>.Success(profileDto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "获取用户个人信息失败");
+            return ApiResponse<UserProfileDto>.Fail(500, "获取用户个人信息失败");
+        }
+    }
+
+
+    /// <summary>
     /// 添加收藏
     /// </summary>
     public async Task<ApiResponse<FavoriteResultDto>> AddFavoriteAsync(int userId, AddFavoriteDto dto)
     {
+
+        // 打印参数
+        _logger.LogInformation($"Add收藏参数: {userId}, {dto.ItemId}, {dto.ItemType}");
         // 1. 参数校验
-        if (userId <= 0 || dto.CompanionId <= 0)
+        if (userId <= 0 || dto.ItemId <= 0)
             return ApiResponse<FavoriteResultDto>.Fail(400, "参数异常");
 
-        // 2. 校验陪玩师是否存在
-        var companionExists = await _context.Companions
-            .AnyAsync(c => c.Id == dto.CompanionId && c.Status == 1);
-        if (!companionExists)
-            return ApiResponse<FavoriteResultDto>.Fail(404, "陪玩师不存在或未上线");
+        // 2. 校验关联项目是否存在
+
+        if (dto.ItemType == "companion")
+        {
+            var companionExists = await _context.Companions
+                .AnyAsync(c => c.Id == dto.ItemId && c.Status == 1);
+            if (!companionExists)
+                return ApiResponse<FavoriteResultDto>.Fail(404, "陪玩师不存在或未上线");
+        }
+        else if(dto.ItemType == "post")
+        {
+            var postExists = await _context.Posts
+                .AnyAsync(p => p.Id == dto.ItemId);
+            if (!postExists)
+                return ApiResponse<FavoriteResultDto>.Fail(404, "动态不存在或未上线");
+        }
+
+
+
 
         // 3. 校验是否已收藏
         var isExist = await _context.UserCollections
             .AnyAsync(f => f.UserId == userId 
-                         && f.ItemId == dto.CompanionId 
-                         && f.ItemType == "companion");
+                         && f.ItemId == dto.ItemId 
+                         && f.ItemType == dto.ItemType);
         if (isExist)
-            return ApiResponse<FavoriteResultDto>.Fail(400, "已收藏该陪玩师");
+            return ApiResponse<FavoriteResultDto>.Fail(400, "已收藏");
 
         // 4. 新增收藏记录
         var favorite = new UserCollection
         {
             UserId = userId,
-            ItemId = dto.CompanionId,
-            ItemType = "companion",
+            ItemId = dto.ItemId,
+            ItemType = dto.ItemType,
             CreatedAt = DateTime.Now
         };
 
@@ -686,30 +711,44 @@ public class UserService : IUserService
     /// <summary>
     /// 取消收藏
     /// </summary>
-    public async Task<ApiResponse<FavoriteResultDto>> RemoveFavoriteAsync(int userId, int companionId)
+    public async Task<ApiResponse<FavoriteResultDto>> RemoveFavoriteAsync(int userId, RemoveFavoriteDto dto)
     {
         // 1. 参数校验
-        if (userId <= 0 || companionId <= 0)
+        if (userId <= 0 || dto.ItemId <= 0)
             return ApiResponse<FavoriteResultDto>.Fail(400, "参数异常");
 
-        // 2. 查询收藏记录
-        var favorite = await _context.UserCollections
-            .FirstOrDefaultAsync(f => f.UserId == userId 
-                                    && f.ItemId == companionId 
-                                    && f.ItemType == "companion");
-        if (favorite == null)
-            return ApiResponse<FavoriteResultDto>.Fail(400, "未收藏该陪玩师");
-
-        // 3. 删除收藏
-        _context.UserCollections.Remove(favorite);
-        await _context.SaveChangesAsync();
-
-        // 4. 返回结果
-        return ApiResponse<FavoriteResultDto>.Success(new FavoriteResultDto
+        try
         {
-            Success = true,
-            Message = "取消收藏成功"
-        });
+            // 2. 查询收藏记录 —— 只查需要的字段，不查会报错的 string 字段
+            var favorite = await _context.UserCollections
+                .Where(f => f.UserId == userId 
+                        && f.ItemId == dto.ItemId 
+                        && f.ItemType == dto.ItemType)
+                .Select(f => new {
+                    f.Id  // 只查主键，其他字段一律不查！
+                })
+                .FirstOrDefaultAsync();
+
+            if (favorite == null)
+                return ApiResponse<FavoriteResultDto>.Fail(400, "未收藏该项目");
+
+            // 3. 根据主键删除
+            var delEntity = new UserCollection { Id = favorite.Id };
+            _context.UserCollections.Attach(delEntity);
+            _context.UserCollections.Remove(delEntity);
+            await _context.SaveChangesAsync();
+
+            // 4. 返回结果
+            return ApiResponse<FavoriteResultDto>.Success(new FavoriteResultDto
+            {
+                Success = true,
+                Message = "取消收藏成功"
+            });
+        }
+        catch
+        {
+            return ApiResponse<FavoriteResultDto>.Fail(500, "取消收藏失败");
+        }
     }
 
     #endregion

@@ -160,6 +160,21 @@ public class OrdersController : ControllerBase
         return Ok(result);
     }
 
+    #region 客户端 mobile
+
+    /// <summary>
+    /// 获取订单统计数据
+    /// </summary>
+    /// <returns>订单统计结果</returns>
+    [HttpGet("order-status")]
+    public async Task<ApiResponse<OrderStatusDto>> GetOrderStatus()
+    {
+        var openId = GetOpenId();
+        return await _orderService.GetOrderStatusAsync(openId);
+    }
+
+    #endregion
+
 
     #region PC端接口
 
@@ -187,6 +202,22 @@ public class OrdersController : ControllerBase
     public async Task<ApiResponse<OrderStatisticsDto>> GetStatistics()
     {
         return await _orderService.GetStatisticsAsync();
+    }
+
+    #endregion
+
+
+    #region 私有接口
+    
+    
+
+    /// <summary>
+    /// 从Token获取当前登录用户OpenID
+    /// </summary>
+    private string GetOpenId()
+    {
+        var claim = User.FindFirst("openId");
+        return claim != null ? claim.Value : string.Empty;
     }
 
     #endregion

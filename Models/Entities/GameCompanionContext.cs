@@ -109,7 +109,7 @@ public partial class GameCompanionContext : DbContext
             entity.Property(e => e.IdCardBack).HasComment("身份证反面照片");
             entity.Property(e => e.IdCardFront).HasComment("身份证正面照片");
             entity.Property(e => e.Level)
-                .HasDefaultValueSql("'bronze'")
+                .HasDefaultValueSql("'1'")
                 .HasComment("等级");
             entity.Property(e => e.Nickname).HasComment("陪玩师昵称");
             entity.Property(e => e.OnlineStatus)
@@ -124,8 +124,9 @@ public partial class GameCompanionContext : DbContext
             entity.Property(e => e.RealName).HasComment("真实姓名");
             entity.Property(e => e.RejectReason).HasComment("拒绝原因");
             entity.Property(e => e.ServiceType)
-                .HasDefaultValueSql("'entertainment'")
-                .HasComment("服务类型:技术陪玩/娱乐陪玩/语音陪伴");
+                .HasDefaultValueSql("'1'")
+                .IsFixedLength()
+                .HasComment("服务类型");
             entity.Property(e => e.Status)
                 .HasDefaultValueSql("'0'")
                 .HasComment("0=待审核,1=审核通过,2=审核拒绝");
@@ -308,7 +309,8 @@ public partial class GameCompanionContext : DbContext
                 .HasDefaultValueSql("'0'")
                 .HasComment("排序");
             entity.Property(e => e.Status)
-                .HasDefaultValueSql("'active'")
+                .HasDefaultValueSql("'1'")
+                .IsFixedLength()
                 .HasComment("状态");
             entity.Property(e => e.Type).HasComment("游戏类型");
             entity.Property(e => e.UpdatedAt)
@@ -706,6 +708,9 @@ public partial class GameCompanionContext : DbContext
             entity.Property(e => e.LastLoginTime).HasComment("最后登录时间");
             entity.Property(e => e.Name).HasComment("姓名");
             entity.Property(e => e.Nickname).HasComment("昵称");
+            entity.Property(e => e.Openid)
+                .HasDefaultValueSql("''")
+                .HasComment("微信openid");
             entity.Property(e => e.Password).HasComment("密码");
             entity.Property(e => e.Phone).HasComment("手机号");
             entity.Property(e => e.Points)

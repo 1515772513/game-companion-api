@@ -42,4 +42,10 @@ public interface IAuthService
     /// 手机号一键登录（无验证码）
     /// </summary>
     Task<ApiResponse<LoginResponse>> SmsLoginAsync(SmsLoginRequest request);
+
+
+    /// <summary>
+    /// 微信一键登录
+    /// </summary>
+    Task<ApiResponse<LoginResponse>> WechatLoginAsync(WechatLoginRequest request);
 }

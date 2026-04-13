@@ -12,7 +12,7 @@ public interface IUserService
     /// <summary>
     /// 获取用户个人信息
     /// </summary>
-    Task<ApiResponse<UserProfileDto>> GetProfileAsync(int userId);
+    Task<ApiResponse<UserProfileDto>> GetProfileAsync(string openId);
 
     /// <summary>
     /// 更新用户个人资料
@@ -77,5 +77,5 @@ public interface IUserService
     /// <summary>
     /// 取消陪玩师收藏
     /// </summary>
-    Task<ApiResponse<FavoriteResultDto>> RemoveFavoriteAsync(int userId, int companionId);
+    Task<ApiResponse<FavoriteResultDto>> RemoveFavoriteAsync(int userId, RemoveFavoriteDto dto);
 }
