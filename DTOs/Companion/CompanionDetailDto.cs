@@ -78,6 +78,26 @@ public class CompanionServiceDto
     /// 服务ID
     /// </summary>
     public int Id { get; set; }
+
+    /// <summary>
+    /// 游戏ID
+    /// </summary>
+    public int GameId { get; set; }
+
+    /// <summary>
+    /// 游戏名称
+    /// </summary>
+    public string GameName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 游戏段位/等级
+    /// </summary>
+    public string GameLevel { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 游戏段位/等级名称
+    /// </summary>
+    public string LevelName { get; set; } = string.Empty;
     
     /// <summary>
     /// 服务名称

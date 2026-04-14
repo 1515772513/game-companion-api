@@ -977,6 +977,10 @@ public class CompanionService : ICompanionService
             .Select(g => new CompanionServiceDto
             {
                 Id = g.Id,  // 这里用游戏技能表ID
+                GameId = g.GameId,
+                GameName = g.Game.Name ?? "",
+                GameLevel = g.GameLevel,
+                LevelName = "",
                 Price = g.PricePerGame, // 从 companion_games 取
                 PriceUnit = "局",
                 Duration = 60,
