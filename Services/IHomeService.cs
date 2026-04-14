@@ -15,6 +15,12 @@ public interface IHomeService
     Task<ApiResponse<HomeDataResponse>> GetHomeDataAsync();
 
     /// <summary>
+    /// 获取系统配置
+    /// </summary>
+    /// <returns>系统配置响应</returns>
+    Task<ApiResponse<object>> GetSystemConfigAsync();
+
+    /// <summary>
     /// 获取陪玩师列表
     /// </summary>
     /// <param name="request">请求参数</param>

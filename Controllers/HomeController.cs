@@ -33,6 +33,19 @@ public class HomeController : ControllerBase
     }
 
     /// <summary>
+    /// 获取系统配置
+    /// </summary>
+    /// <returns>系统配置</returns>
+    [HttpGet("system_config")]
+    [ProducesResponseType(typeof(ApiResponse<object>), 200)]
+    [ProducesResponseType(typeof(ApiResponse), 503)]
+    public async Task<IActionResult> GetSystemConfig()
+    {
+        var response = await _homeService.GetSystemConfigAsync();
+        return response.Code == 200 ? Ok(response) : StatusCode(response.Code, response);
+    }
+
+    /// <summary>
     /// 获取陪玩师列表
     /// </summary>
     /// <param name="page">页码</param>

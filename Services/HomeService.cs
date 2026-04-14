@@ -112,6 +112,36 @@ public class HomeService : IHomeService
     }
 
     /// <summary>
+    /// 获取系统配置
+    /// </summary>
+    public async Task<ApiResponse<object>> GetSystemConfigAsync()
+    {
+        try
+        {
+            var config = await _systemConfigService.GetConfigByKeyAsync("system_config");
+            var response = new object();
+            if (!string.IsNullOrWhiteSpace(config?.ConfigValue))
+            {
+                try
+                {
+                    // 🔥 自动把字符串转成真实 JSON
+                    response = JsonSerializer.Deserialize<object>(config.ConfigValue);
+                }
+                catch
+                {
+                    response = new object();
+                }
+            }
+
+            return ApiResponse<object>.SuccessResponse(response, "获取成功");
+        }
+        catch (Exception ex)
+        {
+            return ApiResponse<object>.ErrorResponse(500, ex.Message, "系统错误");
+        }
+    }
+
+    /// <summary>
     /// 获取陪玩师列表
     /// </summary>
     public async Task<ApiResponse<CompanionListResponse>> GetCompanionsAsync(CompanionListRequest request)
