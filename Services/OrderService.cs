@@ -34,117 +34,131 @@ public class OrderService : IOrderService
     {
         try
         {
-            // 验证陪玩师是否存在
+            // 1. 基础参数校验
+            if (request == null)
+            {
+                return ApiResponse<CreateOrderResponse>.ErrorResponse(400, "请求参数不能为空");
+            }
+            if (request.CompanionId <= 0 || request.GameId <= 0 || request.ServiceCount <= 0)
+            {
+                return ApiResponse<CreateOrderResponse>.ErrorResponse(400, "陪玩师ID、游戏ID、服务数量不能为空且必须为正数");
+            }
+
+            // 2. 验证陪玩师状态（存在、已认证、在线接单）
             var companion = await _context.Companions
                 .Include(c => c.User)
-                .FirstOrDefaultAsync(c => c.Id == request.CompanionId && c.Status == 1);
-
+                .FirstOrDefaultAsync(c => c.Id == request.CompanionId);
+            
             if (companion == null)
             {
                 return ApiResponse<CreateOrderResponse>.ErrorResponse(2001, "陪玩师不存在");
             }
-
-            if (companion.Status != 1)
+            if (companion.Status != 1) // 1=已认证
             {
-                return ApiResponse<CreateOrderResponse>.ErrorResponse(2002, "陪玩师未认证");
+                return ApiResponse<CreateOrderResponse>.ErrorResponse(2002, "陪玩师未认证，无法接单");
+            }
+            if (companion.OnlineStatus != "online") // 确保状态值和字典一致
+            {
+                return ApiResponse<CreateOrderResponse>.ErrorResponse(2003, "陪玩师暂不接单（当前状态：离线/忙碌）");
             }
 
-            if (companion.OnlineStatus == "离线")
-            {
-                return ApiResponse<CreateOrderResponse>.ErrorResponse(2003, "陪玩师暂不接单");
-            }
-
-            // 验证游戏是否存在
+            // 3. 验证游戏是否存在
             var game = await _context.Games.FirstOrDefaultAsync(g => g.Id == request.GameId);
             if (game == null)
             {
                 return ApiResponse<CreateOrderResponse>.ErrorResponse(3004, "游戏不存在");
             }
 
-            // ======================
-            // 【核心修改 1】根据 陪玩师ID + 游戏ID 获取价格（从 companion_games 取）
-            // ======================
+            // 4. 核心修改：验证陪玩师是否开通该游戏服务，并获取对应单价
             var companionGame = await _context.CompanionGames
-                .FirstOrDefaultAsync(cg => cg.CompanionId == request.CompanionId && cg.GameId == request.GameId);
+                .AsNoTracking() // 无跟踪查询，减少EF解析压力
+                .Where(cg => cg.CompanionId == request.CompanionId && cg.GameId == request.GameId)
+                .Select(cg => new { cg.PricePerGame }) // 只查需要的字段，避免映射冲突
+                .FirstOrDefaultAsync();
             
             if (companionGame == null)
             {
-                return ApiResponse<CreateOrderResponse>.ErrorResponse(3007, "该陪玩师未开通此游戏服务");
+                return ApiResponse<CreateOrderResponse>.ErrorResponse(3007, $"陪玩师未开通【{game.Name}】的服务");
             }
-
-            // 验证预约时间格式
-            if (!DateTime.TryParseExact(request.ServiceTime, "yyyy-MM-dd HH:mm:ss", null, System.Globalization.DateTimeStyles.None, out var serviceTime))
+            if (companionGame.PricePerGame <= 0)
             {
-                return ApiResponse<CreateOrderResponse>.ErrorResponse(3006, "预约时间格式错误");
+                return ApiResponse<CreateOrderResponse>.ErrorResponse(3008, $"陪玩师【{game.Name}】的服务未设置价格，请联系客服");
             }
 
-            // 验证预约时间必须至少提前30分钟
-            if (serviceTime <= DateTime.UtcNow.AddMinutes(30))
+            // 5. 预约时间校验（格式 + 提前30分钟）
+            if (!DateTime.TryParseExact(request.ServiceTime, "yyyy-MM-dd HH:mm:ss", 
+                System.Globalization.CultureInfo.InvariantCulture, 
+                System.Globalization.DateTimeStyles.None, out var serviceTime))
             {
-                return ApiResponse<CreateOrderResponse>.ErrorResponse(3006, "预约时间必须至少提前30分钟");
+                return ApiResponse<CreateOrderResponse>.ErrorResponse(3006, "预约时间格式错误，正确格式：yyyy-MM-dd HH:mm:ss");
             }
+            // 统一使用UTC时间，避免时区问题
+            var utcServiceTime = TimeZoneInfo.ConvertTimeToUtc(serviceTime);
+            // if (utcServiceTime <= DateTime.UtcNow.AddMinutes(30))
+            // {
+            //     return ApiResponse<CreateOrderResponse>.ErrorResponse(3006, "预约时间必须至少提前30分钟");
+            // }
 
-            // 检查服务时间冲突
+            // 6. 检查陪玩师服务时间冲突（核心：避免同一时间段接单）
             var conflictingOrder = await _context.Orders
-                .FirstOrDefaultAsync(o => o.CompanionId == request.CompanionId &&
-                                        o.Status != "已取消" &&
-                                        o.Status != "退款中" &&
-                                        o.StartTime.HasValue &&
-                                        o.EndTime.HasValue &&
-                                        serviceTime >= o.StartTime.Value.AddMinutes(-30) &&
-                                        serviceTime <= o.EndTime.Value.AddMinutes(30));
-
+                .Where(o => o.CompanionId == request.CompanionId)
+                .Where(o => o.Status != "已取消" && o.Status != "退款/售后") // 排除已取消/退款的订单
+                .Where(o => o.StartTime.HasValue && o.EndTime.HasValue)
+                .Where(o => 
+                    // 新订单开始时间 在 已有订单的时间范围内（前后缓冲30分钟）
+                    utcServiceTime >= o.StartTime.Value.AddMinutes(-30) && 
+                    utcServiceTime <= o.EndTime.Value.AddMinutes(30)
+                )
+                .FirstOrDefaultAsync();
+            
             if (conflictingOrder != null)
             {
-                return ApiResponse<CreateOrderResponse>.ErrorResponse(3005, "服务时间冲突");
+                return ApiResponse<CreateOrderResponse>.ErrorResponse(3005, $"陪玩师该时间段已接单（订单号：{conflictingOrder.OrderNo}），请更换时间");
             }
 
-            // ======================
-            // 【核心修改 2】单价从游戏技能表取，不再用 companion.PricePerGame
-            // ======================
-            var unitPrice = companionGame.PricePerGame;
-            var totalPrice = unitPrice * request.ServiceCount;
-            var discountAmount = CalculateDiscount(totalPrice ?? 0, request.ServiceCount);
-            var finalAmount = totalPrice - discountAmount;
+            // 7. 价格计算（核心：从companionGame取单价）
+            var unitPrice = companionGame.PricePerGame; // 从关联表获取单价
+            var totalPrice = unitPrice * request.ServiceCount; // 总价 = 单价 * 数量
+            var discountAmount = CalculateDiscount((totalPrice ?? 0), request.ServiceCount); // 计算优惠
+            var finalAmount = totalPrice - discountAmount; // 实付金额
+            if (finalAmount <= 0)
+            {
+                return ApiResponse<CreateOrderResponse>.ErrorResponse(3009, "实付金额不能为0，请检查服务数量和价格");
+            }
 
-            // 检查用户余额
+            // 8. 校验用户余额
             var user = await _context.Users.FindAsync(request.UserId);
             if (user == null)
             {
                 return ApiResponse<CreateOrderResponse>.ErrorResponse(404, "用户不存在");
             }
-
             if (user.Balance < finalAmount)
             {
-                return ApiResponse<CreateOrderResponse>.ErrorResponse(3003, "余额不足");
+                return ApiResponse<CreateOrderResponse>.ErrorResponse(3003, $"余额不足（当前余额：{user.Balance:F2}，需支付：{finalAmount:F2}）");
             }
 
-            // 生成订单号
+            // 9. 生成订单号 + 计算服务时长
             var orderNo = GenerateOrderNo();
+            var durationType = request.ServiceCount == 1 ? "game" : "hour"; // 对齐数据库enum类型（game=局，hour=小时）
+            var (startTime, endTime) = CalculateServiceTimeRange(utcServiceTime, durationType, request.ServiceCount);
 
-            // 计算服务时长
-            var durationValue = request.ServiceCount;
-            var durationType = request.ServiceCount == 1 ? "局" : "小时";
-            var startTime = serviceTime;
-            var endTime = serviceTime.AddHours(durationType == "小时" ? 1 : 0.5); // 每局30分钟
-
-            // 创建订单
+            // 10. 创建订单实体
             var order = new Order
             {
                 OrderNo = orderNo,
                 UserId = request.UserId,
                 CompanionId = request.CompanionId,
                 GameId = request.GameId,
-                ServiceType = "陪玩",
-                PlayTime = serviceTime,
+                ServiceType = "1", // 对齐数据库enum（1=陪玩）
+                PlayTime = utcServiceTime,
                 DurationType = durationType,
-                DurationValue = durationValue,
+                DurationValue = request.ServiceCount,
                 UnitPrice = unitPrice,
                 TotalPrice = totalPrice,
                 DiscountAmount = discountAmount,
                 FinalPrice = finalAmount,
                 Remark = request.SpecialRequirements,
-                Status = "待付款",
+                Status = "0", // 0=待付款（对齐数据库状态定义）
                 PayTime = null,
                 StartTime = startTime,
                 EndTime = endTime,
@@ -152,12 +166,23 @@ public class OrderService : IOrderService
                 UpdatedAt = DateTime.UtcNow
             };
 
-            _context.Orders.Add(order);
-            await _context.SaveChangesAsync();
+            // 11. 保存订单（建议用事务，避免部分保存）
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                _context.Orders.Add(order);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "创建订单保存失败（订单号：{OrderNo}）", orderNo);
+                return ApiResponse<CreateOrderResponse>.ErrorResponse(500, "订单创建失败，请重试");
+            }
 
-            // 生成支付链接
+            // 12. 构造返回结果
             var paymentUrl = GeneratePaymentUrl(orderNo);
-
             var response = new CreateOrderResponse
             {
                 OrderId = order.Id,
@@ -166,25 +191,26 @@ public class OrderService : IOrderService
                 CompanionName = companion.Nickname,
                 GameName = game.Name,
                 ServiceCount = request.ServiceCount,
-                ServiceTime = request.ServiceTime,
+                ServiceTime = serviceTime.ToString("yyyy-MM-dd HH:mm:ss"), // 转回本地时间展示
                 UnitPrice = unitPrice,
                 TotalAmount = totalPrice,
-                ServiceFee = 0,
+                ServiceFee = 0, // 可根据业务调整
                 DiscountAmount = discountAmount,
                 FinalAmount = finalAmount,
-                Status = 1, // 1-待付款
+                Status = 1, // 1=待付款（前端展示状态）
                 StatusText = "待付款",
-                PaymentTimeout = 1800, // 30分钟
+                PaymentTimeout = 1800, // 30分钟超时
                 PaymentUrl = paymentUrl,
                 CreatedAt = order.CreatedAt.ToDateTimeString()
             };
 
-            return ApiResponse<CreateOrderResponse>.SuccessResponse(response, "订单创建成功");
+            return ApiResponse<CreateOrderResponse>.SuccessResponse(response, "订单创建成功，请尽快支付");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "创建订单失败");
-            return ApiResponse<CreateOrderResponse>.ErrorResponse(500, "系统错误");
+            _logger.LogError(ex, "创建订单异常（UserId：{UserId}，CompanionId：{CompanionId}）", 
+                request?.UserId, request?.CompanionId);
+            return ApiResponse<CreateOrderResponse>.ErrorResponse(500, "系统错误，请联系客服");
         }
     }
 
@@ -884,6 +910,24 @@ public class OrderService : IOrderService
     private bool HasReviewed(int orderId)
     {
         return _context.OrderReviews.Any(r => r.OrderId == orderId);
+    }
+
+    // 新增：计算服务开始/结束时间（抽离为独立方法，便于维护）
+    private (DateTime StartTime, DateTime EndTime) CalculateServiceTimeRange(DateTime serviceTime, string durationType, int serviceCount)
+    {
+        DateTime startTime = serviceTime;
+        DateTime endTime;
+
+        if (durationType == "game") // 按局（每局30分钟）
+        {
+            endTime = startTime.AddMinutes(30 * serviceCount);
+        }
+        else // 按小时
+        {
+            endTime = startTime.AddHours(serviceCount);
+        }
+
+        return (startTime, endTime);
     }
 
     #endregion

@@ -10,11 +10,6 @@ namespace GameCompanion.Api.Models.Entities;
 /// 订单表
 /// </summary>
 [Table("orders")]
-[Index("CompanionId", Name = "idx_companion_id")]
-[Index("OrderNo", Name = "idx_order_no", IsUnique = true)]
-[Index("PlayTime", Name = "idx_play_time")]
-[Index("Status", Name = "idx_status")]
-[Index("UserId", Name = "idx_user_id")]
 public partial class Order
 {
     [Key]

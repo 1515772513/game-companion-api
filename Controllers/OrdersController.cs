@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using GameCompanion.Api.Dtos;
 using GameCompanion.Api.DTOs.Order;
 using GameCompanion.Api.Models;
@@ -30,7 +31,7 @@ public class OrdersController : ControllerBase
     /// </summary>
     /// <param name="request">创建订单请求</param>
     /// <returns>创建订单结果</returns>
-    [HttpPost]
+    [HttpPost("create")]
     [ProducesResponseType(typeof(ApiResponse<CreateOrderResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
@@ -40,7 +41,7 @@ public class OrdersController : ControllerBase
         _logger.LogInformation("用户创建订单: CompanionId={CompanionId}, GameId={GameId}", request.CompanionId, request.GameId);
 
         // 从Claims中获取用户ID（简化处理，实际应该从JWT token中解析）
-        var userId = 1; // TODO: 从JWT token中获取用户ID
+        var userId = GetUserId();
 
         // 将用户ID添加到请求中
         request.GetType().GetProperty("UserId")?.SetValue(request, userId, null);
@@ -209,7 +210,14 @@ public class OrdersController : ControllerBase
 
     #region 私有接口
     
-    
+    /// <summary>
+    /// 从Token获取当前登录用户ID
+    /// </summary>
+    private int GetUserId()
+    {
+        var claim = User.FindFirst(ClaimTypes.NameIdentifier);
+        return claim != null && int.TryParse(claim.Value, out int id) ? id : 0;
+    }
 
     /// <summary>
     /// 从Token获取当前登录用户OpenID

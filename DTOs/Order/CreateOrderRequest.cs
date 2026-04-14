@@ -33,15 +33,14 @@ public class CreateOrderRequest
     /// <summary>
     /// 服务数量（局数/小时数）
     /// </summary>
-    [Range(1, 10, ErrorMessage = "服务数量必须在1-10之间")]
+    [Range(1, 1000, ErrorMessage = "服务数量必须在1-1000之间")]
     [Required(ErrorMessage = "服务数量不能为空")]
     public int ServiceCount { get; set; }
 
     /// <summary>
     /// 预约服务时间
     /// </summary>
-    [Required(ErrorMessage = "预约服务时间不能为空")]
-    public string ServiceTime { get; set; } = string.Empty;
+    public string ServiceTime { get; set; } = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
 
     /// <summary>
     /// 特殊要求/备注
