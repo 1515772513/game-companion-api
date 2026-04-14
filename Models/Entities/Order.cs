@@ -10,6 +10,9 @@ namespace GameCompanion.Api.Models.Entities;
 /// 订单表
 /// </summary>
 [Table("orders")]
+[Index("CompanionId", Name = "idx_companion_id")]
+[Index("UserId", Name = "idx_user_id")]
+[Index("OrderNo", Name = "order_no", IsUnique = true)]
 public partial class Order
 {
     [Key]
@@ -70,14 +73,14 @@ public partial class Order
     /// </summary>
     [Column("unit_price")]
     [Precision(10, 2)]
-    public decimal? UnitPrice { get; set; }
+    public decimal UnitPrice { get; set; }
 
     /// <summary>
     /// 总价
     /// </summary>
     [Column("total_price")]
     [Precision(10, 2)]
-    public decimal? TotalPrice { get; set; }
+    public decimal TotalPrice { get; set; }
 
     /// <summary>
     /// 优惠金额
@@ -91,7 +94,7 @@ public partial class Order
     /// </summary>
     [Column("final_price")]
     [Precision(10, 2)]
-    public decimal? FinalPrice { get; set; }
+    public decimal FinalPrice { get; set; }
 
     /// <summary>
     /// 备注信息

@@ -4,6 +4,7 @@ using GameCompanion.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using GameCompanion.Api.Data;
 using System.Security.Claims;
+using GameCompanion.Api.Models.Entities;
 
 namespace GameCompanion.Api.Controllers;
 
@@ -17,9 +18,9 @@ public class CompanionController : ControllerBase
 {
     private readonly ICompanionService _companionService;
     private readonly ILogger<CompanionController> _logger;
-    private readonly ApplicationDbContext _context;
+    private readonly GameCompanionContext _context;
 
-    public CompanionController(ICompanionService companionService, ILogger<CompanionController> logger, ApplicationDbContext context)
+    public CompanionController(ICompanionService companionService, ILogger<CompanionController> logger, GameCompanionContext context)
     {
         _companionService = companionService;
         _logger = logger;

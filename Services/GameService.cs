@@ -10,12 +10,12 @@ namespace GameCompanion.Api.Services
 {
     public class GameService : IGameService
     {
-        private readonly ApplicationDbContext _dbContext;
+        private readonly GameCompanionContext _dbContext;
         private readonly ILogger<GameService> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         public GameService(
-            ApplicationDbContext dbContext,
+            GameCompanionContext dbContext,
             ILogger<GameService> logger,
             IHttpContextAccessor httpContextAccessor)
         {

@@ -13,10 +13,10 @@ namespace GameCompanion.Api.Services;
 /// </summary>
 public class MessageService : IMessageService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly GameCompanionContext _context;
     private readonly ILogger<MessageService> _logger;
 
-    public MessageService(ApplicationDbContext context, ILogger<MessageService> logger)
+    public MessageService(GameCompanionContext context, ILogger<MessageService> logger)
     {
         _context = context;
         _logger = logger;

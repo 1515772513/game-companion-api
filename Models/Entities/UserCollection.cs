@@ -32,21 +32,21 @@ public partial class UserCollection
     /// </summary>
     [Column("title")]
     [StringLength(100)]
-    public string Title { get; set; } = string.Empty;
+    public string? Title { get; set; }
 
     /// <summary>
     /// 收藏描述
     /// </summary>
     [Column("description")]
     [StringLength(500)]
-    public string? Description { get; set; } = string.Empty;
+    public string? Description { get; set; }
 
     /// <summary>
     /// 收藏分类
     /// </summary>
     [Column("category")]
     [StringLength(50)]
-    public string Category { get; set; } = string.Empty;
+    public string? Category { get; set; }
 
     /// <summary>
     /// 关联项目ID
@@ -68,5 +68,6 @@ public partial class UserCollection
     public DateTime CreatedAt { get; set; }
 
     [ForeignKey("UserId")]
+    [InverseProperty("UserCollections")]
     public virtual User User { get; set; } = null!;
 }

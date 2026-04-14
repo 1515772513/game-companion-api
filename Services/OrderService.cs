@@ -15,12 +15,12 @@ namespace GameCompanion.Api.Services;
 /// </summary>
 public class OrderService : IOrderService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly GameCompanionContext _context;
     private readonly ILogger<OrderService> _logger;
 
     private readonly IDictTranslateService _dictTranslateService;
 
-    public OrderService(ApplicationDbContext context, ILogger<OrderService> logger, IDictTranslateService dictTranslateService)
+    public OrderService(GameCompanionContext context, ILogger<OrderService> logger, IDictTranslateService dictTranslateService)
     {
         _context = context;
         _logger = logger;
@@ -153,10 +153,10 @@ public class OrderService : IOrderService
                 PlayTime = utcServiceTime,
                 DurationType = durationType,
                 DurationValue = request.ServiceCount,
-                UnitPrice = unitPrice,
-                TotalPrice = totalPrice,
+                UnitPrice = unitPrice ?? 0,
+                TotalPrice = totalPrice ?? 0,
                 DiscountAmount = discountAmount,
-                FinalPrice = finalAmount,
+                FinalPrice = finalAmount ?? 0,
                 Remark = request.SpecialRequirements,
                 Status = "0", // 0=待付款（对齐数据库状态定义）
                 PayTime = null,
@@ -273,7 +273,7 @@ public class OrderService : IOrderService
                     GameRank = "",
                     ServiceCount = o.DurationValue,
                     ServiceTime = o.PlayTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "",
-                    TotalAmount = o.FinalPrice ?? 0,
+                    TotalAmount = o.FinalPrice,
                     CreatedAt = o.CreatedAt.ToDateTimeString()
                 }).ToList(),
                 Pagination = new GetOrdersResponse.OrderPagination
@@ -350,11 +350,11 @@ public class OrderService : IOrderService
                 ServiceUnit = order.DurationType ?? "局",
                 ServiceTime = order.PlayTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "",
                 SpecialRequirements = order.Remark ?? "",
-                UnitPrice = order.UnitPrice ?? 0,
+                UnitPrice = order.UnitPrice,
                 ServiceFee = 0,
                 DiscountAmount = order.DiscountAmount ?? 0,
-                TotalAmount = order.TotalPrice ?? 0,
-                FinalAmount = order.FinalPrice ?? 0,
+                TotalAmount = order.TotalPrice,
+                FinalAmount = order.FinalPrice,
                 PaymentMethod = "balance",
                 PaymentMethodText = "余额支付",
                 PaymentTime = order.PayTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "",
@@ -423,7 +423,7 @@ public class OrderService : IOrderService
                 Status = 6,
                 StatusText = "已取消",
                 CancelledAt = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"),
-                RefundAmount = order.FinalPrice ?? 0,
+                RefundAmount = order.FinalPrice,
                 RefundTo = "balance",
                 RefundToText = "退回余额"
             };

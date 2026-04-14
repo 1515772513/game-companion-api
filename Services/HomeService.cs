@@ -2,6 +2,7 @@ using System.Text.Json;
 using GameCompanion.Api.Data;
 using GameCompanion.Api.DTOs.Home;
 using GameCompanion.Api.Models;
+using GameCompanion.Api.Models.Entities;
 using GameCompanion.Api.Utils;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,10 +13,10 @@ namespace GameCompanion.Api.Services;
 /// </summary>
 public class HomeService : IHomeService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly GameCompanionContext _context;
     private readonly ISystemConfigService _systemConfigService;
 
-    public HomeService(ApplicationDbContext context, ISystemConfigService systemConfigService)
+    public HomeService(GameCompanionContext context, ISystemConfigService systemConfigService)
     {
         _context = context;
         _systemConfigService = systemConfigService;

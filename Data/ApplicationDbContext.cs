@@ -236,7 +236,7 @@ public class ApplicationDbContext : DbContext
                   .HasForeignKey(e => e.UserId)
                   .OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.Companion)
-                  .WithMany()
+                  .WithMany(c => c.Orders) 
                   .HasForeignKey(e => e.CompanionId)
                   .OnDelete(DeleteBehavior.Cascade);
             entity.Property(e => e.UnitPrice).HasPrecision(10, 2);

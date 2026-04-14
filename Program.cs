@@ -12,6 +12,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 using GameCompanion.Api.Filters;
 using GameCompanion.Api.Services.DictTranslate;
 using Microsoft.Extensions.FileProviders;
+using GameCompanion.Api.Models.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -74,13 +75,23 @@ builder.Services.AddSwaggerGen(c =>
     c.SchemaFilter<FixSwaggerSchemaFilter>();
 });
 
-// 数据库
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+// 数据库 原来的
+// builder.Services.AddDbContext<ApplicationDbContext>(options =>
+//     options.UseMySql(
+//         builder.Configuration.GetConnectionString("DefaultConnection"),
+//         ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection")),
+//         mysqlOptions => mysqlOptions.EnableRetryOnFailure(3, TimeSpan.FromSeconds(5), null)
+//     ));
+
+// 新加
+builder.Services.AddDbContext<GameCompanionContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection")),
-        mysqlOptions => mysqlOptions.EnableRetryOnFailure(3, TimeSpan.FromSeconds(5), null)
-    ));
+        new MySqlServerVersion(new Version(8, 0, 36))
+    )
+);
+
+
 
 // Redis
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>

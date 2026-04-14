@@ -17,11 +17,11 @@ namespace GameCompanion.Api.Services;
 /// </summary>
 public class AuthService : IAuthService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly GameCompanionContext _context;
     private readonly IConfiguration _configuration;
     private readonly ILogger<AuthService> _logger;
 
-    public AuthService(ApplicationDbContext context, IConfiguration configuration, ILogger<AuthService> logger)
+    public AuthService(GameCompanionContext context, IConfiguration configuration, ILogger<AuthService> logger)
     {
         _context = context;
         _configuration = configuration;

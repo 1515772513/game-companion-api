@@ -20,6 +20,8 @@ public partial class GameCompanionContext : DbContext
 
     public virtual DbSet<Companion> Companions { get; set; }
 
+    public virtual DbSet<CompanionApplication> CompanionApplications { get; set; }
+
     public virtual DbSet<CompanionGame> CompanionGames { get; set; }
 
     public virtual DbSet<CompanionRequest> CompanionRequests { get; set; }
@@ -64,7 +66,11 @@ public partial class GameCompanionContext : DbContext
 
     public virtual DbSet<SystemConfig> SystemConfigs { get; set; }
 
+    public virtual DbSet<Transaction> Transactions { get; set; }
+
     public virtual DbSet<User> Users { get; set; }
+
+    public virtual DbSet<UserCollection> UserCollections { get; set; }
 
     public virtual DbSet<UserSetting> UserSettings { get; set; }
 
@@ -134,6 +140,32 @@ public partial class GameCompanionContext : DbContext
             entity.Property(e => e.UserId).HasComment("用户ID");
 
             entity.HasOne(d => d.User).WithMany(p => p.Companions).HasConstraintName("companions_ibfk_1");
+        });
+
+        modelBuilder.Entity<CompanionApplication>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.ToTable("companion_applications", tb => tb.HasComment("陪玩师申请表"));
+
+            entity.Property(e => e.Id).HasComment("主键ID");
+            entity.Property(e => e.AdminNotes).HasComment("管理员备注");
+            entity.Property(e => e.AvailableTime).HasComment("可接单时间");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasComment("创建时间");
+            entity.Property(e => e.GameCategory).HasComment("游戏类型");
+            entity.Property(e => e.HourlyRate).HasComment("时薪");
+            entity.Property(e => e.SelfIntroduction).HasComment("自我介绍");
+            entity.Property(e => e.SkillLevel).HasComment("技能等级");
+            entity.Property(e => e.Status)
+                .HasDefaultValueSql("'待审核'")
+                .HasComment("状态：待审核/已通过/已拒绝");
+            entity.Property(e => e.UpdatedAt)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasComment("更新时间");
+            entity.Property(e => e.UserId).HasComment("用户ID");
         });
 
         modelBuilder.Entity<CompanionGame>(entity =>
@@ -681,6 +713,15 @@ public partial class GameCompanionContext : DbContext
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
 
+        modelBuilder.Entity<Transaction>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.ToTable("transactions", tb => tb.HasComment("交易记录表"));
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PRIMARY");
@@ -728,6 +769,26 @@ public partial class GameCompanionContext : DbContext
             entity.Property(e => e.VipLevel)
                 .HasDefaultValueSql("'0'")
                 .HasComment("VIP等级 0=普通 1=普通会员 2=VIP会员 3=SVIP会员");
+        });
+
+        modelBuilder.Entity<UserCollection>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.ToTable("user_collections", tb => tb.HasComment("用户收藏表"));
+
+            entity.Property(e => e.Id).HasComment("主键ID");
+            entity.Property(e => e.Category).HasComment("收藏分类");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasComment("创建时间");
+            entity.Property(e => e.Description).HasComment("收藏描述");
+            entity.Property(e => e.ItemId).HasComment("关联项目ID");
+            entity.Property(e => e.ItemType).HasComment("关联项目类型(companion/post等)");
+            entity.Property(e => e.Title).HasComment("收藏标题");
+            entity.Property(e => e.UserId).HasComment("用户ID");
+
+            entity.HasOne(d => d.User).WithMany(p => p.UserCollections).HasConstraintName("user_collections_ibfk_1");
         });
 
         modelBuilder.Entity<UserSetting>(entity =>

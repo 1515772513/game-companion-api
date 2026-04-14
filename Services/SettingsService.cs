@@ -13,10 +13,10 @@ namespace GameCompanion.Api.Services;
 /// </summary>
 public class SettingsService : ISettingsService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly GameCompanionContext _context;
     private readonly ILogger<SettingsService> _logger;
 
-    public SettingsService(ApplicationDbContext context, ILogger<SettingsService> logger)
+    public SettingsService(GameCompanionContext context, ILogger<SettingsService> logger)
     {
         _context = context;
         _logger = logger;

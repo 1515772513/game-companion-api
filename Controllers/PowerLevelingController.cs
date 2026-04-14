@@ -3,6 +3,7 @@ using GameCompanion.Api.Models;
 using GameCompanion.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using GameCompanion.Api.Data;
+using GameCompanion.Api.Models.Entities;
 
 namespace GameCompanion.Api.Controllers;
 
@@ -16,9 +17,9 @@ public class PowerLevelingController : ControllerBase
 {
     private readonly IPowerLevelingService _powerLevelingService;
     private readonly ILogger<PowerLevelingController> _logger;
-    private readonly ApplicationDbContext _context;
+    private readonly GameCompanionContext _context;
 
-    public PowerLevelingController(IPowerLevelingService powerLevelingService, ILogger<PowerLevelingController> logger, ApplicationDbContext context)
+    public PowerLevelingController(IPowerLevelingService powerLevelingService, ILogger<PowerLevelingController> logger, GameCompanionContext context)
     {
         _powerLevelingService = powerLevelingService;
         _logger = logger;

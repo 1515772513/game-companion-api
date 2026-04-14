@@ -13,10 +13,10 @@ namespace GameCompanion.Api.Services
     /// </summary>
     public class SystemConfigService : ISystemConfigService
     {
-        private readonly ApplicationDbContext _context;
+        private readonly GameCompanionContext _context;
         private readonly ILogger<SystemConfigService> _logger;
 
-        public SystemConfigService(ApplicationDbContext context, ILogger<SystemConfigService> logger)
+        public SystemConfigService(GameCompanionContext context, ILogger<SystemConfigService> logger)
         {
             _context = context;
             _logger = logger;

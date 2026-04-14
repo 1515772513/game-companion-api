@@ -13,14 +13,14 @@ namespace GameCompanion.Api.Services
     public class FileService : IFileService
     {
         private readonly IWebHostEnvironment _webHostEnv;
-        private readonly ApplicationDbContext _dbContext;
+        private readonly GameCompanionContext _dbContext;
         private readonly ILogger<FileService> _logger;
         private readonly string _wwwRootPath;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         public FileService(
             IWebHostEnvironment webHostEnv,
-            ApplicationDbContext dbContext,
+            GameCompanionContext dbContext,
             ILogger<FileService> logger,
             IHttpContextAccessor httpContextAccessor)
         {

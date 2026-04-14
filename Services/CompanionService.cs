@@ -14,11 +14,11 @@ namespace GameCompanion.Api.Services;
 /// </summary>
 public class CompanionService : ICompanionService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly GameCompanionContext _context;
     private readonly ILogger<CompanionService> _logger;
     private readonly IDictTranslateService _dictTranslateService;
 
-    public CompanionService(ApplicationDbContext context, ILogger<CompanionService> logger, IDictTranslateService dictTranslateService)
+    public CompanionService(GameCompanionContext context, ILogger<CompanionService> logger, IDictTranslateService dictTranslateService)
     {
         _context = context;
         _logger = logger;
@@ -383,7 +383,7 @@ public class CompanionService : ICompanionService
                 ServiceCount = o.DurationValue,
                 ServiceTime = o.PlayTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "",
                 SpecialRequirements = o.Remark,
-                TotalAmount = o.FinalPrice ?? 0,
+                TotalAmount = o.FinalPrice,
                 CreatedAt = o.CreatedAt.ToDateTimeString(),
                 Countdown = 0 // 需要根据时间计算
             }).ToList();
@@ -617,11 +617,11 @@ public class CompanionService : ICompanionService
 
             var response = new EarningsResponse
             {
-                TotalEarnings = completedOrders ?? 0,
-                MonthEarnings = completedOrders ?? 0,
-                TodayEarnings = completedOrders ?? 0,
-                PendingAmount = pendingOrders ?? 0,
-                WithdrawnAmount = completedOrders ?? 0 - pendingOrders ?? 0,
+                TotalEarnings = completedOrders,
+                MonthEarnings = completedOrders,
+                TodayEarnings = completedOrders,
+                PendingAmount = pendingOrders,
+                WithdrawnAmount = completedOrders - pendingOrders,
                 OrdersCount = totalOrders,
                 MonthOrders = monthOrders,
                 TodayOrders = todayOrders,

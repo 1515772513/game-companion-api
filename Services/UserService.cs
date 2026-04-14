@@ -13,10 +13,10 @@ namespace GameCompanion.Api.Services;
 /// </summary>
 public class UserService : IUserService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly GameCompanionContext _context;
     private readonly ILogger<UserService> _logger;
 
-    public UserService(ApplicationDbContext context, ILogger<UserService> logger)
+    public UserService(GameCompanionContext context, ILogger<UserService> logger)
     {
         _context = context;
         _logger = logger;

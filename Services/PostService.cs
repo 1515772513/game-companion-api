@@ -13,9 +13,9 @@ namespace GameCompanion.Api.Services;
 /// </summary>
 public class PostService : IPostService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly GameCompanionContext _context;
 
-    public PostService(ApplicationDbContext context)
+    public PostService(GameCompanionContext context)
     {
         _context = context;
     }
