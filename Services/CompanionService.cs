@@ -1048,6 +1048,8 @@ public class CompanionService : ICompanionService
             // 基础查询（高性能：无跟踪、预生成SQL）
             var query = _context.Companions
                 .AsNoTracking()
+                .Include(x => x.CompanionGames)
+                    .ThenInclude(cg => cg.Game)
                 .AsQueryable();
 
             // 条件过滤
@@ -1109,7 +1111,7 @@ public class CompanionService : ICompanionService
                         GameIcon = cg.Game.Icon ?? "",
                         GameLevel = cg.GameLevel ?? "",
                         ServiceType = cg.ServiceType ?? "",
-                        ServiceTypeName = "",
+                        ServiceTypeName = "",  // 占位，后面批量翻译
                         PricePerGame = cg.PricePerGame,
                         PricePerHour = cg.PricePerHour
                     }).ToList()
@@ -1117,27 +1119,47 @@ public class CompanionService : ICompanionService
                 .ToListAsync();
 
             // ==============================================
-            // 🔥 高性能：一次性批量翻译 2 个字典（只查1次DB！）
+            // 🔥 修正：批量翻译【游戏里的 ServiceTypeName】
             // ==============================================
             if (list.Count > 0)
             {
-                // 1. 提取所有需要翻译的值（去重）
-                var serviceTypes = list.Select(x => x.ServiceType).Where(x => !string.IsNullOrEmpty(x)).Distinct().ToList();
-                var statusValues = list.Select(x => x.Status.ToString()).Distinct().ToList();
+                // 1. 提取所有游戏中的 ServiceType（去重）
+                var allServiceTypes = list
+                    .SelectMany(x => x.Games)
+                    .Select(g => g.ServiceType)
+                    .Where(t => !string.IsNullOrEmpty(t))
+                    .Distinct()
+                    .ToList();
 
-                // 2. 批量翻译（一次数据库请求）
-                var serviceTypeMap = await _dictTranslateService.BatchTranslateAsync("service_type", serviceTypes);
+                // 2. 提取审核状态
+                var statusValues = list
+                    .Select(x => x.Status.ToString())
+                    .Distinct()
+                    .ToList();
+
+                // 3. 批量翻译
+                var serviceTypeMap = await _dictTranslateService.BatchTranslateAsync("service_type", allServiceTypes);
                 var statusMap = await _dictTranslateService.BatchTranslateAsync("review_status", statusValues);
 
-                // 3. 内存赋值（极快）
+                // 4. 赋值：审核状态
                 foreach (var item in list)
                 {
-                    // 翻译服务类型
-                    item.ServiceTypeName = serviceTypeMap.TryGetValue(item.ServiceType!, out var sName) ? sName : item.ServiceType!;
-                    
-                    // 翻译审核状态
                     var statusKey = item.Status.ToString();
                     item.StatusName = statusMap.TryGetValue(statusKey, out var stName) ? stName : statusKey;
+                }
+
+                // 5. 赋值：游戏服务类型名称（核心修正）
+                foreach (var companion in list)
+                {
+                    foreach (var game in companion.Games)
+                    {
+                        if (!string.IsNullOrEmpty(game.ServiceType))
+                        {
+                            game.ServiceTypeName = serviceTypeMap.TryGetValue(game.ServiceType, out var name) 
+                                ? name 
+                                : game.ServiceType;
+                        }
+                    }
                 }
             }
 
