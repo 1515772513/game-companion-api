@@ -333,7 +333,7 @@ public class PowerLevelingService : IPowerLevelingService
                 CurrentRank = "当前段位", // 需要从订单详情获取
                 TargetRank = "目标段位", // 需要从订单详情获取
                 Progress = 0, // 需要根据进度计算
-                TotalAmount = o.FinalPrice,
+                TotalAmount = o.FinalPrice ?? 0,
                 CreatedAt = o.CreatedAt.ToDateTimeString(),
                 EstimatedCompleteTime = o.EndTime?.ToString("yyyy-MM-dd HH:mm:ss")
             }).ToList();
@@ -395,7 +395,7 @@ public class PowerLevelingService : IPowerLevelingService
                 CurrentStars = details.CurrentStars,
                 TargetRank = details.TargetRank,
                 Progress = details.Progress,
-                TotalAmount = order.FinalPrice,
+                TotalAmount = order.FinalPrice ?? 0,
                 SpecialRequirements = details.SpecialRequirements,
                 StartedAt = order.StartTime?.ToString("yyyy-MM-dd HH:mm:ss"),
                 EstimatedCompleteTime = order.EndTime?.ToString("yyyy-MM-dd HH:mm:ss"),

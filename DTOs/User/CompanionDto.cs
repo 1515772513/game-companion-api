@@ -15,6 +15,14 @@ public class CompanionGameItemDto
     /// <summary>游戏段位/等级</summary>
     public string GameLevel { get; set; } = string.Empty;
     public string GameIcon { get; set; } = string.Empty;
+    /// <summary>服务类型</summary>
+    public string ServiceType { get; set; } = string.Empty;
+    /// <summary>服务类型名称</summary>
+    public string ServiceTypeName { get; set; } = string.Empty;
+    /// <summary>单价(元/局)</summary>
+    public decimal? PricePerGame { get; set; }
+    /// <summary>单价(元/小时)</summary>
+    public decimal? PricePerHour { get; set; }
 }
 
 /// <summary>

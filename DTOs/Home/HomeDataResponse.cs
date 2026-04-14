@@ -104,7 +104,7 @@ public class CompanionSummaryDto
     /// 价格
     /// </summary>
     [JsonPropertyName("price")]
-    public decimal Price { get; set; }
+    public decimal? Price { get; set; }
 
     /// <summary>
     /// 价格单位

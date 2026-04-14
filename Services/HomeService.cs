@@ -51,6 +51,8 @@ public class HomeService : IHomeService
             // 获取热门陪玩师
             response.HotCompanions = await _context.Companions
                 .Where(c => c.OnlineStatus == "online" && c.Rating >= 4.5m)
+                .Include(c => c.User)
+                .Include(c => c.CompanionGames)
                 .OrderByDescending(c => c.Rating)
                 .Take(6)
                 .Select(c => new CompanionSummaryDto
@@ -59,8 +61,19 @@ public class HomeService : IHomeService
                     Nickname = c.Nickname,
                     AvatarUrl = c.User == null ? "" : c.User.Avatar ?? "",
                     Level = c.Level ?? null,
-                    ServiceType = c.ServiceType ?? "娱乐陪玩",
-                    Price = c.PricePerGame,
+
+                    // ======================
+                    // 【修改 1】从游戏表取服务类型
+                    // ======================
+                    ServiceType = c.CompanionGames
+                        .FirstOrDefault()!.ServiceType == "tech" ? "技术陪玩" : "娱乐陪玩",
+
+                    // ======================
+                    // 【修改 2】从游戏表取价格
+                    // ======================
+                    Price = c.CompanionGames
+                        .FirstOrDefault()!.PricePerGame,
+
                     PriceUnit = "局",
                     Rating = c.Rating ?? 0,
                     OnlineStatus = c.OnlineStatus == "online" ? 1 : 0,
@@ -160,10 +173,12 @@ public class HomeService : IHomeService
                 query = query.Where(c => c.CompanionGames.Any(cg => cg.GameId == request.GameId.Value));
             }
 
-            // 服务类型筛选
+            // ==============================================
+            // 【修改 1】服务类型筛选（从 companion_games 取）
+            // ==============================================
             if (!string.IsNullOrEmpty(request.ServiceType))
             {
-                query = query.Where(c => c.ServiceType == request.ServiceType);
+                query = query.Where(c => c.CompanionGames.Any(cg => cg.ServiceType == request.ServiceType));
             }
 
             // 等级筛选
@@ -172,15 +187,21 @@ public class HomeService : IHomeService
                 query = query.Where(c => c.Level == request.Level.Value);
             }
 
-            // 价格区间筛选
+            // ==============================================
+            // 【修改 2】价格区间筛选（从 companion_games 取）
+            // ==============================================
             if (request.MinPrice.HasValue)
             {
-                query = query.Where(c => c.PricePerGame >= request.MinPrice.Value);
+                query = query.Where(c => c.CompanionGames
+                    .Where(cg => !request.GameId.HasValue || cg.GameId == request.GameId.Value)
+                    .Any(cg => cg.PricePerGame >= request.MinPrice.Value));
             }
 
             if (request.MaxPrice.HasValue)
             {
-                query = query.Where(c => c.PricePerGame <= request.MaxPrice.Value);
+                query = query.Where(c => c.CompanionGames
+                    .Where(cg => !request.GameId.HasValue || cg.GameId == request.GameId.Value)
+                    .Any(cg => cg.PricePerGame <= request.MaxPrice.Value));
             }
 
             // 在线状态筛选
@@ -201,10 +222,12 @@ public class HomeService : IHomeService
             if (!string.IsNullOrEmpty(request.Keyword))
             {
                 query = query.Where(c => c.Nickname.Contains(request.Keyword) ||
-                                       c.Tags.Contains(request.Keyword));
+                                    c.Tags.Contains(request.Keyword));
             }
 
-            // 排序
+            // ==============================================
+            // 【修改 3】排序（价格排序从 companion_games 取）
+            // ==============================================
             switch (request.SortBy.ToLower())
             {
                 case "rating":
@@ -214,8 +237,14 @@ public class HomeService : IHomeService
                     break;
                 case "price":
                     query = request.SortOrder.ToLower() == "asc"
-                        ? query.OrderBy(c => c.PricePerGame)
-                        : query.OrderByDescending(c => c.PricePerGame);
+                        ? query.OrderBy(c => c.CompanionGames
+                            .Where(cg => !request.GameId.HasValue || cg.GameId == request.GameId.Value)
+                            .Select(cg => cg.PricePerGame)
+                            .FirstOrDefault())
+                        : query.OrderByDescending(c => c.CompanionGames
+                            .Where(cg => !request.GameId.HasValue || cg.GameId == request.GameId.Value)
+                            .Select(cg => cg.PricePerGame)
+                            .FirstOrDefault());
                     break;
                 case "order_count":
                     query = request.SortOrder.ToLower() == "asc"
@@ -240,9 +269,21 @@ public class HomeService : IHomeService
                     AvatarUrl = c.User == null ? "" : c.User.Avatar,
                     Level = c.Level ?? null,
                     LevelCode = c.Level ?? null,
-                    ServiceType = c.ServiceType == "tech" ? "技术陪玩" : "娱乐陪玩",
-                    ServiceTypeCode = c.ServiceType ?? "entertainment",
-                    Price = c.PricePerGame,
+
+                    // ==============================================
+                    // 【修改 4】服务类型（从 companion_games 取）
+                    // ==============================================
+                    ServiceType = c.CompanionGames
+                        .FirstOrDefault()!.ServiceType == "tech" ? "技术陪玩" : "娱乐陪玩",
+                    ServiceTypeCode = c.CompanionGames
+                        .FirstOrDefault()!.ServiceType ?? "entertainment",
+
+                    // ==============================================
+                    // 【修改 5】价格（从 companion_games 取）
+                    // ==============================================
+                    Price = c.CompanionGames
+                        .FirstOrDefault()!.PricePerGame,
+                    
                     PriceUnit = "局",
                     Rating = c.Rating ?? 0,
                     RatingCount = c.OrderReviews == null ? 0 : c.OrderReviews.Count(),
@@ -258,17 +299,17 @@ public class HomeService : IHomeService
                 .ToListAsync();
 
             return ApiResponse<CompanionListResponse>.SuccessResponse(new CompanionListResponse
-            {   
-                Items = items,
-                Pagination = new PaginationDto
                 {
-                    Page = request.Page,
-                    PageSize = request.PageSize,
-                    Total = total,
-                    TotalPages = (int)Math.Ceiling((double)total / request.PageSize),
-                    HasMore = request.Page * request.PageSize < total
-                }
-            }, "获取成功");
+                    Items = items,
+                    Pagination = new PaginationDto
+                    {
+                        Page = request.Page,
+                        PageSize = request.PageSize,
+                        Total = total,
+                        TotalPages = (int)Math.Ceiling((double)total / request.PageSize),
+                        HasMore = request.Page * request.PageSize < total
+                    }
+                }, "获取成功");
         }
         catch (Exception ex)
         {
@@ -309,10 +350,6 @@ public class HomeService : IHomeService
                 AvatarUrl = companion.User?.Avatar ?? "",
                 Level = companion.Level ?? null,
                 LevelCode = companion.Level ?? null,
-                ServiceType = companion.ServiceType == "tech" ? "技术陪玩" : "娱乐陪玩",
-                ServiceTypeCode = companion.ServiceType ?? "entertainment",
-                Price = companion.PricePerGame,
-                PriceUnit = "局",
                 Rating = companion.Rating ?? 0,
                 RatingCount = companion.OrderReviews?.Count ?? 0,
                 OrderCount = companion.TotalOrders ?? 0,
@@ -325,7 +362,11 @@ public class HomeService : IHomeService
                 {
                     GameId = cg.GameId,
                     GameName = cg.Game?.Name ?? "",
-                    GameRank = cg.GameLevel ?? ""
+                    GameRank = cg.GameLevel ?? "",
+                    ServiceType = cg.ServiceType,
+                    ServiceName = "",
+                    Price = cg.PricePerGame,
+                    PriceUnit = "局",
                 }).ToList(),
                 ServiceTimes = new List<ServiceTimeDto>(), // 服务时间需要额外配置
                 Tags = companion.Tags?.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList() ?? new List<string>(),
@@ -410,7 +451,7 @@ public class HomeService : IHomeService
             var query = _context.Companions
                 .Include(c => c.User)
                 .Where(c => c.Status == 1 &&
-                           (c.Nickname.Contains(request.Keyword) ||
+                        (c.Nickname.Contains(request.Keyword) ||
                             (c.Tags != null && c.Tags.Contains(request.Keyword)) ||
                             (c.Bio != null && c.Bio.Contains(request.Keyword))));
 
@@ -424,8 +465,23 @@ public class HomeService : IHomeService
                     Nickname = c.Nickname,
                     AvatarUrl = c.User == null ? "" : (c.User.Avatar == null ? "" : c.User.Avatar),
                     Level = c.Level ?? null,
-                    ServiceType = c.ServiceType == "tech" ? "技术陪玩" : "娱乐陪玩",
-                    Price = c.PricePerGame,
+
+                    // ======================
+                    // 【修改 1】从游戏表取服务类型
+                    // ======================
+                    ServiceType = _context.CompanionGames
+                        .Where(g => g.CompanionId == c.Id)
+                        .Select(g => g.ServiceType)
+                        .FirstOrDefault() == "tech" ? "技术陪玩" : "娱乐陪玩",
+
+                    // ======================
+                    // 【修改 2】从游戏表取单价
+                    // ======================
+                    Price = _context.CompanionGames
+                        .Where(g => g.CompanionId == c.Id)
+                        .Select(g => g.PricePerGame)
+                        .FirstOrDefault(),
+
                     PriceUnit = "局",
                     Rating = c.Rating ?? 0,
                     OnlineStatus = c.OnlineStatus == "online" ? 1 : 0,

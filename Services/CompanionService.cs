@@ -54,7 +54,9 @@ public class CompanionService : ICompanionService
                 return ApiResponse<ApplicationStatusResponse>.ErrorResponse(400, "您已经是认证陪玩师，无需再次申请");
             }
 
-            // 创建陪玩师申请记录
+            // ======================
+            // 【修改 1】创建陪玩师基础信息，不再写入 ServiceType、PricePerGame
+            // ======================
             var companion = new Companion
             {
                 UserId = userId,
@@ -64,8 +66,6 @@ public class CompanionService : ICompanionService
                 IdCardBack = request.IdCardBackUrl,
                 Phone = request.Phone,
                 Nickname = request.Nickname,
-                ServiceType = request.ServiceType,
-                PricePerGame = request.Price,
                 Bio = request.Bio,
                 Tags = request.Tags != null ? string.Join(",", request.Tags) : null,
                 Status = 0,
@@ -77,7 +77,9 @@ public class CompanionService : ICompanionService
             _context.Companions.Add(companion);
             await _context.SaveChangesAsync();
 
-            // 创建游戏技能记录
+            // ======================
+            // 【修改 2】创建游戏技能时，写入 ServiceType、PricePerGame、GameLevel
+            // ======================
             foreach (var gameId in request.Games)
             {
                 var companionGame = new CompanionGame
@@ -85,6 +87,8 @@ public class CompanionService : ICompanionService
                     CompanionId = companion.Id,
                     GameId = gameId,
                     GameLevel = request.GameRank,
+                    ServiceType = request.ServiceType,   // 从这里写入
+                    PricePerGame = request.Price,         // 从这里写入
                     CreatedAt = DateTime.UtcNow
                 };
                 _context.CompanionGames.Add(companionGame);
@@ -164,13 +168,16 @@ public class CompanionService : ICompanionService
             var companion = await _context.Companions
                 .Include(c => c.User)
                 .Include(c => c.CompanionGames)
-                .ThenInclude(g => g.Game)
+                    .ThenInclude(g => g.Game)
                 .FirstOrDefaultAsync(c => c.UserId == userId);
 
             if (companion == null || companion.Status != 1)
             {
                 return ApiResponse<CompanionInfoResponse>.ErrorResponse(404, "未找到陪玩师信息或未认证");
             }
+
+            // 取出第一个游戏技能（用于取服务类型、价格、段位）
+            var firstGame = companion.CompanionGames.FirstOrDefault();
 
             var response = new CompanionInfoResponse
             {
@@ -179,8 +186,17 @@ public class CompanionService : ICompanionService
                 Nickname = companion.Nickname,
                 AvatarUrl = companion.User?.Avatar ?? "",
                 Level = companion.Level ?? null,
-                ServiceType = companion.ServiceType ?? "技术陪玩",
-                Price = companion.PricePerGame,
+                
+                // ======================
+                // 【修改 1】从游戏表取服务类型
+                // ======================
+                ServiceType = firstGame?.ServiceType ?? "tech",
+                
+                // ======================
+                // 【修改 2】从游戏表取价格
+                // ======================
+                Price = firstGame?.PricePerGame ?? 0,
+                
                 Rating = companion.Rating ?? 0,
                 OrderCount = companion.TotalOrders ?? 0,
                 RatingCount = 0, // 需要根据评价记录计算
@@ -188,9 +204,9 @@ public class CompanionService : ICompanionService
                 OnlineStatus = OnlineStatusToInt(companion.OnlineStatus),
                 IsVerified = companion.Status == 1,
                 Games = companion.CompanionGames.Select(g => g.Game.Name).ToList(),
-                GameRank = companion.CompanionGames.FirstOrDefault()?.GameLevel ?? "",
+                GameRank = firstGame?.GameLevel ?? "",
                 Bio = companion.Bio ?? "",
-                Tags = companion.Tags?.Split(',').ToList() ?? new List<string>(),
+                Tags = companion.Tags?.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList() ?? new List<string>(),
                 CertificationTime = companion.UpdatedAt.ToDateTimeString(),
                 TodayOrders = 0, // 需要根据订单统计
                 MonthOrders = 0  // 需要根据订单统计
@@ -226,12 +242,35 @@ public class CompanionService : ICompanionService
                 return ApiResponse<object>.Fail(404, "未找到陪玩师信息或未认证");
             }
 
-            // 更新信息
+            // ======================
+            // 【旧字段：只更新昵称、简介、标签】
+            // ======================
             if (request.Nickname != null) companion.Nickname = request.Nickname;
-            if (request.ServiceType != null) companion.ServiceType = request.ServiceType;
-            if (request.Price.HasValue) companion.PricePerGame = request.Price.Value;
             if (request.Bio != null) companion.Bio = request.Bio;
             if (request.Tags != null) companion.Tags = string.Join(",", request.Tags);
+
+            // ======================
+            // 【新逻辑：服务类型、价格 → 更新到 companion_games 表】
+            // ======================
+            if (request.ServiceType != null || request.Price.HasValue)
+            {
+                // 获取该陪玩师的游戏技能记录（默认取第一条，你也可以按 GameId 筛选）
+                var companionGame = await _context.CompanionGames
+                    .FirstOrDefaultAsync(cg => cg.CompanionId == companion.Id);
+
+                if (companionGame == null)
+                {
+                    return ApiResponse<object>.Fail(404, "该陪玩师未设置游戏技能");
+                }
+
+                // 更新服务类型
+                if (request.ServiceType != null)
+                    companionGame.ServiceType = request.ServiceType;
+
+                // 更新单价
+                if (request.Price.HasValue)
+                    companionGame.PricePerGame = request.Price.Value;
+            }
 
             companion.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
@@ -344,7 +383,7 @@ public class CompanionService : ICompanionService
                 ServiceCount = o.DurationValue,
                 ServiceTime = o.PlayTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "",
                 SpecialRequirements = o.Remark,
-                TotalAmount = o.FinalPrice,
+                TotalAmount = o.FinalPrice ?? 0,
                 CreatedAt = o.CreatedAt.ToDateTimeString(),
                 Countdown = 0 // 需要根据时间计算
             }).ToList();
@@ -578,11 +617,11 @@ public class CompanionService : ICompanionService
 
             var response = new EarningsResponse
             {
-                TotalEarnings = completedOrders,
-                MonthEarnings = completedOrders,
-                TodayEarnings = completedOrders,
-                PendingAmount = pendingOrders,
-                WithdrawnAmount = completedOrders - pendingOrders,
+                TotalEarnings = completedOrders ?? 0,
+                MonthEarnings = completedOrders ?? 0,
+                TodayEarnings = completedOrders ?? 0,
+                PendingAmount = pendingOrders ?? 0,
+                WithdrawnAmount = completedOrders ?? 0 - pendingOrders ?? 0,
                 OrdersCount = totalOrders,
                 MonthOrders = monthOrders,
                 TodayOrders = todayOrders,
@@ -714,10 +753,13 @@ public class CompanionService : ICompanionService
                     .Any(g => g.CompanionId == c.Id && g.GameId == filterGameId.Value));
             }
 
-            // 服务类型
+            // ==============================================
+            // 【修改 1】服务类型从 companion_games 表查询
+            // ==============================================
             if (!string.IsNullOrWhiteSpace(request.ServiceType))
             {
-                query = query.Where(c => c.ServiceType == request.ServiceType);
+                query = query.Where(c => _context.CompanionGames
+                    .Any(g => g.CompanionId == c.Id && g.ServiceType == request.ServiceType));
             }
 
             // 等级
@@ -728,11 +770,19 @@ public class CompanionService : ICompanionService
             if (request.OnlineStatus == 1)
                 query = query.Where(c => c.OnlineStatus == "online");
 
-            // 排序
+            // ==============================================
+            // 【修改 2】排序关联 companion_games 表
+            // ==============================================
             query = request.Sort switch
             {
-                "price_asc" => query.OrderBy(c => c.PricePerGame),
-                "price_desc" => query.OrderByDescending(c => c.PricePerGame),
+                "price_asc" => query.OrderBy(c => _context.CompanionGames
+                    .Where(g => g.CompanionId == c.Id && (filterGameId == null || g.GameId == filterGameId.Value))
+                    .Select(g => g.PricePerGame)
+                    .FirstOrDefault()),
+                "price_desc" => query.OrderByDescending(c => _context.CompanionGames
+                    .Where(g => g.CompanionId == c.Id && (filterGameId == null || g.GameId == filterGameId.Value))
+                    .Select(g => g.PricePerGame)
+                    .FirstOrDefault()),
                 "rating_asc" => query.OrderBy(c => c.Rating),
                 "rating_desc" => query.OrderByDescending(c => c.Rating),
                 "total_orders_asc" => query.OrderBy(c => c.TotalOrders),
@@ -754,7 +804,6 @@ public class CompanionService : ICompanionService
                     c.UserId,
                     c.Level,
                     c.Tags,
-                    c.PricePerGame,
                     c.Rating,
                     c.TotalOrders,
                     c.OnlineStatus,
@@ -762,6 +811,13 @@ public class CompanionService : ICompanionService
                     GameId = filterGameId ?? _context.CompanionGames
                         .Where(g => g.CompanionId == c.Id)
                         .Select(g => g.GameId)
+                        .FirstOrDefault(),
+                    // ==============================================
+                    // 【修改 3】从 companion_games 取价格
+                    // ==============================================
+                    PricePerGame = _context.CompanionGames
+                        .Where(g => g.CompanionId == c.Id && (filterGameId == null || g.GameId == filterGameId.Value))
+                        .Select(g => g.PricePerGame)
                         .FirstOrDefault()
                 })
                 .ToListAsync();
@@ -841,7 +897,7 @@ public class CompanionService : ICompanionService
                     Level = x.Level ?? null,
                     LevelName = levelName,
                     Tags = x.Tags?.Split(',').Where(t => !string.IsNullOrWhiteSpace(t)).ToList() ?? new List<string>(),
-                    Price = x.PricePerGame,
+                    Price = x.PricePerGame, // 这里已经是从游戏表取的价格
                     PriceUnit = "局",
                     Rating = x.Rating ?? 0,
                     OrderCount = x.TotalOrders ?? 0,
@@ -908,46 +964,46 @@ public class CompanionService : ICompanionService
     /// </summary>
     public async Task<ApiResponse<List<CompanionServiceDto>>> GetCompanionServicesAsync(int companionId)
     {
-        // 1. 查询真实的陪玩师基础信息
-        var companion = await _context.Companions
-            .FirstOrDefaultAsync(c => c.Id == companionId && c.Status == 1);
+        // 1. 校验陪玩师是否存在
+        var companionExists = await _context.Companions
+            .AnyAsync(c => c.Id == companionId && c.Status == 1);
         
-        if (companion == null)
+        if (!companionExists)
             return ApiResponse<List<CompanionServiceDto>>.Fail(404, "陪玩师不存在");
 
-        // 2. 构建真实服务列表（基于数据库实体，无模拟数据）
-        var serviceList = new List<CompanionServiceDto>
-        {
-            new CompanionServiceDto
+        // 2. 从 companion_games 表查询该陪玩师的所有游戏服务（最新表结构）
+        var gameServices = await _context.CompanionGames
+            .Where(g => g.CompanionId == companionId)
+            .Select(g => new CompanionServiceDto
             {
-                Id = companion.Id,
-                // Description = $"专业陪玩服务",
-                Price = companion.PricePerGame,
+                Id = g.Id,  // 这里用游戏技能表ID
+                Price = g.PricePerGame, // 从 companion_games 取
                 PriceUnit = "局",
                 Duration = 60,
-                ServiceType = companion.ServiceType,
+                ServiceType = g.ServiceType, // 从 companion_games 取
                 ServiceTypeName = string.Empty
-            }
-        };
+            })
+            .ToListAsync();
 
-        // 3. 集成你提供的字典翻译逻辑
-        if (serviceList.Count > 0)
+        if (!gameServices.Any())
+            return ApiResponse<List<CompanionServiceDto>>.Success(gameServices);
+
+        // 3. 批量翻译服务类型字典（原逻辑不变）
+        var serviceTypes = gameServices
+            .Select(x => x.ServiceType)
+            .Where(x => !string.IsNullOrEmpty(x))
+            .Distinct()
+            .ToList();
+
+        var serviceTypeMap = await _dictTranslateService.BatchTranslateAsync("service_type", serviceTypes);
+
+        foreach (var item in gameServices)
         {
-            // 提取所有需要翻译的服务类型（去重）
-            var serviceTypes = serviceList.Select(x => x.ServiceType).Where(x => !string.IsNullOrEmpty(x)).Distinct().ToList();
-
-            // 批量翻译（一次数据库请求）
-            var serviceTypeMap = await _dictTranslateService.BatchTranslateAsync("service_type", serviceTypes);
-
-            // 内存赋值翻译结果
-            foreach (var item in serviceList)
-            {
-                item.ServiceTypeName = serviceTypeMap.TryGetValue(item.ServiceType!, out var sName) ? sName : item.ServiceType!;
-            }
+            item.ServiceTypeName = serviceTypeMap.TryGetValue(item.ServiceType!, out var sName) ? sName : item.ServiceType!;
         }
 
-        // 4. 返回真实数据+翻译后的结果
-        return ApiResponse<List<CompanionServiceDto>>.Success(serviceList);
+        // 4. 返回
+        return ApiResponse<List<CompanionServiceDto>>.Success(gameServices);
     }
 
     /// <summary>
@@ -1013,7 +1069,7 @@ public class CompanionService : ICompanionService
                 query = query.Where(x => x.CompanionGames.Any(g => g.GameId == request.GameId));
 
             if (!string.IsNullOrWhiteSpace(request.ServiceType))
-                query = query.Where(x => x.ServiceType == request.ServiceType);
+                query = query.Where(x => x.CompanionGames.Any(g => g.ServiceType == request.ServiceType));
 
             if (request.StartTime.HasValue)
                 query = query.Where(x => x.CreatedAt >= request.StartTime.Value);
@@ -1036,12 +1092,8 @@ public class CompanionService : ICompanionService
                     RealName = x.User.RealName ?? "",
                     Phone = x.Phone,
                     Level = x.Level ?? null,
-                    ServiceType = x.ServiceType ?? "",
-                    ServiceTypeName = "", // 服务类型翻译占位
                     Status = x.Status ?? 0,
                     StatusName = "",      // 审核状态翻译占位
-                    PricePerGame = x.PricePerGame,
-                    PricePerHour = x.PricePerHour,
                     Rating = x.Rating,
                     TotalOrders = x.TotalOrders,
                     GoodReviewRate = x.GoodReviewRate,
@@ -1055,7 +1107,11 @@ public class CompanionService : ICompanionService
                         GameId = cg.GameId,
                         GameName = cg.Game.Name,
                         GameIcon = cg.Game.Icon ?? "",
-                        GameLevel = cg.GameLevel ?? ""
+                        GameLevel = cg.GameLevel ?? "",
+                        ServiceType = cg.ServiceType ?? "",
+                        ServiceTypeName = "",
+                        PricePerGame = cg.PricePerGame,
+                        PricePerHour = cg.PricePerHour
                     }).ToList()
                 })
                 .ToListAsync();

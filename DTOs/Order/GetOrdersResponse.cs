@@ -89,7 +89,7 @@ public class OrderItemBase
     /// <summary>
     /// 订单金额
     /// </summary>
-    public decimal TotalPrice { get; set; }
+    public decimal? TotalPrice { get; set; }
 
     /// <summary>
     /// 优惠金额
@@ -99,7 +99,7 @@ public class OrderItemBase
     /// <summary>
     /// 最终金额
     /// </summary>
-    public decimal FinalPrice { get; set; }
+    public decimal? FinalPrice { get; set; }
 }
 
 /// <summary>
@@ -130,7 +130,7 @@ public class CompanionInfoBase
     /// <summary>
     /// 陪玩师等级
     /// </summary>
-    public int? Level { get; set; } = null;
+    public string? Level { get; set; } = string.Empty;
 }
 
 

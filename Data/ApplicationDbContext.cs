@@ -205,8 +205,6 @@ public class ApplicationDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
 
             // 原有精度保留
-            entity.Property(e => e.PricePerGame).HasPrecision(10, 2);
-            entity.Property(e => e.PricePerHour).HasPrecision(10, 2);
             entity.Property(e => e.Rating).HasPrecision(3, 2);
             entity.Property(e => e.GoodReviewRate).HasPrecision(5, 2);
         });
@@ -221,6 +219,9 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.GameId)
                 .HasColumnName("game_id")
                 .IsRequired();
+            // 原有精度保留
+            entity.Property(e => e.PricePerGame).HasPrecision(10, 2);
+            entity.Property(e => e.PricePerHour).HasPrecision(10, 2);
         });
     }
 

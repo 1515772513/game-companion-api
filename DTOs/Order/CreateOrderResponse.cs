@@ -43,12 +43,12 @@ public class CreateOrderResponse
     /// <summary>
     /// 单价（元/局或元/小时）
     /// </summary>
-    public decimal UnitPrice { get; set; }
+    public decimal? UnitPrice { get; set; }
 
     /// <summary>
     /// 订单总额
     /// </summary>
-    public decimal TotalAmount { get; set; }
+    public decimal? TotalAmount { get; set; }
 
     /// <summary>
     /// 服务手续费
@@ -63,7 +63,7 @@ public class CreateOrderResponse
     /// <summary>
     /// 实付金额
     /// </summary>
-    public decimal FinalAmount { get; set; }
+    public decimal? FinalAmount { get; set; }
 
     /// <summary>
     /// 订单状态：1-待付款，2-待服务，3-服务中，4-待确认，5-已完成，6-已取消，7-退款中

@@ -18,7 +18,7 @@ public class RefundOrderResponse
     /// <summary>
     /// 退款金额
     /// </summary>
-    public decimal RefundAmount { get; set; }
+    public decimal? RefundAmount { get; set; }
 
     /// <summary>
     /// 退款状态：0-审核中，1-已退款，2-已拒绝

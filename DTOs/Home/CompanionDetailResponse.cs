@@ -44,30 +44,6 @@ public class CompanionDetailResponse
     public int? LevelCode { get; set; } = null;
 
     /// <summary>
-    /// 服务类型
-    /// </summary>
-    [JsonPropertyName("service_type")]
-    public string ServiceType { get; set; } = "";
-
-    /// <summary>
-    /// 服务类型代码
-    /// </summary>
-    [JsonPropertyName("service_type_code")]
-    public string ServiceTypeCode { get; set; } = "";
-
-    /// <summary>
-    /// 价格
-    /// </summary>
-    [JsonPropertyName("price")]
-    public decimal Price { get; set; }
-
-    /// <summary>
-    /// 价格单位
-    /// </summary>
-    [JsonPropertyName("price_unit")]
-    public string PriceUnit { get; set; } = "";
-
-    /// <summary>
     /// 评分
     /// </summary>
     [JsonPropertyName("rating")]
@@ -180,6 +156,31 @@ public class GameSkillDto
     /// </summary>
     [JsonPropertyName("game_rank")]
     public string GameRank { get; set; } = "";
+
+    /// <summary>
+    /// 服务类型
+    /// </summary>
+    [JsonPropertyName("service_type")]
+    public string ServiceType { get; set; } = "";
+
+    /// <summary>
+    /// 服务名称
+    /// </summary>
+    [JsonPropertyName("service_name")]
+    public string ServiceName { get; set; } = "";
+        
+    /// <summary>
+    /// 价格
+    /// </summary>
+    [JsonPropertyName("price")]
+    public decimal? Price { get; set; } = null;
+
+    /// <summary>
+    /// 价格单位
+    /// </summary>
+    [JsonPropertyName("price_unit")]
+    public string PriceUnit { get; set; } = "";
+
 }
 
 /// <summary>

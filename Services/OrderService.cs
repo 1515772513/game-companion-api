@@ -61,6 +61,17 @@ public class OrderService : IOrderService
                 return ApiResponse<CreateOrderResponse>.ErrorResponse(3004, "游戏不存在");
             }
 
+            // ======================
+            // 【核心修改 1】根据 陪玩师ID + 游戏ID 获取价格（从 companion_games 取）
+            // ======================
+            var companionGame = await _context.CompanionGames
+                .FirstOrDefaultAsync(cg => cg.CompanionId == request.CompanionId && cg.GameId == request.GameId);
+            
+            if (companionGame == null)
+            {
+                return ApiResponse<CreateOrderResponse>.ErrorResponse(3007, "该陪玩师未开通此游戏服务");
+            }
+
             // 验证预约时间格式
             if (!DateTime.TryParseExact(request.ServiceTime, "yyyy-MM-dd HH:mm:ss", null, System.Globalization.DateTimeStyles.None, out var serviceTime))
             {
@@ -88,10 +99,12 @@ public class OrderService : IOrderService
                 return ApiResponse<CreateOrderResponse>.ErrorResponse(3005, "服务时间冲突");
             }
 
-            // 计算订单金额
-            var unitPrice = companion.PricePerGame;
+            // ======================
+            // 【核心修改 2】单价从游戏技能表取，不再用 companion.PricePerGame
+            // ======================
+            var unitPrice = companionGame.PricePerGame;
             var totalPrice = unitPrice * request.ServiceCount;
-            var discountAmount = CalculateDiscount(totalPrice, request.ServiceCount);
+            var discountAmount = CalculateDiscount(totalPrice ?? 0, request.ServiceCount);
             var finalAmount = totalPrice - discountAmount;
 
             // 检查用户余额
@@ -228,13 +241,13 @@ public class OrderService : IOrderService
                         Id = o.Companion.Id,
                         Nickname = o.Companion.Nickname,
                         // AvatarUrl = o.Companion.AvatarUrl ?? "",
-                        Level = o.Companion.Level ?? null,
+                        Level = o.Companion.Level?.ToString() ?? "",
                     },
                     GameName = o.Game?.Name ?? "",
                     GameRank = "",
                     ServiceCount = o.DurationValue,
                     ServiceTime = o.PlayTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "",
-                    TotalAmount = o.FinalPrice,
+                    TotalAmount = o.FinalPrice ?? 0,
                     CreatedAt = o.CreatedAt.ToDateTimeString()
                 }).ToList(),
                 Pagination = new GetOrdersResponse.OrderPagination
@@ -311,11 +324,11 @@ public class OrderService : IOrderService
                 ServiceUnit = order.DurationType ?? "局",
                 ServiceTime = order.PlayTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "",
                 SpecialRequirements = order.Remark ?? "",
-                UnitPrice = order.UnitPrice,
+                UnitPrice = order.UnitPrice ?? 0,
                 ServiceFee = 0,
                 DiscountAmount = order.DiscountAmount ?? 0,
-                TotalAmount = order.TotalPrice,
-                FinalAmount = order.FinalPrice,
+                TotalAmount = order.TotalPrice ?? 0,
+                FinalAmount = order.FinalPrice ?? 0,
                 PaymentMethod = "balance",
                 PaymentMethodText = "余额支付",
                 PaymentTime = order.PayTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "",
@@ -384,7 +397,7 @@ public class OrderService : IOrderService
                 Status = 6,
                 StatusText = "已取消",
                 CancelledAt = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"),
-                RefundAmount = order.FinalPrice,
+                RefundAmount = order.FinalPrice ?? 0,
                 RefundTo = "balance",
                 RefundToText = "退回余额"
             };
@@ -654,8 +667,13 @@ public class OrderService : IOrderService
                     {
                         Id = x.Companion.Id,
                         Nickname = x.Companion.Nickname ?? "",
-                        // AvatarUrl = x.Companion.AvatarUrl ?? "",
-                        Level = x.Companion.Level ?? null,
+                        // ======================
+                        // 【唯一修改】从 companion_games 取当前游戏的等级
+                        // ======================
+                        Level = _context.CompanionGames
+                            .Where(cg => cg.CompanionId == x.CompanionId && cg.GameId == x.GameId)
+                            .Select(cg => cg.GameLevel)
+                            .FirstOrDefault(),
                         RealName = x.User.RealName ?? ""
                     },
 

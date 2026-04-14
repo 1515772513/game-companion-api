@@ -75,27 +75,6 @@ public partial class Companion
     public int? Level { get; set; }
 
     /// <summary>
-    /// 服务类型
-    /// </summary>
-    [Column("service_type")]
-    [StringLength(1)]
-    public string? ServiceType { get; set; }
-
-    /// <summary>
-    /// 单价(元/局)
-    /// </summary>
-    [Column("price_per_game")]
-    [Precision(10, 2)]
-    public decimal PricePerGame { get; set; }
-
-    /// <summary>
-    /// 单价(元/小时)
-    /// </summary>
-    [Column("price_per_hour")]
-    [Precision(10, 2)]
-    public decimal? PricePerHour { get; set; }
-
-    /// <summary>
     /// 评分(0.00-5.00)
     /// </summary>
     [Column("rating")]

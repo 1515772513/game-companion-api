@@ -116,17 +116,11 @@ public partial class GameCompanionContext : DbContext
                 .HasDefaultValueSql("'offline'")
                 .HasComment("在线状态");
             entity.Property(e => e.Phone).HasComment("联系电话");
-            entity.Property(e => e.PricePerGame).HasComment("单价(元/局)");
-            entity.Property(e => e.PricePerHour).HasComment("单价(元/小时)");
             entity.Property(e => e.Rating)
                 .HasDefaultValueSql("'0.00'")
                 .HasComment("评分(0.00-5.00)");
             entity.Property(e => e.RealName).HasComment("真实姓名");
             entity.Property(e => e.RejectReason).HasComment("拒绝原因");
-            entity.Property(e => e.ServiceType)
-                .HasDefaultValueSql("'1'")
-                .IsFixedLength()
-                .HasComment("服务类型");
             entity.Property(e => e.Status)
                 .HasDefaultValueSql("'0'")
                 .HasComment("0=待审核,1=审核通过,2=审核拒绝");
@@ -152,6 +146,11 @@ public partial class GameCompanionContext : DbContext
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.GameId).HasComment("游戏ID");
             entity.Property(e => e.GameLevel).HasComment("游戏段位/等级");
+            entity.Property(e => e.PricePerGame).HasComment("单价(元/局)");
+            entity.Property(e => e.PricePerHour).HasComment("单价(元/小时)");
+            entity.Property(e => e.ServiceType)
+                .IsFixedLength()
+                .HasComment("服务类型");
 
             entity.HasOne(d => d.Companion).WithMany(p => p.CompanionGames).HasConstraintName("companion_games_ibfk_1");
         });
@@ -696,8 +695,8 @@ public partial class GameCompanionContext : DbContext
             entity.Property(e => e.Bio).HasComment("个人简介");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.Gender)
-                .HasDefaultValueSql("'other'")
-                .HasComment("性别");
+                .HasDefaultValueSql("'0'")
+                .HasComment("性别 0=未知 1=男 2=女");
             entity.Property(e => e.IdCard).HasComment("身份证号");
             entity.Property(e => e.IsAdmin)
                 .HasDefaultValueSql("'0'")

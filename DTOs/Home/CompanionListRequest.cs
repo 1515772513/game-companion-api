@@ -125,7 +125,7 @@ public class CompanionDetailDto
     /// <summary>
     /// 价格
     /// </summary>
-    public decimal Price { get; set; }
+    public decimal? Price { get; set; }
 
     /// <summary>
     /// 价格单位
