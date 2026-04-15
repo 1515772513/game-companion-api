@@ -47,7 +47,7 @@ public class ApiResponse<T>
     {
         Code = 200;
         Message = "success";
-        Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        Timestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
     }
 
     /// <summary>
@@ -155,7 +155,7 @@ public class ApiResponse
     {
         Code = 200;
         Message = "success";
-        Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        Timestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
     }
 
     /// <summary>

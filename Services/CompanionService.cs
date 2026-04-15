@@ -70,8 +70,8 @@ public class CompanionService : ICompanionService
                 Tags = request.Tags != null ? string.Join(",", request.Tags) : null,
                 Status = 0,
                 OnlineStatus = "离线",
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now
             };
 
             _context.Companions.Add(companion);
@@ -89,7 +89,7 @@ public class CompanionService : ICompanionService
                     GameLevel = request.GameRank,
                     ServiceType = request.ServiceType,   // 从这里写入
                     PricePerGame = request.Price,         // 从这里写入
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
                 _context.CompanionGames.Add(companionGame);
             }
@@ -272,7 +272,7 @@ public class CompanionService : ICompanionService
                     companionGame.PricePerGame = request.Price.Value;
             }
 
-            companion.UpdatedAt = DateTime.UtcNow;
+            companion.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             return ApiResponse<object>.Success("陪玩师信息更新成功");
@@ -315,7 +315,7 @@ public class CompanionService : ICompanionService
             };
 
             companion.OnlineStatus = onlineStatus;
-            companion.UpdatedAt = DateTime.UtcNow;
+            companion.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             return ApiResponse<object>.Success($"状态已切换为{onlineStatus}");
@@ -435,8 +435,8 @@ public class CompanionService : ICompanionService
             }
 
             order.Status = "服务中";
-            order.StartTime = DateTime.UtcNow;
-            order.UpdatedAt = DateTime.UtcNow;
+            order.StartTime = DateTime.Now;
+            order.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             return ApiResponse<object>.Success("订单接受成功");
@@ -475,7 +475,7 @@ public class CompanionService : ICompanionService
             }
 
             order.Status = "已取消";
-            order.UpdatedAt = DateTime.UtcNow;
+            order.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             return ApiResponse<object>.Success("订单拒绝成功");
@@ -514,8 +514,8 @@ public class CompanionService : ICompanionService
             }
 
             order.Status = "服务中";
-            order.StartTime = DateTime.UtcNow;
-            order.UpdatedAt = DateTime.UtcNow;
+            order.StartTime = DateTime.Now;
+            order.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             return ApiResponse<object>.Success("服务开始成功");
@@ -554,8 +554,8 @@ public class CompanionService : ICompanionService
             }
 
             order.Status = "已完成";
-            order.EndTime = DateTime.UtcNow;
-            order.UpdatedAt = DateTime.UtcNow;
+            order.EndTime = DateTime.Now;
+            order.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             return ApiResponse<object>.Success("服务完成成功");
@@ -590,7 +590,7 @@ public class CompanionService : ICompanionService
             }
 
             // 统计订单数据
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
             var todayStart = now.Date;
             var monthStart = new DateTime(now.Year, now.Month, 1);
 

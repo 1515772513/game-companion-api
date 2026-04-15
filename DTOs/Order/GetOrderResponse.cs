@@ -28,7 +28,7 @@ public class GetOrderResponse
     /// <summary>
     /// 订单状态
     /// </summary>
-    public int Status { get; set; }
+    public string Status { get; set; } = string.Empty;
 
     /// <summary>
     /// 订单状态文本

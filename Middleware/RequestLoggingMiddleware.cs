@@ -19,13 +19,13 @@ public class RequestLoggingMiddleware
         var requestId = context.TraceIdentifier;
         context.Items["RequestId"] = requestId;
 
-        var startTime = DateTime.UtcNow;
+        var startTime = DateTime.Now;
 
         _logger.LogInformation("请求开始: {RequestId} - {Method} {Path}", requestId, context.Request.Method, context.Request.Path);
 
         await _next(context);
 
-        var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
+        var duration = (DateTime.Now - startTime).TotalMilliseconds;
 
         _logger.LogInformation("请求完成: {RequestId} - {StatusCode} - {Duration}ms", requestId, context.Response.StatusCode, duration);
     }

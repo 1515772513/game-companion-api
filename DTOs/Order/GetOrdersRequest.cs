@@ -26,7 +26,7 @@ public class GetOrdersRequest
     /// <summary>
     /// 订单状态筛选：1-待付款，2-待服务，3-服务中，4-待确认，5-已完成，6-已取消，7-退款中
     /// </summary>
-    public int? Status { get; set; }
+    public string? Status { get; set; }
 
     /// <summary>
     /// 排序字段：created_at-创建时间，service_time-服务时间

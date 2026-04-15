@@ -82,7 +82,7 @@ public class MessageService : IMessageService
                     MessageType = ConvertMessageType(lastMessage.MessageType),
                     SenderId = lastMessage.SenderId,
                     Time = lastMessage.CreatedAt.ToDateTimeString(),
-                    Timestamp = new DateTimeOffset(lastMessage.CreatedAt ?? DateTime.UtcNow).ToUniversalTime().ToUnixTimeSeconds()
+                    Timestamp = new DateTimeOffset(lastMessage.CreatedAt ?? DateTime.Now).ToUniversalTime().ToUnixTimeSeconds()
                 } : null,
                 UnreadCount = conv.UnreadCount ?? 0,
                 IsOnline = conv.Companion?.OnlineStatus == "在线",
@@ -148,7 +148,7 @@ public class MessageService : IMessageService
                 Content = msg.Content,
                 MessageType = ConvertMessageType(msg.MessageType),
                 Time = msg.CreatedAt.ToDateTimeString(),
-                Timestamp = new DateTimeOffset(msg.CreatedAt ?? DateTime.UtcNow).ToUniversalTime().ToUnixTimeSeconds(),
+                Timestamp = new DateTimeOffset(msg.CreatedAt ?? DateTime.Now).ToUniversalTime().ToUnixTimeSeconds(),
                 IsSelf = userId == msg.SenderId,
                 IsRead = msg.IsRead == true
             });
@@ -223,7 +223,7 @@ public class MessageService : IMessageService
             Content = request.Content,
             MessageType = ConvertMessageTypeToDb(request.MessageType),
             IsRead = false,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.Now
         };
 
         _context.Messages.Add(message);
@@ -231,7 +231,7 @@ public class MessageService : IMessageService
 
         // 更新会话的最后消息和未读数
         conversation.LastMessage = request.Content;
-        conversation.LastMessageTime = DateTime.UtcNow;
+        conversation.LastMessageTime = DateTime.Now;
         if (conversation.UserId != userId)
         {
             conversation.UnreadCount = (conversation.UnreadCount ?? 0) + 1;
@@ -248,7 +248,7 @@ public class MessageService : IMessageService
             MessageType = request.MessageType,
             SenderId = userId,
             IsSelf = true,
-            SentAt = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")
+            SentAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
         };
 
         return ApiResponse<SendMessageResponseDto>.SuccessResponse(response);
@@ -387,14 +387,14 @@ public class MessageService : IMessageService
         }
 
         notification.IsRead = true;
-        // notification.ReadAt = DateTime.UtcNow;
+        // notification.ReadAt = DateTime.Now;
         await _context.SaveChangesAsync();
 
         var response = new MarkNotificationReadResponseDto
         {
             NotificationId = notificationId,
             IsRead = true,
-            ReadAt = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")
+            ReadAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
         };
 
         return ApiResponse<MarkNotificationReadResponseDto>.SuccessResponse(response);

@@ -39,7 +39,7 @@ public class PostService : IPostService
 
         // 检查发布频率限制
         var recentPosts = await _context.Posts
-            .Where(p => p.UserId == userId && p.CreatedAt > DateTime.UtcNow.AddHours(-1))
+            .Where(p => p.UserId == userId && p.CreatedAt > DateTime.Now.AddHours(-1))
             .CountAsync();
 
         if (recentPosts >= 10)
@@ -59,8 +59,8 @@ public class PostService : IPostService
             LikeCount = 0,
             CommentCount = 0,
             ShareCount = 0,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.Now,
+            UpdatedAt = DateTime.Now
         };
 
         _context.Posts.Add(post);
@@ -278,7 +278,7 @@ public class PostService : IPostService
             {
                 PostId = postId,
                 UserId = userId,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now
             };
 
             _context.PostLikes.Add(like);
@@ -359,7 +359,7 @@ public class PostService : IPostService
 
         // 检查评论频率限制
         var recentComments = await _context.PostComments
-            .Where(c => c.UserId == userId && c.CreatedAt > DateTime.UtcNow.AddMinutes(-30))
+            .Where(c => c.UserId == userId && c.CreatedAt > DateTime.Now.AddMinutes(-30))
             .CountAsync();
 
         if (recentComments >= 10)
@@ -374,7 +374,7 @@ public class PostService : IPostService
             ParentId = request.ParentId,
             Content = request.Content,
             LikeCount = 0,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.Now
         };
 
         _context.PostComments.Add(comment);
@@ -470,7 +470,7 @@ public class PostService : IPostService
         }
 
         post.Status = "已删除";
-        post.UpdatedAt = DateTime.UtcNow;
+        post.UpdatedAt = DateTime.Now;
         await _context.SaveChangesAsync();
 
         return ApiResponse.Success("删除成功");
@@ -494,7 +494,7 @@ public class PostService : IPostService
         }
 
         Draft draft;
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
 
         if (request.DraftId.HasValue)
         {
@@ -567,7 +567,7 @@ public class PostService : IPostService
     /// </summary>
     private string GetTimeText(DateTime dateTime)
     {
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
         var diff = now - dateTime;
 
         if (diff.TotalMinutes < 1)

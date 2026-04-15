@@ -100,6 +100,21 @@ public class OrderItemBase
     /// 最终金额
     /// </summary>
     public decimal? FinalPrice { get; set; }
+
+    /// <summary>
+    /// 服务类型
+    /// </summary>
+    public string ServiceType { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 服务类型文本
+    /// </summary>
+    public string ServiceTypeName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 是否失效（超过15分钟 + 状态=0）
+    /// </summary>
+    public bool IsExpired { get; set; } = false;
 }
 
 /// <summary>

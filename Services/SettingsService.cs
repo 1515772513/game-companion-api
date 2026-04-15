@@ -86,7 +86,7 @@ public class SettingsService : ISettingsService
             }
 
             user.Phone = changeDto.NewPhone;
-            user.UpdatedAt = DateTime.UtcNow;
+            user.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             return ApiResponse<bool>.Success(true);
@@ -131,7 +131,7 @@ public class SettingsService : ISettingsService
 
             // 更新密码（实际项目中应该哈希处理）
             user.Password = changeDto.NewPassword;
-            user.UpdatedAt = DateTime.UtcNow;
+            user.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             return ApiResponse<bool>.Success(true);
@@ -213,15 +213,15 @@ public class SettingsService : ISettingsService
                 UserId = userId,
                 SettingKey = key,
                 SettingValue = value ? "1" : "0",
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now
             };
             _context.UserSettings.Add(setting);
         }
         else
         {
             setting.SettingValue = value ? "1" : "0";
-            setting.UpdatedAt = DateTime.UtcNow;
+            setting.UpdatedAt = DateTime.Now;
         }
     }
 
@@ -245,7 +245,7 @@ public class SettingsService : ISettingsService
                 Contact = feedbackDto.ContactInfo,
                 Type = feedbackDto.Type,
                 Status = "待处理",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now
             };
 
             _context.Feedbacks.Add(feedback);

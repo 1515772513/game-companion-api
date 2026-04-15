@@ -44,7 +44,7 @@ public class UserService : IUserService
             user.Age = updateDto.Age;
             user.Name = updateDto.Name;
             user.Bio = updateDto.Bio;
-            user.UpdatedAt = DateTime.UtcNow;
+            user.UpdatedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
 
@@ -95,7 +95,7 @@ public class UserService : IUserService
             }
 
             user.Avatar = avatarUrl;
-            user.UpdatedAt = DateTime.UtcNow;
+            user.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             return ApiResponse<string>.Success(avatarUrl);
@@ -123,7 +123,7 @@ public class UserService : IUserService
             // 简单的实名认证，实际项目中应该调用第三方API进行验证
             user.RealName = verifyDto.RealName;
             user.IdCard = verifyDto.IdCard;
-            user.UpdatedAt = DateTime.UtcNow;
+            user.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             return ApiResponse<bool>.Success(true);
@@ -313,7 +313,7 @@ public class UserService : IUserService
                 {
                     FollowerId = currentUserId,
                     FollowingId = followDto.UserId,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
                 _context.Follows.Add(follow);
             }
@@ -359,8 +359,8 @@ public class UserService : IUserService
                 HourlyRate = applyDto.HourlyRate,
                 AvailableTime = applyDto.AvailableTime,
                 Status = "待审核",
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now
             };
 
             _context.CompanionApplications.Add(application);
@@ -519,7 +519,7 @@ public class UserService : IUserService
     {
         try
         {
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
             var lastWeek = now.AddDays(-7);
             var twoWeeksAgo = now.AddDays(-14);
 

@@ -48,7 +48,7 @@ public class AuthService : IAuthService
         }
 
         // 更新最后登录时间
-        user.LastLoginTime = DateTime.UtcNow;
+        user.LastLoginTime = DateTime.Now;
         await _context.SaveChangesAsync();
 
         var token = GenerateJwtToken(user);
@@ -96,8 +96,8 @@ public class AuthService : IAuthService
             Phone = request.Phone,
             Nickname = request.Nickname ?? "用户" + request.Phone.Substring(7),
             Status = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.Now,
+            UpdatedAt = DateTime.Now
         };
 
         _context.Users.Add(user);
@@ -147,12 +147,12 @@ public class AuthService : IAuthService
         // TODO: 验证验证码
 
         user.Password = HashPassword(request.NewPassword);
-        user.UpdatedAt = DateTime.UtcNow;
+        user.UpdatedAt = DateTime.Now;
         await _context.SaveChangesAsync();
 
         return ApiResponse<object>.SuccessResponse(new
         {
-            reset_time = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")
+            reset_time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
         }, "密码重置成功");
     }
 
@@ -174,7 +174,7 @@ public class AuthService : IAuthService
 
         return ApiResponse<object>.SuccessResponse(new
         {
-            logout_time = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")
+            logout_time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
         }, "登出成功");
     }
 
@@ -195,7 +195,7 @@ public class AuthService : IAuthService
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddMinutes(int.Parse(jwtSettings["ExpirationMinutes"]!)),
+            Expires = DateTime.Now.AddMinutes(int.Parse(jwtSettings["ExpirationMinutes"]!)),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(secretKey), SecurityAlgorithms.HmacSha256Signature),
             Issuer = jwtSettings["Issuer"],
             Audience = jwtSettings["Audience"]
@@ -255,9 +255,9 @@ public class AuthService : IAuthService
                     Nickname = $"用户{request.Phone[^4..]}", // 尾号4位
                     Status = true, // 启用
                     IsBlocked = false,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow,
-                    LastLoginTime = DateTime.UtcNow
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now,
+                    LastLoginTime = DateTime.Now
                     // 你有其他默认字段，在这里继续加
                 };
 
@@ -275,8 +275,8 @@ public class AuthService : IAuthService
             }
 
             // 4. 统一更新登录时间
-            user.LastLoginTime = DateTime.UtcNow;
-            user.UpdatedAt = DateTime.UtcNow;
+            user.LastLoginTime = DateTime.Now;
+            user.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             // 5. 生成 Token
@@ -338,9 +338,9 @@ public class AuthService : IAuthService
                     Avatar = request.Avatar ?? string.Empty,
                     Status = true, // 启用
                     IsBlocked = false,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow,
-                    LastLoginTime = DateTime.UtcNow,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now,
+                    LastLoginTime = DateTime.Now,
                     Phone = string.Empty,
                 };
 
@@ -358,8 +358,8 @@ public class AuthService : IAuthService
             }
 
             // 4. 统一更新登录时间
-            user.LastLoginTime = DateTime.UtcNow;
-            user.UpdatedAt = DateTime.UtcNow;
+            user.LastLoginTime = DateTime.Now;
+            user.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             // 5. 生成 Token

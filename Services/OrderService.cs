@@ -94,7 +94,7 @@ public class OrderService : IOrderService
             }
             // 统一使用UTC时间，避免时区问题
             var utcServiceTime = TimeZoneInfo.ConvertTimeToUtc(serviceTime);
-            // if (utcServiceTime <= DateTime.UtcNow.AddMinutes(30))
+            // if (utcServiceTime <= DateTime.Now.AddMinutes(30))
             // {
             //     return ApiResponse<CreateOrderResponse>.ErrorResponse(3006, "预约时间必须至少提前30分钟");
             // }
@@ -162,8 +162,8 @@ public class OrderService : IOrderService
                 PayTime = null,
                 StartTime = startTime,
                 EndTime = endTime,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now
             };
 
             // 11. 保存订单（建议用事务，避免部分保存）
@@ -228,9 +228,9 @@ public class OrderService : IOrderService
                 .Where(o => o.UserId == request.UserId);
 
             // 状态筛选
-            if (request.Status.HasValue)
+            if (!string.IsNullOrEmpty(request.Status))
             {
-                query = query.Where(o => GetOrderStatusValue(o.Status) == request.Status.Value);
+                query = query.Where(o => o.Status == request.Status);
             }
 
             // 排序
@@ -250,6 +250,31 @@ public class OrderService : IOrderService
                 .Take(request.PageSize)
                 .ToListAsync();
 
+            // ==============================================
+            // 🔥 批量翻译：订单状态 + 服务类型
+            // ==============================================
+            Dictionary<string, string> statusTexts = new Dictionary<string, string>();
+            Dictionary<string, string> serviceTypeMap = new Dictionary<string, string>();
+
+            if (orders.Any())
+            {
+                // 1. 批量翻译订单状态 order_status
+                var allStatus = orders
+                    .Select(o => o.Status)
+                    .Where(s => !string.IsNullOrEmpty(s))
+                    .Distinct()
+                    .ToList();
+                statusTexts = await _dictTranslateService.BatchTranslateAsync("order_status", allStatus);
+
+                // 2. 批量翻译服务类型 service_type
+                var allServiceTypes = orders
+                    .Select(o => o.ServiceType)
+                    .Where(s => !string.IsNullOrEmpty(s))
+                    .Distinct()
+                    .ToList();
+                serviceTypeMap = await _dictTranslateService.BatchTranslateAsync("service_type", allServiceTypes);
+            }
+
             var response = new GetOrdersResponse
             {
                 Items = orders.Select(o => new GetOrdersResponse.OrderItem
@@ -258,8 +283,13 @@ public class OrderService : IOrderService
                     OrderNo = o.OrderNo,
                     OrderType = "1", // 1-陪玩订单
                     OrderTypeText = "陪玩订单",
+                    ServiceType = o.ServiceType,
+                    ServiceTypeName = serviceTypeMap.TryGetValue(o.ServiceType, out var serviceName) ? serviceName : o.ServiceType,
                     Status = o.Status,
-                    StatusText = "",
+                    StatusText = statusTexts.TryGetValue(o.Status, out var statusName) ? statusName : o.Status,
+                    IsExpired = (o.Status == "0" && 
+                                (DateTime.Now - o.CreatedAt.Value).TotalMinutes > 15),
+
                     Companion = new GetOrdersResponse.CompanionInfo
                     {
                         Id = o.Companion.Id,
@@ -336,7 +366,7 @@ public class OrderService : IOrderService
                 OrderNo = order.OrderNo,
                 OrderType = 1,
                 OrderTypeText = "陪玩订单",
-                Status = GetOrderStatusValue(order.Status),
+                Status = order.Status,
                 StatusText = order.Status,
                 PaymentStatus = GetPaymentStatusValue(order.Status),
                 PaymentStatusText = GetPaymentStatusText(order.Status),
@@ -374,13 +404,13 @@ public class OrderService : IOrderService
                 Countdown = new GetOrderResponse.CountdownInfo
                 {
                     ServiceStartIn = order.StartTime.HasValue ?
-                        (int)(order.StartTime.Value - DateTime.UtcNow).TotalSeconds : 0,
+                        (int)(order.StartTime.Value - DateTime.Now).TotalSeconds : 0,
                     AutoConfirmIn = 0
                 },
                 Actions = new GetOrderResponse.OrderActions
                 {
                     CanCancel = order.Status == "待付款" || order.Status == "待服务",
-                    CanRefund = order.Status == "已完成" && DateTime.UtcNow <= order.PayTime?.AddHours(24),
+                    CanRefund = order.Status == "已完成" && DateTime.Now <= order.PayTime?.AddHours(24),
                     CanConfirm = order.Status == "服务中",
                     CanReview = order.Status == "已完成" && !HasReviewed(order.Id)
                 },
@@ -410,20 +440,20 @@ public class OrderService : IOrderService
             }
 
             // 检查订单状态
-            if (order.Status != "待付款" && order.Status != "待服务")
+            if (order.Status != "0")
             {
                 return ApiResponse<CancelOrderResponse>.ErrorResponse(3002, "订单状态不允许取消");
             }
 
             // 检查取消时间
-            if (order.StartTime.HasValue && order.StartTime.Value <= DateTime.UtcNow.AddHours(1))
+            if (order.CreatedAt.HasValue &&  (DateTime.Now - order.CreatedAt.Value).TotalMinutes > 15)
             {
-                return ApiResponse<CancelOrderResponse>.ErrorResponse(3007, "取消时间过晚");
+                return ApiResponse<CancelOrderResponse>.ErrorResponse(3007, "取消时间过晚，订单已失效");
             }
 
             // 更新订单状态
-            order.Status = "已取消";
-            order.UpdatedAt = DateTime.UtcNow;
+            order.Status = "6";
+            order.UpdatedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
 
@@ -433,7 +463,7 @@ public class OrderService : IOrderService
                 OrderNo = order.OrderNo,
                 Status = 6,
                 StatusText = "已取消",
-                CancelledAt = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"),
+                CancelledAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
                 RefundAmount = order.FinalPrice,
                 RefundTo = "balance",
                 RefundToText = "退回余额"
@@ -484,7 +514,7 @@ public class OrderService : IOrderService
                 RefundStatus = 0,
                 RefundStatusText = "审核中",
                 EstimatedRefundTime = "1-3个工作日",
-                SubmittedAt = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")
+                SubmittedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
             };
 
             return ApiResponse<RefundOrderResponse>.SuccessResponse(response, "退款申请已提交");
@@ -518,7 +548,7 @@ public class OrderService : IOrderService
 
             // 更新订单状态
             order.Status = "已完成";
-            order.UpdatedAt = DateTime.UtcNow;
+            order.UpdatedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
 
@@ -527,7 +557,7 @@ public class OrderService : IOrderService
                 OrderId = order.Id,
                 Status = 5,
                 StatusText = "已完成",
-                ConfirmedAt = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"),
+                ConfirmedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
                 RewardPoints = (int)order.FinalPrice // 按金额给予积分
             };
 
@@ -574,7 +604,7 @@ public class OrderService : IOrderService
                 Rating = request.Rating,
                 Content = request.Comment,
                 Tags = request.Tags != null ? string.Join(",", request.Tags) : null,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now
             };
 
             _context.OrderReviews.Add(review);

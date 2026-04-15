@@ -243,8 +243,8 @@ public class PowerLevelingService : IPowerLevelingService
                 TotalPrice = service.Data?.Price ?? 0,
                 FinalPrice = service.Data?.Price ?? 0,
                 Status = "待付款",
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now
             };
 
             _context.Orders.Add(order);
@@ -260,7 +260,7 @@ public class PowerLevelingService : IPowerLevelingService
                           $"特殊要求：{request.SpecialRequirements ?? "无"}|" +
                           $"联系电话：{request.ContactPhone}";
 
-            order.UpdatedAt = DateTime.UtcNow;
+            order.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             var response = new
@@ -446,7 +446,7 @@ public class PowerLevelingService : IPowerLevelingService
 
             order.Status = "已取消";
             order.Remark = $"{order.Remark}|取消原因：{request.CancelReason}";
-            order.UpdatedAt = DateTime.UtcNow;
+            order.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             return ApiResponse<object>.Success("订单取消成功");
@@ -491,7 +491,7 @@ public class PowerLevelingService : IPowerLevelingService
 
             order.Status = "已退款";
             order.Remark = $"{order.Remark}|退款原因：{request.RefundReason}";
-            order.UpdatedAt = DateTime.UtcNow;
+            order.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             return ApiResponse<object>.Success("退款申请已提交");
