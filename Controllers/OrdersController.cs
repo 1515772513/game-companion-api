@@ -76,17 +76,16 @@ public class OrdersController : ControllerBase
     /// <summary>
     /// 获取订单详情
     /// </summary>
-    /// <param name="id">订单ID</param>
+    /// <param name="orderNo">订单号</param>
     /// <returns>订单详情</returns>
-    [HttpGet("{id}")]
+    [HttpGet("detail/{orderNo}")]
     [ProducesResponseType(typeof(ApiResponse<GetOrderResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse<GetOrderResponse>>> GetOrder(int id)
+    public async Task<ActionResult<ApiResponse<GetOrderResponse>>> GetOrder(string orderNo)
     {
-        _logger.LogInformation("用户获取订单详情: OrderId={OrderId}", id);
-
-        var result = await _orderService.GetOrderAsync(id);
+        var userId = GetUserId();
+        var result = await _orderService.GetOrderAsync(orderNo, userId);
         return Ok(result);
     }
 

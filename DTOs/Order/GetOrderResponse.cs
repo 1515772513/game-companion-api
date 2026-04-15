@@ -61,6 +61,16 @@ public class GetOrderResponse
     public string GameRank { get; set; } = string.Empty;
 
     /// <summary>
+    /// 服务类型
+    /// </summary>
+    public string ServiceType { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 服务名称
+    /// </summary>
+    public string ServiceTypeName { get; set; } = string.Empty;
+
+    /// <summary>
     /// 服务数量
     /// </summary>
     public int ServiceCount { get; set; }

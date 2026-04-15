@@ -22,7 +22,7 @@ public interface IOrderService
     /// <summary>
     /// 获取订单详情
     /// </summary>
-    Task<ApiResponse<GetOrderResponse>> GetOrderAsync(int orderId);
+    Task<ApiResponse<GetOrderResponse>> GetOrderAsync(string orderNo, int userId);
 
     /// <summary>
     /// 取消订单

@@ -100,21 +100,21 @@ public class OrderService : IOrderService
             // }
 
             // 6. 检查陪玩师服务时间冲突（核心：避免同一时间段接单）
-            var conflictingOrder = await _context.Orders
-                .Where(o => o.CompanionId == request.CompanionId)
-                .Where(o => o.Status != "已取消" && o.Status != "退款/售后") // 排除已取消/退款的订单
-                .Where(o => o.StartTime.HasValue && o.EndTime.HasValue)
-                .Where(o => 
-                    // 新订单开始时间 在 已有订单的时间范围内（前后缓冲30分钟）
-                    utcServiceTime >= o.StartTime.Value.AddMinutes(-30) && 
-                    utcServiceTime <= o.EndTime.Value.AddMinutes(30)
-                )
-                .FirstOrDefaultAsync();
+            // var conflictingOrder = await _context.Orders
+            //     .Where(o => o.CompanionId == request.CompanionId)
+            //     .Where(o => o.Status != "已取消" && o.Status != "退款/售后") // 排除已取消/退款的订单
+            //     .Where(o => o.StartTime.HasValue && o.EndTime.HasValue)
+            //     .Where(o => 
+            //         // 新订单开始时间 在 已有订单的时间范围内（前后缓冲30分钟）
+            //         utcServiceTime >= o.StartTime.Value.AddMinutes(-30) && 
+            //         utcServiceTime <= o.EndTime.Value.AddMinutes(30)
+            //     )
+            //     .FirstOrDefaultAsync();
             
-            if (conflictingOrder != null)
-            {
-                return ApiResponse<CreateOrderResponse>.ErrorResponse(3005, $"陪玩师该时间段已接单（订单号：{conflictingOrder.OrderNo}），请更换时间");
-            }
+            // if (conflictingOrder != null)
+            // {
+            //     return ApiResponse<CreateOrderResponse>.ErrorResponse(3005, $"陪玩师该时间段已接单（订单号：{conflictingOrder.OrderNo}），请更换时间");
+            // }
 
             // 7. 价格计算（核心：从companionGame取单价）
             var unitPrice = companionGame.PricePerGame; // 从关联表获取单价
@@ -298,7 +298,7 @@ public class OrderService : IOrderService
     /// <summary>
     /// 获取订单详情
     /// </summary>
-    public async Task<ApiResponse<GetOrderResponse>> GetOrderAsync(int orderId)
+    public async Task<ApiResponse<GetOrderResponse>> GetOrderAsync(string orderNo, int userId)
     {
         try
         {
@@ -307,16 +307,14 @@ public class OrderService : IOrderService
                 .Include(o => o.Companion)
                     .ThenInclude(c => c.User)
                 .Include(o => o.Game)
-                .FirstOrDefaultAsync(o => o.Id == orderId);
+                .FirstOrDefaultAsync(o => o.OrderNo == orderNo);
 
             if (order == null)
             {
                 return ApiResponse<GetOrderResponse>.ErrorResponse(3001, "订单不存在");
             }
-
-            // 检查权限（这里简化处理，实际应该检查当前用户是否是订单的创建者）
-            var currentUser = await _context.Users.FindAsync(1); // 简化处理
-            if (currentUser == null || order.UserId != currentUser.Id)
+            
+            if (order.UserId != userId)
             {
                 return ApiResponse<GetOrderResponse>.ErrorResponse(403, "无权访问");
             }
@@ -346,6 +344,8 @@ public class OrderService : IOrderService
                     Name = order.Game.Name
                 },
                 GameRank = "",
+                ServiceType = order.DurationType,
+                ServiceTypeName = "",
                 ServiceCount = order.DurationValue,
                 ServiceUnit = order.DurationType ?? "局",
                 ServiceTime = order.PlayTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "",
