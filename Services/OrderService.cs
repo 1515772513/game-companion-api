@@ -259,9 +259,7 @@ public class OrderService : IOrderService
                     OrderType = "1", // 1-陪玩订单
                     OrderTypeText = "陪玩订单",
                     Status = o.Status,
-                    StatusText = o.Status,
-                    PaymentStatus = GetPaymentStatusValue(o.Status),
-                    PaymentStatusText = GetPaymentStatusText(o.Status),
+                    StatusText = "",
                     Companion = new GetOrdersResponse.CompanionInfo
                     {
                         Id = o.Companion.Id,
@@ -296,7 +294,7 @@ public class OrderService : IOrderService
     }
 
     /// <summary>
-    /// 获取订单详情
+    /// 获取订单详情（已添加 ServiceTypeName 翻译）
     /// </summary>
     public async Task<ApiResponse<GetOrderResponse>> GetOrderAsync(string orderNo, int userId)
     {
@@ -317,6 +315,19 @@ public class OrderService : IOrderService
             if (order.UserId != userId)
             {
                 return ApiResponse<GetOrderResponse>.ErrorResponse(403, "无权访问");
+            }
+
+            // ==============================================
+            // 🔥 翻译服务类型名称（和你列表逻辑完全一致）
+            // ==============================================
+            string serviceTypeName = string.Empty;
+            if (!string.IsNullOrEmpty(order.ServiceType))
+            {
+                var serviceTypeMap = await _dictTranslateService.BatchTranslateAsync(
+                    "service_type", 
+                    new List<string> { order.ServiceType }
+                );
+                serviceTypeMap.TryGetValue(order.ServiceType, out serviceTypeName);
             }
 
             var response = new GetOrderResponse
@@ -344,8 +355,8 @@ public class OrderService : IOrderService
                     Name = order.Game.Name
                 },
                 GameRank = "",
-                ServiceType = order.DurationType,
-                ServiceTypeName = "",
+                ServiceType = order.ServiceType,
+                ServiceTypeName = serviceTypeName,
                 ServiceCount = order.DurationValue,
                 ServiceUnit = order.DurationType ?? "局",
                 ServiceTime = order.PlayTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "",

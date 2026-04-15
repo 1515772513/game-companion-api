@@ -55,16 +55,12 @@ public class OrdersController : ControllerBase
     /// </summary>
     /// <param name="request">获取订单列表请求</param>
     /// <returns>订单列表</returns>
-    [HttpGet]
+    [HttpGet("getList")]
     [ProducesResponseType(typeof(ApiResponse<GetOrdersResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<GetOrdersResponse>>> GetOrders([FromQuery] GetOrdersRequest request)
     {
-        _logger.LogInformation("用户获取订单列表: Page={Page}, PageSize={PageSize}, Status={Status}",
-            request.Page, request.PageSize, request.Status);
-
-        // 从Claims中获取用户ID（简化处理，实际应该从JWT token中解析）
-        var userId = 1; // TODO: 从JWT token中获取用户ID
+        var userId = GetUserId();
 
         // 将用户ID添加到请求中
         request.GetType().GetProperty("UserId")?.SetValue(request, userId, null);
