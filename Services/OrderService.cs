@@ -324,7 +324,7 @@ public class OrderService : IOrderService
     }
 
     /// <summary>
-    /// 获取订单详情（已添加 ServiceTypeName 翻译）
+    /// 获取订单详情
     /// </summary>
     public async Task<ApiResponse<GetOrderResponse>> GetOrderAsync(string orderNo, int userId)
     {
@@ -333,7 +333,7 @@ public class OrderService : IOrderService
             var order = await _context.Orders
                 .Include(o => o.User)
                 .Include(o => o.Companion)
-                    .ThenInclude(c => c.User)
+                .ThenInclude(c => c.User)
                 .Include(o => o.Game)
                 .FirstOrDefaultAsync(o => o.OrderNo == orderNo);
 
@@ -348,7 +348,7 @@ public class OrderService : IOrderService
             }
 
             // ==============================================
-            // 🔥 翻译服务类型名称（和你列表逻辑完全一致）
+            // 🔥 翻译服务类型名称
             // ==============================================
             string serviceTypeName = string.Empty;
             if (!string.IsNullOrEmpty(order.ServiceType))
@@ -360,6 +360,19 @@ public class OrderService : IOrderService
                 serviceTypeMap.TryGetValue(order.ServiceType, out serviceTypeName);
             }
 
+            // ==============================================
+            // 🔥 翻译订单状态 StatusText（和列表逻辑一致）
+            // ==============================================
+            string statusText = string.Empty;
+            if (!string.IsNullOrEmpty(order.Status))
+            {
+                var statusMap = await _dictTranslateService.BatchTranslateAsync(
+                    "order_status", 
+                    new List<string> { order.Status }
+                );
+                statusMap.TryGetValue(order.Status, out statusText);
+            }
+
             var response = new GetOrderResponse
             {
                 Id = order.Id,
@@ -367,9 +380,10 @@ public class OrderService : IOrderService
                 OrderType = 1,
                 OrderTypeText = "陪玩订单",
                 Status = order.Status,
-                StatusText = order.Status,
+                StatusText = statusText, // 👈 翻译后的状态
                 PaymentStatus = GetPaymentStatusValue(order.Status),
                 PaymentStatusText = GetPaymentStatusText(order.Status),
+                Remark = order.Remark ?? "",
                 Companion = new GetOrderResponse.CompanionDetail
                 {
                     Id = order.Companion.Id,
@@ -414,7 +428,9 @@ public class OrderService : IOrderService
                     CanConfirm = order.Status == "服务中",
                     CanReview = order.Status == "已完成" && !HasReviewed(order.Id)
                 },
-                Timeline = GenerateOrderTimeline(order)
+                Timeline = GenerateOrderTimeline(order),
+                IsExpired = (order.Status == "0" && 
+                                (DateTime.Now - order.CreatedAt.Value).TotalMinutes > 15),
             };
 
             return ApiResponse<GetOrderResponse>.SuccessResponse(response, "获取成功");

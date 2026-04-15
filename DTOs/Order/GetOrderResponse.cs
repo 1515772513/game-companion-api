@@ -46,6 +46,11 @@ public class GetOrderResponse
     public string PaymentStatusText { get; set; } = string.Empty;
 
     /// <summary>
+    /// 订单备注
+    /// </summary>
+    public string Remark { get; set; } = string.Empty;
+
+    /// <summary>
     /// 陪玩师详细信息
     /// </summary>
     public CompanionDetail Companion { get; set; } = new();
@@ -149,6 +154,11 @@ public class GetOrderResponse
     /// 可执行操作
     /// </summary>
     public OrderActions Actions { get; set; } = new();
+
+    /// <summary>
+    /// 是否已过期
+    /// </summary>
+    public bool IsExpired { get; set; } = false;
 
     /// <summary>
     /// 订单时间线
