@@ -92,7 +92,7 @@ namespace GameCompanion.Api.Services
             {
                 Id = entity.Id,
                 FileName = entity.FileName,
-                FileUrl = $"{baseUrl}{entity.FileUrl}",
+                FileUrl = entity.FileUrl,
                 FileSize = entity.FileSize,
                 FileExt = entity.FileExt ?? "",
                 ContentType = entity.ContentType ?? ""
