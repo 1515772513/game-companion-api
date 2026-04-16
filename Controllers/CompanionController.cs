@@ -40,7 +40,8 @@ public class CompanionController : ControllerBase
     public async Task<ActionResult<ApiResponse<ApplicationStatusResponse>>> Apply([FromBody] ApplyCompanionRequest request)
     {
         _logger.LogInformation("用户申请成为陪玩师");
-        var result = await _companionService.ApplyCompanionAsync(request);
+        var userId = GetUserIdFromClaims();
+        var result = await _companionService.ApplyCompanionAsync(request, userId);
         return Ok(result);
     }
 

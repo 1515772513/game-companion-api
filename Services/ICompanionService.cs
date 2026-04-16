@@ -11,7 +11,7 @@ public interface ICompanionService
     /// <summary>
     /// 申请成为陪玩师
     /// </summary>
-    Task<ApiResponse<ApplicationStatusResponse>> ApplyCompanionAsync(ApplyCompanionRequest request);
+    Task<ApiResponse<ApplicationStatusResponse>> ApplyCompanionAsync(ApplyCompanionRequest request, int userId);
 
     /// <summary>
     /// 获取认证申请状态

@@ -92,4 +92,7 @@ public partial class SysFile
     /// </summary>
     [Column("is_deleted")]
     public sbyte IsDeleted { get; set; }
+
+    [InverseProperty("File")]
+    public virtual ICollection<CompanionBackgroundImage> CompanionBackgroundImages { get; set; } = new List<CompanionBackgroundImage>();
 }

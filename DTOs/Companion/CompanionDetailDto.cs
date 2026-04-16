@@ -62,6 +62,11 @@ public class CompanionListDetailDto
     /// 相册图片
     /// </summary>
     public List<string> Gallery { get; set; } = new();
+
+    /// <summary>
+    /// 背景墙图片
+    /// </summary>
+    public List<string> BackgroundImages { get; set; } = new();
     
     /// <summary>
     /// 是否收藏

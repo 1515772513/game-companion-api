@@ -26,37 +26,28 @@ public class CompanionService : ICompanionService
     }
 
     /// <summary>
-    /// 申请成为陪玩师
+    /// 申请成为陪玩师（支持：多游戏+多服务+多背景轮播图）
     /// </summary>
-    public async Task<ApiResponse<ApplicationStatusResponse>> ApplyCompanionAsync(ApplyCompanionRequest request)
+    public async Task<ApiResponse<ApplicationStatusResponse>> ApplyCompanionAsync(ApplyCompanionRequest request, int userId)
     {
         try
         {
-            // 获取当前用户（这里假设用户已经通过认证）
-            var userId = GetCurrentUserId();
             if (userId == 0)
             {
                 return ApiResponse<ApplicationStatusResponse>.ErrorResponse(401, "未授权，请先登录");
             }
 
-            // 检查是否已经申请过
-            var existingApplication = await _context.Companions
-                .FirstOrDefaultAsync(c => c.UserId == userId);
-
-            if (existingApplication != null && existingApplication.Status == 0)
+            // 检查重复申请
+            var existing = await _context.Companions.FirstOrDefaultAsync(c => c.UserId == userId);
+            if (existing != null)
             {
-                return ApiResponse<ApplicationStatusResponse>.ErrorResponse(400, "您已经有待审核的申请，请耐心等待");
+                if (existing.Status == 0)
+                    return ApiResponse<ApplicationStatusResponse>.ErrorResponse(400, "已有待审核申请，请勿重复提交");
+                if (existing.Status == 1)
+                    return ApiResponse<ApplicationStatusResponse>.ErrorResponse(400, "您已是认证陪玩师");
             }
 
-            // 检查是否已认证
-            if (existingApplication != null && existingApplication.Status == 1)
-            {
-                return ApiResponse<ApplicationStatusResponse>.ErrorResponse(400, "您已经是认证陪玩师，无需再次申请");
-            }
-
-            // ======================
-            // 【修改 1】创建陪玩师基础信息，不再写入 ServiceType、PricePerGame
-            // ======================
+            // 1. 创建陪玩师基础信息
             var companion = new Companion
             {
                 UserId = userId,
@@ -68,34 +59,53 @@ public class CompanionService : ICompanionService
                 Nickname = request.Nickname,
                 Bio = request.Bio,
                 Tags = request.Tags != null ? string.Join(",", request.Tags) : null,
-                Status = 0,
-                OnlineStatus = "离线",
+                Status = 0, // 待审核
+                OnlineStatus = "offline",
                 CreatedAt = DateTime.Now,
                 UpdatedAt = DateTime.Now
             };
-
             _context.Companions.Add(companion);
             await _context.SaveChangesAsync();
 
-            // ======================
-            // 【修改 2】创建游戏技能时，写入 ServiceType、PricePerGame、GameLevel
-            // ======================
-            foreach (var gameId in request.Games)
+            // 2. 批量添加游戏技能（不变）
+            foreach (var item in request.GameSkills)
             {
                 var companionGame = new CompanionGame
                 {
                     CompanionId = companion.Id,
-                    GameId = gameId,
-                    GameLevel = request.GameRank,
-                    ServiceType = request.ServiceType,   // 从这里写入
-                    PricePerGame = request.Price,         // 从这里写入
+                    GameId = item.GameId,
+                    GameLevel = item.GameRank,
+                    ServiceType = item.ServiceType,
+                    PricePerGame = item.Price,
                     CreatedAt = DateTime.Now
                 };
                 _context.CompanionGames.Add(companionGame);
             }
+
+            // 3. ====================== 批量插入【多张背景轮播图】 ======================
+            if (request.BackgroundImages != null && request.BackgroundImages.Any())
+            {
+                foreach (var img in request.BackgroundImages)
+                {
+                    var backgroundImage = new CompanionBackgroundImage
+                    {
+                        Id = Guid.NewGuid(),
+                        CompanionId = companion.Id,
+                        FileId = img.FileId,
+                        Sort = img.Sort,
+                        CreateTime = DateTime.Now,
+                        UpdateTime = DateTime.Now,
+                        IsDeleted = 0
+                    };
+                    _context.CompanionBackgroundImages.Add(backgroundImage);
+                }
+            }
+
+            // 统一提交
             await _context.SaveChangesAsync();
 
-            var response = new ApplicationStatusResponse
+            // 返回结果
+            var resp = new ApplicationStatusResponse
             {
                 ApplicationId = companion.Id,
                 CertificationStatus = 0,
@@ -103,11 +113,11 @@ public class CompanionService : ICompanionService
                 CertificationApplyTime = companion.CreatedAt.ToDateTimeString()
             };
 
-            return ApiResponse<ApplicationStatusResponse>.SuccessResponse(response, "申请提交成功，请等待审核");
+            return ApiResponse<ApplicationStatusResponse>.SuccessResponse(resp, "申请提交成功，等待审核");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "陪玩师申请失败");
+            _logger.LogError(ex, "陪玩师申请异常");
             return ApiResponse<ApplicationStatusResponse>.ErrorResponse(500, "申请失败，请稍后重试");
         }
     }
@@ -931,6 +941,9 @@ public class CompanionService : ICompanionService
     {
         var companion = await _context.Companions
             .Include(c => c.User)
+            // 👇 加入背景墙轮播图关联 + 文件表
+            .Include(c => c.CompanionBackgroundImages.Where(img => img.IsDeleted == 0))
+                .ThenInclude(img => img.File)
             .FirstOrDefaultAsync(c => c.Id == companionId && c.Status == 1);
 
         if (companion == null)
@@ -952,7 +965,15 @@ public class CompanionService : ICompanionService
             GoodRate = companion.GoodReviewRate ?? 100,
             Tags = companion.Tags?.Split(',').Where(t => !string.IsNullOrWhiteSpace(t)).ToList() ?? new(),
             Intro = companion.Bio ?? "这个人很懒，什么都没留下~",
-            Gallery = new List<string>(), // 可扩展相册字段
+            
+            // 👇 核心：取出轮播图URL列表（按sort排序）
+            BackgroundImages = companion.CompanionBackgroundImages
+                .OrderBy(img => img.Sort)
+                .Select(img => img.File?.FileUrl ?? string.Empty)
+                .Where(url => !string.IsNullOrEmpty(url))
+                .ToList(),
+
+            Gallery = new List<string>(), // 原有相册
             IsFavorite = isFavorite
         };
 

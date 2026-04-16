@@ -7,56 +7,79 @@ namespace GameCompanion.Api.DTOs.Companion;
 /// </summary>
 public class ApplyCompanionRequest
 {
+    // 基础信息（不变）
     [Required(ErrorMessage = "真实姓名不能为空")]
-    [StringLength(50, ErrorMessage = "真实姓名长度不能超过50个字符")]
+    [StringLength(50)]
     public string RealName { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "身份证号不能为空")]
-    [StringLength(18, MinimumLength = 18, ErrorMessage = "身份证号长度必须为18位")]
+    [StringLength(18, MinimumLength = 18)]
     public string IdCard { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "身份证正面照URL不能为空")]
-    [Url(ErrorMessage = "身份证正面照URL格式不正确")]
+    [Url]
     public string IdCardFrontUrl { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "身份证反面照URL不能为空")]
-    [Url(ErrorMessage = "身份证反面照URL格式不正确")]
+    [Url]
     public string IdCardBackUrl { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "联系电话不能为空")]
-    [Phone(ErrorMessage = "联系电话格式不正确")]
-    [StringLength(11, MinimumLength = 11, ErrorMessage = "联系电话长度必须为11位")]
+    [Phone]
+    [StringLength(11, MinimumLength = 11)]
     public string Phone { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "昵称不能为空")]
-    [StringLength(50, ErrorMessage = "昵称长度不能超过50个字符")]
+    [StringLength(50)]
     public string Nickname { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "头像URL不能为空")]
-    [Url(ErrorMessage = "头像URL格式不正确")]
-    public string AvatarUrl { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "服务类型不能为空")]
-    [StringLength(20, ErrorMessage = "服务类型长度不能超过20个字符")]
-    public string ServiceType { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "价格不能为空")]
-    [Range(0.01, 99999.99, ErrorMessage = "价格必须在0.01-99999.99之间")]
-    public decimal Price { get; set; }
-
-    [Required(ErrorMessage = "擅长游戏不能为空")]
-    public List<int> Games { get; set; } = new();
-
-    [Required(ErrorMessage = "游戏段位不能为空")]
-    [StringLength(50, ErrorMessage = "游戏段位长度不能超过50个字符")]
-    public string GameRank { get; set; } = string.Empty;
-
+    
     [Required(ErrorMessage = "个人简介不能为空")]
-    [StringLength(500, ErrorMessage = "个人简介长度不能超过500个字符")]
+    [StringLength(500)]
     public string Bio { get; set; } = string.Empty;
 
-    [StringLength(200, ErrorMessage = "标签长度不能超过200个字符")]
     public List<string>? Tags { get; set; }
+
+    // ====================== 核心改动：多游戏 + 每个游戏独立配置 ======================
+    [Required(ErrorMessage = "游戏技能列表不能为空")]
+    public List<ApplyGameSkillItem> GameSkills { get; set; } = new();
+
+     // ====================== 【核心】多张背景轮播图 ======================
+    public List<ApplyBackgroundImageItem> BackgroundImages { get; set; } = new();
+}
+
+/// <summary>
+/// 单张背景图信息（支持排序）
+/// </summary>
+public class ApplyBackgroundImageItem
+{
+    [Required(ErrorMessage = "文件ID不能为空")]
+    public Guid FileId { get; set; }
+
+    /// <summary>
+    /// 排序（越小越靠前）
+    /// </summary>
+    public int Sort { get; set; }
+}
+
+/// <summary>
+/// 每个游戏的技能 + 服务类型 + 价格
+/// </summary>
+public class ApplyGameSkillItem
+{
+    [Required(ErrorMessage = "游戏ID不能为空")]
+    public int GameId { get; set; }
+
+    [Required(ErrorMessage = "游戏段位不能为空")]
+    [StringLength(50)]
+    public string GameRank { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "服务类型不能为空")]
+    [StringLength(20)]
+    public string ServiceType { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "单价不能为空")]
+    [Range(0.01, 99999.99)]
+    public decimal Price { get; set; }
 }
 
 /// <summary>

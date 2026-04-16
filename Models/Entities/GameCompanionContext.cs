@@ -22,6 +22,8 @@ public partial class GameCompanionContext : DbContext
 
     public virtual DbSet<CompanionApplication> CompanionApplications { get; set; }
 
+    public virtual DbSet<CompanionBackgroundImage> CompanionBackgroundImages { get; set; }
+
     public virtual DbSet<CompanionGame> CompanionGames { get; set; }
 
     public virtual DbSet<CompanionRequest> CompanionRequests { get; set; }
@@ -166,6 +168,30 @@ public partial class GameCompanionContext : DbContext
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasComment("更新时间");
             entity.Property(e => e.UserId).HasComment("用户ID");
+        });
+
+        modelBuilder.Entity<CompanionBackgroundImage>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.ToTable("companion_background_images", tb => tb.HasComment("陪玩师背景墙轮播图关联表"));
+
+            entity.Property(e => e.Id).HasComment("主键UUID");
+            entity.Property(e => e.CompanionId).HasComment("陪玩师ID（关联companions表id）");
+            entity.Property(e => e.CreateTime)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasComment("创建时间");
+            entity.Property(e => e.FileId).HasComment("文件ID（关联sys_file表id）");
+            entity.Property(e => e.IsDeleted).HasComment("是否删除 0=否 1=是");
+            entity.Property(e => e.Sort).HasComment("排序权重（越小越靠前，轮播顺序）");
+            entity.Property(e => e.UpdateTime)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasComment("更新时间");
+
+            entity.HasOne(d => d.Companion).WithMany(p => p.CompanionBackgroundImages).HasConstraintName("fk_companion_background_companion");
+
+            entity.HasOne(d => d.File).WithMany(p => p.CompanionBackgroundImages).HasConstraintName("fk_companion_background_file");
         });
 
         modelBuilder.Entity<CompanionGame>(entity =>

@@ -133,6 +133,9 @@ public partial class Companion
     public DateTime? UpdatedAt { get; set; }
 
     [InverseProperty("Companion")]
+    public virtual ICollection<CompanionBackgroundImage> CompanionBackgroundImages { get; set; } = new List<CompanionBackgroundImage>();
+
+    [InverseProperty("Companion")]
     public virtual ICollection<CompanionGame> CompanionGames { get; set; } = new List<CompanionGame>();
 
     [InverseProperty("Companion")]
