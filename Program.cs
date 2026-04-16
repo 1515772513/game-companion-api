@@ -174,19 +174,19 @@ app.UseCors("AllowAll");               // 1. CORS 必须第一
 app.UseStaticFiles();                 // 2. 默认 wwwroot
 
 // 3. 配置 uploads 静态文件 + 强制跨域头
-var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
-if (!Directory.Exists(uploadPath)) Directory.CreateDirectory(uploadPath);
+// var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
+// if (!Directory.Exists(uploadPath)) Directory.CreateDirectory(uploadPath);
 
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new PhysicalFileProvider(uploadPath),
-    RequestPath = "/uploads",
-    OnPrepareResponse = ctx =>
-    {
-        ctx.Context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
-        ctx.Context.Response.Headers.Append("Cache-Control", "public, max-age=604800");
-    }
-});
+// app.UseStaticFiles(new StaticFileOptions
+// {
+//     FileProvider = new PhysicalFileProvider(uploadPath),
+//     RequestPath = "/uploads",
+//     OnPrepareResponse = ctx =>
+//     {
+//         ctx.Context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
+//         ctx.Context.Response.Headers.Append("Cache-Control", "public, max-age=604800");
+//     }
+// });
 
 // 4. 自定义中间件
 app.UseMiddleware<ExceptionMiddleware>();
