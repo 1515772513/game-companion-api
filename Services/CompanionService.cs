@@ -100,6 +100,19 @@ public class CompanionService : ICompanionService
                     _context.CompanionBackgroundImages.Add(backgroundImage);
                 }
             }
+            
+            // 完善用户信息
+            
+
+            var user = new User
+            {
+                Id = userId,
+                RealName = request.RealName,
+                IdCard = request.IdCard,
+                Phone = request.Phone,
+                Name = request.RealName
+            };
+            _context.Users.Update(user);
 
             // 统一提交
             await _context.SaveChangesAsync();
