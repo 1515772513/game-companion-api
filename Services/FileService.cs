@@ -66,12 +66,14 @@ namespace GameCompanion.Api.Services
             // 🔥 修复：正确枚举 FileMode.Create
             using var stream = new FileStream(fullPath, FileMode.Create);
             await file.CopyToAsync(stream);
-
+            
+            var req = _httpContextAccessor.HttpContext.Request;
+            var baseUrl = $"{req.Scheme}://{req.Host.Value}";
             var entity = new SysFile
             {
                 Id = Guid.NewGuid(),
                 FileName = file.FileName,
-                FileUrl = fileUrl,
+                FileUrl = $"{baseUrl}{fileUrl}",
                 FilePath = fullPath,
                 FileSize = file.Length,
                 FileExt = ext,
@@ -85,8 +87,6 @@ namespace GameCompanion.Api.Services
             _dbContext.SysFiles.Add(entity);
             await _dbContext.SaveChangesAsync();
             
-            var req = _httpContextAccessor.HttpContext.Request;
-            var baseUrl = $"{req.Scheme}://{req.Host.Value}";
             _logger.LogInformation($"上传文件成功：{_httpContextAccessor.HttpContext.Request.PathBase.Value}");
             return new FileUploadRespDto
             {
