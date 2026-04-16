@@ -1111,6 +1111,7 @@ public class CompanionService : ICompanionService
             GameSkills = companion.CompanionGames.Select(g => new GameSkillItem
             {
                 GameId = g.GameId,
+                GameName = g.Game.Name ?? "",
                 GameRank = g.GameLevel ?? "",
                 GameRankName = string.Empty,
                 ServiceType = g.ServiceType,

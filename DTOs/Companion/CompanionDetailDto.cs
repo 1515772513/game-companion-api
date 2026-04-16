@@ -25,6 +25,7 @@ public class AdminCompanionDetailDto
 public class GameSkillItem
 {
     public int GameId { get; set; }
+    public string GameName { get; set; } = string.Empty;
     public string GameRank { get; set; } = string.Empty;
 
     public string GameRankName { get; set; } = string.Empty;
