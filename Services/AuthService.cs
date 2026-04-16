@@ -319,54 +319,70 @@ public class AuthService : IAuthService
     /// </summary>
     public async Task<ApiResponse<LoginResponse>> WechatLoginAsync(WechatLoginRequest request)
     {
+        using var transaction = await _context.Database.BeginTransactionAsync();
+
         try
         {
-            // 1. 根据 code 获取 openid ✅
+            // 1. 获取微信 openid
             var wechatResult = await GetWechatOpenIdAsync(request.Openid);
             string openid = wechatResult.openid;
 
-            // 1. 根据Openid查询用户
+            if (string.IsNullOrEmpty(openid))
+            {
+                return ApiResponse<LoginResponse>.ErrorResponse(1001, "获取微信授权失败");
+            }
+
+            // 2. 查询用户（❌ 删掉 AsNoTracking，这是报错根源）
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Openid == openid);
 
-            // 2. 如果用户不存在 → 自动创建账号
+            // 3. 新用户
             if (user == null)
             {
                 user = new User
                 {
                     Openid = openid,
-                    Nickname = request.Nickname ?? $"用户{request.Openid[^4..]}", // 后4位
+                    Nickname = request.Nickname ?? $"用户{openid[^4..]}",
                     Avatar = request.Avatar ?? string.Empty,
-                    Status = true, // 启用
+                    Status = true,
                     IsBlocked = false,
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now,
                     LastLoginTime = DateTime.Now,
                     Phone = string.Empty,
+                    Gender = 0,
+                    VipLevel = 0
                 };
 
                 _context.Users.Add(user);
-                await _context.SaveChangesAsync();
             }
             else
             {
-                // 3. 已有账号 → 校验状态
+                // 4. 老用户校验
                 if (user.Status != true)
                     return ApiResponse<LoginResponse>.ErrorResponse(1007, "账号已被禁用");
-
                 if (user.IsBlocked == true)
                     return ApiResponse<LoginResponse>.ErrorResponse(1008, "账号已被封禁");
             }
 
-            // 4. 统一更新登录时间
+            // 5. 统一更新登录时间
             user.LastLoginTime = DateTime.Now;
             user.UpdatedAt = DateTime.Now;
-            await _context.SaveChangesAsync();
 
-            // 5. 生成 Token
+            // 6. 一次保存
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            // 7. 生成token
             var token = GenerateJwtToken(user);
             var refreshToken = GenerateRefreshToken();
 
-            // 6. 返回登录成功
+            // 8. 查询是否是陪玩师
+            bool isCompanion = await _context.Companions.AnyAsync(c => c.UserId == user.Id);
+            int? companionStatus = isCompanion ? await _context.Companions
+                .Where(c => c.UserId == user.Id)
+                .Select(c => c.Status)
+                .FirstOrDefaultAsync() : null;
+
             return ApiResponse<LoginResponse>.SuccessResponse(new LoginResponse
             {
                 AccessToken = token,
@@ -384,16 +400,17 @@ public class AuthService : IAuthService
                     VipExpireTime = user.VipExpireDate?.ToString("yyyy-MM-dd HH:mm:ss"),
                     Balance = user.Balance.GetSafeDecimal(),
                     Points = user.Points.GetSafeInt(),
-                    IsCompanion = user.Companions.Any(),
-                    CompanionStatus = user.Companions.FirstOrDefault()?.Status,
+                    IsCompanion = isCompanion,
+                    CompanionStatus = companionStatus,
                     CreatedAt = user.CreatedAt?.ToDateTimeString() ?? string.Empty
                 }
             }, "登录成功");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "一键登录异常：{Openid}", request.Openid);
-            return ApiResponse<LoginResponse>.ErrorResponse(500, "服务器异常");
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "微信登录异常 Openid:{Openid}", request.Openid);
+            return ApiResponse<LoginResponse>.ErrorResponse(500, "登录失败");
         }
     }
     

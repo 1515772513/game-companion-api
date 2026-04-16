@@ -103,15 +103,18 @@ public class CompanionService : ICompanionService
             
             // 完善用户信息
             
-
-            var user = new User
+            // 先查询用户信息
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null)
             {
-                Id = userId,
-                RealName = request.RealName,
-                IdCard = request.IdCard,
-                Phone = request.Phone,
-                Name = request.RealName
-            };
+                return ApiResponse<ApplicationStatusResponse>.ErrorResponse(404, "未找到用户信息");
+            }
+            // 更新信息
+            user.RealName = request.RealName;
+            user.IdCard = request.IdCard;
+            user.Phone = request.Phone;
+            user.Name = request.RealName;
+            
             _context.Users.Update(user);
 
             // 统一提交
