@@ -1086,6 +1086,7 @@ public class CompanionService : ICompanionService
         var companion = await _context.Companions
             .Include(c => c.User)
             .Include(c => c.CompanionGames)
+                .ThenInclude(cg => cg.Game)
             .Include(c => c.CompanionBackgroundImages.Where(img => img.IsDeleted == 0))
                 .ThenInclude(img => img.File)
             .FirstOrDefaultAsync(c => c.Id == companionId && (ignoreStatus || c.Status == 1));
@@ -1096,6 +1097,69 @@ public class CompanionService : ICompanionService
         // 检查是否收藏
         var isFavorite = await _context.UserCollections
             .AnyAsync(f => f.UserId == userId && f.ItemId == companionId && f.ItemType == "companion");
+
+        // ===================== 翻译逻辑（只在DTO用，不修改实体） =====================
+        var gameSkills = companion.CompanionGames.ToList();
+        var gameSkillItems = new List<GameSkillItem>();
+
+        if (gameSkills.Any())
+        {
+            // 1. 批量翻译服务类型
+            var serviceTypes = gameSkills
+                .Select(g => g.ServiceType)
+                .Where(t => !string.IsNullOrEmpty(t))
+                .Distinct()
+                .ToList();
+            var serviceTypeMap = await _dictTranslateService.BatchTranslateAsync("service_type", serviceTypes);
+
+            // 2. 批量翻译段位（按游戏ID）
+            var levelTasks = new Dictionary<int, Task<Dictionary<string, string>>>();
+            foreach (var g in gameSkills)
+            {
+                if (!levelTasks.ContainsKey(g.GameId))
+                {
+                    var dictType = $"game_level_{g.GameId}";
+                    levelTasks[g.GameId] = _dictTranslateService.BatchTranslateAsync(dictType, new List<string> { g.GameLevel });
+                }
+            }
+            await Task.WhenAll(levelTasks.Values);
+
+            // 3. 逐个组装DTO并赋值翻译结果
+            foreach (var g in gameSkills)
+            {
+                // 服务类型名称
+                string serviceTypeName = "";
+                if (!string.IsNullOrEmpty(g.ServiceType) && serviceTypeMap.TryGetValue(g.ServiceType, out var sName))
+                {
+                    serviceTypeName = sName;
+                }
+
+                // 段位名称
+                string gameRankName = "";
+                if (levelTasks.TryGetValue(g.GameId, out var levelTask))
+                {
+                    var levelMap = levelTask.Result;
+                    if (!string.IsNullOrEmpty(g.GameLevel) && levelMap.TryGetValue(g.GameLevel, out var lName))
+                    {
+                        gameRankName = lName;
+                    }
+                }
+
+                // 组装DTO（这里才是真正赋值的地方，不碰实体）
+                gameSkillItems.Add(new GameSkillItem
+                {
+                    GameId = g.GameId,
+                    GameName = g.Game.Name ?? "",
+                    GameRank = g.GameLevel ?? "",
+                    GameRankName = gameRankName,
+                    ServiceType = g.ServiceType,
+                    ServiceTypeName = serviceTypeName,
+                    Price = g.PricePerGame ?? 0,
+                    PriceUnit = "局"
+                });
+            }
+        }
+        // ===================== 翻译逻辑结束 =====================
 
         var detail = new AdminCompanionDetailDto
         {
@@ -1108,23 +1172,12 @@ public class CompanionService : ICompanionService
             Bio = companion.Bio,
             Tags = companion.Tags?.Split(',')?.ToList() ?? new(),
             CreatedAt = companion.CreatedAt.ToDateTimeString(),
-            GameSkills = companion.CompanionGames.Select(g => new GameSkillItem
-            {
-                GameId = g.GameId,
-                GameName = g.Game.Name ?? "",
-                GameRank = g.GameLevel ?? "",
-                GameRankName = string.Empty,
-                ServiceType = g.ServiceType,
-                ServiceTypeName = string.Empty,
-                Price = g.PricePerGame ?? 0,
-                PriceUnit = "局",
-            }).ToList(),// 👇 核心：取出轮播图URL列表（按sort排序）
+            GameSkills = gameSkillItems, // 直接用组装好的DTO列表
             BackgroundImages = companion.CompanionBackgroundImages
                 .OrderBy(img => img.Sort)
                 .Select(img => img.File?.FileUrl ?? string.Empty)
                 .Where(url => !string.IsNullOrEmpty(url))
                 .ToList(),
-
         };
 
         return ApiResponse<AdminCompanionDetailDto>.Success(detail);
