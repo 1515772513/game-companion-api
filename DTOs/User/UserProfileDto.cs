@@ -28,6 +28,8 @@ public class UserProfileDto
     public string CreatedAt { get; set; } = string.Empty;
     public string UpdatedAt { get; set; } = string.Empty;
 
+    public int? CompanionStatus { get; set; } = -1; // 陪玩师状态:-1=未认证, 0=待审核,1=已认证,2=已拒绝
+
     /// <summary>
     /// 收藏项目数量
     /// </summary>

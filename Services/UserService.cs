@@ -602,6 +602,7 @@ public class UserService : IUserService
         try
         {
             var user = await _context.Users
+                .Include(u => u.Companions)
                 .FirstOrDefaultAsync(u => u.Openid == openId);
             if (user == null)
             {
@@ -619,7 +620,6 @@ public class UserService : IUserService
             // 优惠券数
             var couponCount = await _context.Coupons
                 .CountAsync(c => c.UserId == user.Id);
-
 
             var profileDto = new UserProfileDto
             {
@@ -642,6 +642,7 @@ public class UserService : IUserService
                 LastLoginTime = user.LastLoginTime?.ToDateTimeString(),
                 CreatedAt = user.CreatedAt.ToDateTimeString(),
                 UpdatedAt = user.UpdatedAt.ToDateTimeString(),
+                CompanionStatus = user.Companions?.FirstOrDefault()?.Status ?? -1,
                 
                 UserCollectionCount = collectionCount,
                 OrderCount = orderCount,
