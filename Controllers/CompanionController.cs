@@ -336,6 +336,22 @@ public class CompanionController : ControllerBase
         return Ok(result);
     }
 
+    
+    /// <summary>
+    /// 获取陪玩师审核详情
+    /// </summary>
+    /// <returns>陪玩师审核详情</returns>
+    [HttpGet("detail/{id}")]
+    [ProducesResponseType(typeof(ApiResponse<CompanionListDetailDto>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<>), 404)]
+    [ProducesResponseType(typeof(ApiResponse<>), 500)]
+    public async Task<ActionResult<ApiResponse<CompanionListDetailDto>>> GetDetail(int id)
+    {
+        var userId = GetUserIdFromClaims();
+        var result = await _companionService.GetCompanionDetailAsync(id, userId, true);
+        return Ok(result);
+    }
+
     /// <summary>
     /// 获取陪玩认证审核统计（tab数量）
     /// </summary>

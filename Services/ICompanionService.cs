@@ -95,6 +95,11 @@ public interface ICompanionService
     Task<ApiResponse<CompanionListDetailDto>> GetCompanionDetailAsync(int companionId, int userId);
 
     /// <summary>
+    /// 获取陪玩师详情（适配后台）
+    /// </summary>
+    Task<ApiResponse<AdminCompanionDetailDto>> GetCompanionDetailAsync(int companionId, int userId, bool ignoreStatus = false);
+
+    /// <summary>
     /// 获取陪玩师服务列表
     /// </summary>
     Task<ApiResponse<List<CompanionServiceDto>>> GetCompanionServicesAsync(int companionId);

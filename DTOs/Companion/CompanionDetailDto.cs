@@ -1,7 +1,40 @@
-using System;
-using System.Collections.Generic;
-
 namespace GameCompanion.Api.DTOs.Companion;
+
+/// <summary>
+/// 陪玩师详情DTO - 管理端
+/// </summary>
+public class AdminCompanionDetailDto
+{
+    public string RealName { get; set; } = string.Empty;
+    public string IdCard { get; set; } = string.Empty;
+    public string IdCardFrontUrl { get; set; } = string.Empty;
+    public string IdCardBackUrl { get; set; } = string.Empty;
+    public string Phone { get; set; } = string.Empty;
+    public string Nickname { get; set; } = string.Empty;
+    public string Bio { get; set; } = string.Empty;
+    public string CreatedAt { get; set; } = string.Empty;
+
+    public List<string>? Tags { get; set; } = new();
+    public List<GameSkillItem> GameSkills { get; set; } = new();
+    public List<string> BackgroundImages { get; set; } = new();
+}
+
+/// <summary>
+/// 每个游戏的技能 + 服务类型 + 价格
+/// </summary>
+public class GameSkillItem
+{
+    public int GameId { get; set; }
+    public string GameRank { get; set; } = string.Empty;
+
+    public string GameRankName { get; set; } = string.Empty;
+    public string ServiceType { get; set; } = string.Empty;
+
+    public string ServiceTypeName { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+    
+    public string PriceUnit { get; set; } = string.Empty;
+}
 
 /// <summary>
 /// 陪玩师详情DTO

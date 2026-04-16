@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using GameCompanion.Api.Data;
 using GameCompanion.Api.Utils;
 using GameCompanion.Api.Services.DictTranslate;
-using System.Text.Json;
 
 namespace GameCompanion.Api.Services;
 
@@ -1078,6 +1077,58 @@ public class CompanionService : ICompanionService
     #endregion
 
     #region 管理端 PC
+
+    /// <summary>
+    /// 获取陪玩师详情（适配后台）
+    /// </summary>
+    public async Task<ApiResponse<AdminCompanionDetailDto>> GetCompanionDetailAsync(int companionId, int userId, bool ignoreStatus = false)
+    {
+        var companion = await _context.Companions
+            .Include(c => c.User)
+            .Include(c => c.CompanionGames)
+            .Include(c => c.CompanionBackgroundImages.Where(img => img.IsDeleted == 0))
+                .ThenInclude(img => img.File)
+            .FirstOrDefaultAsync(c => c.Id == companionId && (ignoreStatus || c.Status == 1));
+
+        if (companion == null)
+            return ApiResponse<AdminCompanionDetailDto>.Fail(404, "陪玩师不存在或未认证");
+
+        // 检查是否收藏
+        var isFavorite = await _context.UserCollections
+            .AnyAsync(f => f.UserId == userId && f.ItemId == companionId && f.ItemType == "companion");
+
+        var detail = new AdminCompanionDetailDto
+        {
+            RealName = companion.RealName,
+            IdCard = companion.IdCard,
+            IdCardFrontUrl = companion.IdCardFront ?? string.Empty,
+            IdCardBackUrl = companion.IdCardBack ?? string.Empty,
+            Phone = companion.Phone,
+            Nickname = companion.Nickname,
+            Bio = companion.Bio,
+            Tags = companion.Tags?.Split(',')?.ToList() ?? new(),
+            CreatedAt = companion.CreatedAt.ToDateTimeString(),
+            GameSkills = companion.CompanionGames.Select(g => new GameSkillItem
+            {
+                GameId = g.GameId,
+                GameRank = g.GameLevel ?? "",
+                GameRankName = string.Empty,
+                ServiceType = g.ServiceType,
+                ServiceTypeName = string.Empty,
+                Price = g.PricePerGame ?? 0,
+                PriceUnit = "局",
+            }).ToList(),// 👇 核心：取出轮播图URL列表（按sort排序）
+            BackgroundImages = companion.CompanionBackgroundImages
+                .OrderBy(img => img.Sort)
+                .Select(img => img.File?.FileUrl ?? string.Empty)
+                .Where(url => !string.IsNullOrEmpty(url))
+                .ToList(),
+
+        };
+
+        return ApiResponse<AdminCompanionDetailDto>.Success(detail);
+    }
+
 
     /// <summary>
     /// 获取陪玩师列表（高性能优化版 - 双字典翻译）
