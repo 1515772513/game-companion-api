@@ -134,7 +134,7 @@ public class OrderService : IOrderService
             }
             if (user.Balance < finalAmount)
             {
-                return ApiResponse<CreateOrderResponse>.ErrorResponse(3003, $"余额不足（当前余额：{user.Balance:F2}，需支付：{finalAmount:F2}）");
+                // return ApiResponse<CreateOrderResponse>.ErrorResponse(3003, $"余额不足（当前余额：{user.Balance:F2}，需支付：{finalAmount:F2}）");
             }
 
             // 9. 生成订单号 + 计算服务时长
