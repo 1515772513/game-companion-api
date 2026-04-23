@@ -29,25 +29,32 @@ public class UserService : IUserService
     {
         try
         {
+            // 查找用户
             var user = await _context.Users.FindAsync(userId);
             if (user == null)
             {
                 return ApiResponse<UserProfileDto>.Fail(404, "用户不存在");
             }
 
-            // 更新用户信息
+            // 更新基础资料
             user.Nickname = updateDto.Nickname;
-            user.RealName = updateDto.RealName;
-            user.IdCard = updateDto.IdCard;
             user.Phone = updateDto.Phone;
             user.Gender = updateDto.Gender;
-            user.Age = updateDto.Age;
-            user.Name = updateDto.Name;
             user.Bio = updateDto.Bio;
             user.UpdatedAt = DateTime.Now;
 
+            // 核心：根据生日自动计算年龄
+            var birthdayDate = updateDto.Birthday.ToNullableDateTime();
+            if (birthdayDate.HasValue)
+            {
+                user.Birthday = birthdayDate.Value;
+                user.Age = CalculateAge(birthdayDate.Value);
+            }
+
+            // 保存到数据库
             await _context.SaveChangesAsync();
 
+            // 组装返回数据
             var profileDto = new UserProfileDto
             {
                 Id = user.Id,
@@ -59,14 +66,14 @@ public class UserService : IUserService
                 Avatar = user.Avatar,
                 Gender = user.Gender,
                 Age = user.Age,
+                Birthday = user.Birthday,
                 Name = user.Name,
                 Bio = user.Bio,
                 VipLevel = user.VipLevel,
-                VipExpireDate = user.VipExpireDate.ToDateTimeString(),
+                VipExpireDate = user.VipExpireDate?.ToDateTimeString(),
                 Points = user.Points.GetSafeInt(),
                 Balance = user.Balance.GetSafeDecimal(),
                 Status = user.Status == true ? 1 : 0,
-                // StatusCn = user.Status.GetStatusCn(), // 状态:1=禁用,0=正常
                 LastLoginTime = user.LastLoginTime?.ToDateTimeString(),
                 CreatedAt = user.CreatedAt.ToDateTimeString(),
                 UpdatedAt = user.UpdatedAt.ToDateTimeString()
@@ -76,7 +83,7 @@ public class UserService : IUserService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "更新用户个人资料失败");
+            _logger.LogError(ex, "更新用户个人资料失败，用户ID：{UserId}", userId);
             return ApiResponse<UserProfileDto>.Fail(500, "更新用户个人资料失败");
         }
     }
@@ -632,6 +639,8 @@ public class UserService : IUserService
                 Avatar = user.Avatar,
                 Gender = user.Gender,
                 Age = user.Age,
+                BirthdayStr = user.Birthday.ToDateTimeString("yyyy-MM-dd"),
+                Birthday = user.Birthday,
                 Name = user.Name,
                 Bio = user.Bio,
                 VipLevel = user.VipLevel,
@@ -762,5 +771,25 @@ public class UserService : IUserService
         }
     }
 
+    #endregion
+
+    #region 私有方法
+    /// <summary>
+    /// 根据生日计算年龄（私有工具方法）
+    /// </summary>
+    private int CalculateAge(DateTime birthday)
+    {
+        var now = DateTime.Now;
+        int age = now.Year - birthday.Year;
+
+        // 未到今年生日，减1
+        if (now.Month < birthday.Month || (now.Month == birthday.Month && now.Day < birthday.Day))
+        {
+            age--;
+        }
+
+        // 年龄不能为负数
+        return age < 0 ? 0 : age;
+    }
     #endregion
 }

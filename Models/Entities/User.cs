@@ -160,6 +160,12 @@ public partial class User
     [StringLength(100)]
     public string? Openid { get; set; }
 
+    /// <summary>
+    /// 生日
+    /// </summary>
+    [Column(TypeName = "datetime")]
+    public DateTime? Birthday { get; set; }
+
     [InverseProperty("User")]
     public virtual ICollection<Collection> Collections { get; set; } = new List<Collection>();
 

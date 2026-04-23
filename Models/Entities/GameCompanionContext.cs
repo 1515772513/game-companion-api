@@ -760,6 +760,7 @@ public partial class GameCompanionContext : DbContext
                 .HasDefaultValueSql("'0.00'")
                 .HasComment("余额");
             entity.Property(e => e.Bio).HasComment("个人简介");
+            entity.Property(e => e.Birthday).HasComment("生日");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.Gender)
                 .HasDefaultValueSql("'0'")

@@ -16,6 +16,8 @@ public class UserProfileDto
     public string? Avatar { get; set; }
     public int? Gender { get; set; } = 0;
     public int Age { get; set; }
+    public DateTime? Birthday { get; set; }
+    public string? BirthdayStr { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string? Bio { get; set; }
     public int? VipLevel { get; set; }
@@ -51,31 +53,22 @@ public class UserProfileDto
 /// </summary>
 public class UpdateProfileDto
 {
-    [Required]
-    [MaxLength(50)]
     public string Nickname { get; set; } = string.Empty;
 
-    [MaxLength(50)]
     public string? RealName { get; set; }
 
-    [MaxLength(18)]
     public string? IdCard { get; set; }
 
-    [Required]
-    [MaxLength(11)]
-    [RegularExpression(@"^1[3-9]\d{9}$", ErrorMessage = "手机号格式不正确")]
     public string Phone { get; set; } = string.Empty;
 
-    [MaxLength(20)]
     public int? Gender { get; set; } = 0;
 
     public int Age { get; set; }
 
-    [MaxLength(100)]
     public string Name { get; set; } = string.Empty;
 
-    [MaxLength(500)]
     public string? Bio { get; set; }
+    public string? Birthday { get; set; } = string.Empty;
 }
 
 /// <summary>

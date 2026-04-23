@@ -66,20 +66,20 @@ public static class DateTimeExtensions
     /// <summary>
     /// 格式化为标准格式
     /// </summary>
-    public static string ToDateTimeString(this DateTime dateTime)
+    public static string ToDateTimeString(this DateTime dateTime, string format = "yyyy-MM-dd HH:mm:ss")
     {
-        return dateTime.ToString("yyyy-MM-dd HH:mm:ss");
+        return dateTime.ToString(format);
     }
 
     /// <summary>
     /// 字符串格式时间转标准格式
     /// </summary>
-    public static string ToDateTimeString(this string dateTimeStr)
+    public static string ToDateTimeString(this string dateTimeStr, string format = "yyyy-MM-dd HH:mm:ss")
     {
         // 兼容多种输入格式，可根据实际场景调整
         if (DateTime.TryParse(dateTimeStr, out DateTime dt))
         {
-            return dt.ToString("yyyy-MM-dd HH:mm:ss");
+            return dt.ToString(format);
         }
         // 解析失败返回原字符串或空，按需处理
         return dateTimeStr;
@@ -89,25 +89,54 @@ public static class DateTimeExtensions
     /// </summary>
     /// <param name="dateTime"></param>
     /// <returns></returns>
+    public static string ToDateTimeString(this DateTime? dateTime, string format = "yyyy-MM-dd HH:mm:ss")
+    {
+        // 如果有值，调用非可空方法；否则返回空字符串
+        return dateTime?.ToString(format) ?? string.Empty;
+    }
+
+    /// <summary>
+    /// **新增：处理 DateTime? 的核心方法**
+    /// </summary>
+    /// <param name="dateTime"></param>
+    /// <returns></returns>
     public static string ToDateTimeString(this DateTime? dateTime)
     {
         // 如果有值，调用非可空方法；否则返回空字符串
-        return dateTime?.ToDateTimeString() ?? string.Empty;
+        return dateTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? string.Empty;
     }
 
     /// <summary>
     /// 格式化为标准格式（支持 DateOnly）
     /// </summary>
-    public static string ToDateTimeString(this DateOnly dateOnly)
+    public static string ToDateTimeString(this DateOnly dateOnly, string format = "yyyy-MM-dd")
     {
-        return dateOnly.ToString("yyyy-MM-dd");
+        return dateOnly.ToString(format);
     }
 
     /// <summary>
     /// 格式化为标准格式（支持 DateOnly）
     /// </summary>
-    public static string ToDateTimeString(this DateOnly? dateOnly)
+    public static string ToDateTimeString(this DateOnly? dateOnly, string format = "yyyy-MM-dd")
     {
-        return dateOnly?.ToString("yyyy-MM-dd") ?? string.Empty;
+        return dateOnly?.ToString(format) ?? string.Empty;
+    }
+    
+    /// <summary>
+    /// 字符串转换为可空 DateTime，兼容空字符串、null、格式错误
+    /// </summary>
+    public static DateTime? ToNullableDateTime(this string? dateTimeStr)
+    {
+        if (string.IsNullOrWhiteSpace(dateTimeStr))
+        {
+            return null;
+        }
+
+        if (DateTime.TryParse(dateTimeStr, out DateTime dt))
+        {
+            return dt;
+        }
+
+        return null;
     }
 }

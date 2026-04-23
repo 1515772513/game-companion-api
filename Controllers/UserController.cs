@@ -49,14 +49,14 @@ public class UserController : ControllerBase
     /// <summary>
     /// 更新用户个人资料
     /// </summary>
-    [HttpPut("profile")]
+    [HttpPut("info")]
     [ProducesResponseType(typeof(ApiResponse<UserProfileDto>), 200)]
     [ProducesResponseType(typeof(ApiResponse<>), 404)]
     [ProducesResponseType(typeof(ApiResponse<>), 400)]
     [ProducesResponseType(typeof(ApiResponse<>), 500)]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto updateDto)
     {
-        var userId = GetUserIdFromClaims();
+        var userId = GetUserId();
         if (userId == 0)
         {
             return ApiResponse<UserProfileDto>.Fail(401, "用户未授权").ToActionResult();
@@ -76,7 +76,7 @@ public class UserController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<>), 500)]
     public async Task<IActionResult> UploadAvatar([FromBody] UploadAvatarDto uploadDto)
     {
-        var userId = GetUserIdFromClaims();
+        var userId = GetUserId();
         if (userId == 0)
         {
             return ApiResponse<string>.Fail(401, "用户未授权").ToActionResult();
@@ -101,7 +101,7 @@ public class UserController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<>), 500)]
     public async Task<IActionResult> VerifyRealName([FromBody] VerifyRealNameDto verifyDto)
     {
-        var userId = GetUserIdFromClaims();
+        var userId = GetUserId();
         if (userId == 0)
         {
             return ApiResponse<bool>.Fail(401, "用户未授权").ToActionResult();
@@ -120,7 +120,7 @@ public class UserController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<>), 500)]
     public async Task<IActionResult> GetCollections([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
-        var userId = GetUserIdFromClaims();
+        var userId = GetUserId();
         if (userId == 0)
         {
             return ApiResponse<CollectionsResponseDto>.Fail(401, "用户未授权").ToActionResult();
@@ -139,7 +139,7 @@ public class UserController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<>), 500)]
     public async Task<IActionResult> GetFollowing([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
-        var userId = GetUserIdFromClaims();
+        var userId = GetUserId();
         if (userId == 0)
         {
             return ApiResponse<FollowingListResponseDto>.Fail(401, "用户未授权").ToActionResult();
@@ -158,7 +158,7 @@ public class UserController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<>), 500)]
     public async Task<IActionResult> GetFollowers([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
-        var userId = GetUserIdFromClaims();
+        var userId = GetUserId();
         if (userId == 0)
         {
             return ApiResponse<FollowersListResponseDto>.Fail(401, "用户未授权").ToActionResult();
@@ -178,7 +178,7 @@ public class UserController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<>), 500)]
     public async Task<IActionResult> FollowUser([FromBody] FollowUserDto followDto)
     {
-        var userId = GetUserIdFromClaims();
+        var userId = GetUserId();
         if (userId == 0)
         {
             return ApiResponse<bool>.Fail(401, "用户未授权").ToActionResult();
@@ -198,7 +198,7 @@ public class UserController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<>), 500)]
     public async Task<IActionResult> ApplyCompanion([FromBody] ApplyCompanionDto applyDto)
     {
-        var userId = GetUserIdFromClaims();
+        var userId = GetUserId();
         if (userId == 0)
         {
             return ApiResponse<GameCompanion.Api.Models.Entities.CompanionApplication>.Fail(401, "用户未授权").ToActionResult();
@@ -217,7 +217,7 @@ public class UserController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<>), 500)]
     public async Task<IActionResult> GetWallet()
     {
-        var userId = GetUserIdFromClaims();
+        var userId = GetUserId();
         if (userId == 0)
         {
             return ApiResponse<WalletDto>.Fail(401, "用户未授权").ToActionResult();
@@ -225,19 +225,6 @@ public class UserController : ControllerBase
 
         var result = await _userService.GetWalletAsync(userId);
         return result.ToActionResult();
-    }
-
-    /// <summary>
-    /// 从用户声明中获取用户ID
-    /// </summary>
-    private int GetUserIdFromClaims()
-    {
-        var userIdClaim = User.FindFirst("userId");
-        if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
-        {
-            return userId;
-        }
-        return 0;
     }
 
 
@@ -273,8 +260,10 @@ public class UserController : ControllerBase
     /// </summary>
     private int GetUserId()
     {
-        var claim = User.FindFirst(ClaimTypes.NameIdentifier);
-        return claim != null && int.TryParse(claim.Value, out int id) ? id : 0;
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+            return userId;
+        return 0;
     }
 
     /// <summary>
