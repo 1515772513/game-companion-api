@@ -108,4 +108,9 @@ public interface ICompanionService
     /// 获取陪玩师评价列表
     /// </summary>
     Task<ApiResponse<List<CompanionReviewDto>>> GetCompanionReviewsAsync(int companionId, int page, int pageSize);
+
+    /// <summary>
+    /// 审核陪玩师
+    /// </summary>
+    Task<ApiResponse> AuditCompanionAsync(CompanionAuditDto auditDto);
 }

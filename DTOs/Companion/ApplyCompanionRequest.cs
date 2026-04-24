@@ -240,6 +240,30 @@ public class WithdrawRequest
 }
 
 /// <summary>
+/// 陪玩师审核请求DTO
+/// </summary>
+public class CompanionAuditDto
+{
+    /// <summary>
+    /// 陪玩师ID
+    /// </summary>
+    [Required(ErrorMessage = "陪玩师ID不能为空")]
+    public int CompanionId { get; set; }
+
+    /// <summary>
+    /// 审核状态（1=审核通过,2=审核拒绝）
+    /// </summary>
+    [Required(ErrorMessage = "审核状态不能为空")]
+    [Range(1, 2, ErrorMessage = "审核状态只能是1(通过)或2(拒绝)")]
+    public int Status { get; set; }
+
+    /// <summary>
+    /// 拒绝原因（审核拒绝时必填）
+    /// </summary>
+    public string? RejectReason { get; set; }
+}
+
+/// <summary>
 /// 提现记录信息DTO
 /// </summary>
 public class WithdrawRecordInfo

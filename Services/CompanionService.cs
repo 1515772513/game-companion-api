@@ -1360,6 +1360,47 @@ public class CompanionService : ICompanionService
             return ApiResponse<List<CompanionStatusCountDto>>.Fail(500, "获取统计失败");
         }
     }
+
+    /// <summary>
+    /// 审核陪玩师
+    /// </summary>
+    /// <param name="auditDto">审核信息</param>
+    /// <returns>审核结果</returns>
+    public async Task<ApiResponse> AuditCompanionAsync(CompanionAuditDto auditDto)
+    {
+        // 1. 验证参数（拒绝时必须填写拒绝原因）
+        if (auditDto.Status == 2 && string.IsNullOrWhiteSpace(auditDto.RejectReason))
+        {
+            return ApiResponse.Fail(400, "审核拒绝时必须填写拒绝原因");
+        }
+
+        // 2. 查询陪玩师信息
+        var companion = await _context.Set<Companion>()
+            .FirstOrDefaultAsync(c => c.Id == auditDto.CompanionId);
+
+        if (companion == null)
+        {
+            return ApiResponse.Fail(404, "陪玩师不存在");
+        }
+
+        // 3. 检查当前状态是否为待审核（0）
+        if (companion.Status != 0)
+        {
+            return ApiResponse.Fail(400, $"无法审核（仅待审核状态可审核）");
+        }
+
+        // 4. 更新审核状态
+        companion.Status = auditDto.Status;
+        companion.RejectReason = auditDto.Status == 2 ? auditDto.RejectReason : null;
+        companion.UpdatedAt = DateTime.Now;
+
+        // 5. 保存数据库
+        await _context.SaveChangesAsync();
+
+        // 6. 返回结果
+        var message = auditDto.Status == 1 ? "审核通过" : "审核拒绝";
+        return ApiResponse.Success($"陪玩师{message}成功");
+    }
     
     #endregion
 

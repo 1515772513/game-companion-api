@@ -362,5 +362,23 @@ public class CompanionController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// 审核陪玩师
+    /// </summary>
+    /// <param name="auditDto">审核信息</param>
+    /// <returns>审核结果</returns>
+    [HttpPost("audit")]
+    [ProducesResponseType(typeof(ApiResponse), 200)]
+    [ProducesResponseType(typeof(ApiResponse), 400)]
+    [ProducesResponseType(typeof(ApiResponse), 404)]
+    public async Task<IActionResult> AuditCompanion([FromBody] CompanionAuditDto auditDto)
+    {
+        // 调用服务层审核逻辑
+        var result = await _companionService.AuditCompanionAsync(auditDto);
+
+        // 返回响应
+        return result.Code == 200 ? Ok(result) : BadRequest(result);
+    }
+
     #endregion
 }
