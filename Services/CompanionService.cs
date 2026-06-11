@@ -16,12 +16,14 @@ public class CompanionService : ICompanionService
     private readonly GameCompanionContext _context;
     private readonly ILogger<CompanionService> _logger;
     private readonly IDictTranslateService _dictTranslateService;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public CompanionService(GameCompanionContext context, ILogger<CompanionService> logger, IDictTranslateService dictTranslateService)
+    public CompanionService(GameCompanionContext context, ILogger<CompanionService> logger, IDictTranslateService dictTranslateService, IHttpContextAccessor httpContextAccessor)
     {
         _context = context;
         _logger = logger;
         _dictTranslateService = dictTranslateService;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     /// <summary>
@@ -140,11 +142,10 @@ public class CompanionService : ICompanionService
     /// <summary>
     /// 获取认证申请状态
     /// </summary>
-    public async Task<ApiResponse<ApplicationStatusResponse>> GetApplicationStatusAsync()
+    public async Task<ApiResponse<ApplicationStatusResponse>> GetApplicationStatusAsync(int userId)
     {
         try
         {
-            var userId = GetCurrentUserId();
             if (userId == 0)
             {
                 return ApiResponse<ApplicationStatusResponse>.ErrorResponse(401, "未授权，请先登录");
@@ -174,75 +175,6 @@ public class CompanionService : ICompanionService
         {
             _logger.LogError(ex, "获取认证申请状态失败");
             return ApiResponse<ApplicationStatusResponse>.ErrorResponse(500, "获取状态失败");
-        }
-    }
-
-    /// <summary>
-    /// 获取我的陪玩师信息
-    /// </summary>
-    public async Task<ApiResponse<CompanionInfoResponse>> GetMyCompanionInfoAsync()
-    {
-        try
-        {
-            var userId = GetCurrentUserId();
-            if (userId == 0)
-            {
-                return ApiResponse<CompanionInfoResponse>.ErrorResponse(401, "未授权，请先登录");
-            }
-
-            var companion = await _context.Companions
-                .Include(c => c.User)
-                .Include(c => c.CompanionGames)
-                    .ThenInclude(g => g.Game)
-                .FirstOrDefaultAsync(c => c.UserId == userId);
-
-            if (companion == null || companion.Status != 1)
-            {
-                return ApiResponse<CompanionInfoResponse>.ErrorResponse(404, "未找到陪玩师信息或未认证");
-            }
-
-            // 取出第一个游戏技能（用于取服务类型、价格、段位）
-            var firstGame = companion.CompanionGames.FirstOrDefault();
-
-            var response = new CompanionInfoResponse
-            {
-                Id = companion.Id,
-                UserId = companion.UserId,
-                Nickname = companion.Nickname,
-                AvatarUrl = companion.User?.Avatar ?? "",
-                Level = companion.Level ?? null,
-                
-                // ======================
-                // 【修改 1】从游戏表取服务类型
-                // ======================
-                ServiceType = firstGame?.ServiceType ?? "tech",
-                
-                // ======================
-                // 【修改 2】从游戏表取价格
-                // ======================
-                Price = firstGame?.PricePerGame ?? 0,
-                
-                Rating = companion.Rating ?? 0,
-                OrderCount = companion.TotalOrders ?? 0,
-                RatingCount = 0, // 需要根据评价记录计算
-                PositiveRate = companion.GoodReviewRate ?? 0,
-                OnlineStatus = OnlineStatusToInt(companion.OnlineStatus),
-                IsVerified = companion.Status == 1,
-                Games = companion.CompanionGames.Select(g => g.Game.Name).ToList(),
-                GameRank = firstGame?.GameLevel ?? "",
-                Bio = companion.Bio ?? "",
-                Tags = companion.Tags?.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList() ?? new List<string>(),
-                CertificationTime = companion.UpdatedAt.ToDateTimeString(),
-                TodayOrders = 0, // 需要根据订单统计
-                MonthOrders = 0  // 需要根据订单统计
-            };
-
-            return ApiResponse<CompanionInfoResponse>.SuccessResponse(response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "获取陪玩师信息失败");
-            return ApiResponse<CompanionInfoResponse>.ErrorResponse(500, "获取信息失败");
         }
     }
 
@@ -950,6 +882,35 @@ public class CompanionService : ICompanionService
     }
 
     /// <summary>
+    /// 获取我的陪玩师信息
+    /// </summary>
+    public async Task<ApiResponse<CompanionListDetailDto>> GetMyCompanionInfoAsync(int userId)
+    {
+        try
+        {
+            if (userId == 0)
+            {
+                return ApiResponse<CompanionListDetailDto>.ErrorResponse(401, "未授权，请先登录");
+            }
+
+            var companion = await _context.Companions
+                .FirstOrDefaultAsync(c => c.UserId == userId);
+
+            if (companion == null || companion.Status != 1)
+            {
+                return ApiResponse<CompanionListDetailDto>.ErrorResponse(404, "未找到陪玩师信息或未认证");
+            }
+
+            return await GetCompanionDetailAsync(companion.Id, userId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "获取陪玩师信息失败");
+            return ApiResponse<CompanionListDetailDto>.ErrorResponse(500, "获取信息失败");
+        }
+    }
+
+    /// <summary>
     /// 获取陪玩师详情（适配前端）
     /// </summary>
     public async Task<ApiResponse<CompanionListDetailDto>> GetCompanionDetailAsync(int companionId, int userId)
@@ -1152,7 +1113,7 @@ public class CompanionService : ICompanionService
                     GameName = g.Game.Name ?? "",
                     GameRank = g.GameLevel ?? "",
                     GameRankName = gameRankName,
-                    ServiceType = g.ServiceType,
+                    ServiceType = g.ServiceType ?? "",
                     ServiceTypeName = serviceTypeName,
                     Price = g.PricePerGame ?? 0,
                     PriceUnit = "局"
@@ -1163,13 +1124,14 @@ public class CompanionService : ICompanionService
 
         var detail = new AdminCompanionDetailDto
         {
-            RealName = companion.RealName,
-            IdCard = companion.IdCard,
+            Id = companion.Id,
+            RealName = companion.RealName ?? "",
+            IdCard = companion.IdCard ?? "",
             IdCardFrontUrl = companion.IdCardFront ?? string.Empty,
             IdCardBackUrl = companion.IdCardBack ?? string.Empty,
             Phone = companion.Phone,
             Nickname = companion.Nickname,
-            Bio = companion.Bio,
+            Bio = companion.Bio ?? "",
             Tags = companion.Tags?.Split(',')?.ToList() ?? new(),
             CreatedAt = companion.CreatedAt.ToDateTimeString(),
             GameSkills = gameSkillItems, // 直接用组装好的DTO列表
@@ -1411,9 +1373,10 @@ public class CompanionService : ICompanionService
     /// </summary>
     private int GetCurrentUserId()
     {
-        // 这里应该从 HttpContext.User.Claims 中获取用户ID
-        // 为了演示，返回一个模拟的用户ID
-        return 1; // 模拟用户ID
+        var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+            return userId;
+        return 0;
     }
 
     /// <summary>

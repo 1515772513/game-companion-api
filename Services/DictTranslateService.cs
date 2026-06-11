@@ -6,14 +6,22 @@ namespace GameCompanion.Api.Services.DictTranslate;
 
 public class DictTranslateService : IDictTranslateService
 {
-    // 🔥 关键点：自己创建上下文，不依赖注入
+    // 每次调用使用独立的短生命周期上下文：
+    // 连接串从配置(DefaultConnection)读取（开发环境=本地库），同时保证可被并发调用
+    // （GetCompanionDetailAsync 会 Task.WhenAll 并发翻译多个游戏段位，不能共用同一个 DbContext）。
+    private readonly IConfiguration _configuration;
+
+    public DictTranslateService(IConfiguration configuration)
+    {
+        _configuration = configuration;
+    }
+
     private GameCompanionContext CreateContext()
     {
+        var conn = _configuration.GetConnectionString("DefaultConnection");
         var options = new DbContextOptionsBuilder<GameCompanionContext>()
-            .UseMySql("server=47.93.230.189;port=3306;database=game_companion;user=admin;password=admin123;charset=utf8mb4",
-            Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.37-mysql"))
+            .UseMySql(conn, Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.37-mysql"))
             .Options;
-
         return new GameCompanionContext(options);
     }
 
@@ -22,7 +30,6 @@ public class DictTranslateService : IDictTranslateService
         if (string.IsNullOrWhiteSpace(dictType) || string.IsNullOrWhiteSpace(dictValue))
             return dictValue;
 
-        // 自己创建上下文
         using var context = CreateContext();
 
         var label = await context.SysDictData

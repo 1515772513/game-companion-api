@@ -148,7 +148,7 @@ public class SettingsController : ControllerBase
     /// </summary>
     private int GetUserIdFromClaims()
     {
-        var userIdClaim = User.FindFirst("userId");
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
         if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
         {
             return userId;

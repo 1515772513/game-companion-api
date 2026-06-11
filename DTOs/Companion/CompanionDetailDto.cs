@@ -5,6 +5,7 @@ namespace GameCompanion.Api.DTOs.Companion;
 /// </summary>
 public class AdminCompanionDetailDto
 {
+    public int Id { get; set; }
     public string RealName { get; set; } = string.Empty;
     public string IdCard { get; set; } = string.Empty;
     public string IdCardFrontUrl { get; set; } = string.Empty;

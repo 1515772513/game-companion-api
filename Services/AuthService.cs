@@ -220,12 +220,14 @@ public class AuthService : IAuthService
 
     private bool VerifyPassword(string password, string hash)
     {
-        // var hashed = Convert.ToBase64String(Encoding.UTF8.GetBytes(password));
-        return password == hash;
+        if (string.IsNullOrEmpty(hash)) return false;
+        // 与 HashPassword 保持一致（Base64）；同时兼容历史明文存储的数据
+        return hash == HashPassword(password) || hash == password;
     }
 
     private string MaskPhone(string phone)
     {
+        if (string.IsNullOrEmpty(phone)) return string.Empty;
         if (phone.Length == 11)
         {
             return phone.Substring(0, 3) + "****" + phone.Substring(7);

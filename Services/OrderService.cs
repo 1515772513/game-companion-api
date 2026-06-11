@@ -221,10 +221,9 @@ public class OrderService : IOrderService
     {
         try
         {
+            // Companion/Game 作为可选关系单独加载（见下），避免 INNER JOIN 过滤掉代练订单
             var query = _context.Orders
                 .Include(o => o.User)
-                .Include(o => o.Companion)
-                .Include(o => o.Game)
                 .Where(o => o.UserId == request.UserId);
 
             // 状态筛选
@@ -249,6 +248,21 @@ public class OrderService : IOrderService
                 .Skip((request.Page - 1) * request.PageSize)
                 .Take(request.PageSize)
                 .ToListAsync();
+
+            // 单独加载可选关系 Companion/Game（代练订单 companion_id=0 时保持为空）
+            var companionIds = orders.Where(o => o.CompanionId > 0).Select(o => o.CompanionId).Distinct().ToList();
+            var gameIds = orders.Where(o => o.GameId > 0).Select(o => o.GameId).Distinct().ToList();
+            var companionMap = await _context.Companions
+                .Where(c => companionIds.Contains(c.Id))
+                .ToDictionaryAsync(c => c.Id);
+            var gameMap = await _context.Games
+                .Where(g => gameIds.Contains(g.Id))
+                .ToDictionaryAsync(g => g.Id);
+            foreach (var o in orders)
+            {
+                if (o.CompanionId > 0 && companionMap.TryGetValue(o.CompanionId, out var c)) o.Companion = c;
+                if (o.GameId > 0 && gameMap.TryGetValue(o.GameId, out var g)) o.Game = g;
+            }
 
             // ==============================================
             // 🔥 批量翻译：订单状态 + 服务类型
@@ -287,15 +301,15 @@ public class OrderService : IOrderService
                     ServiceTypeName = serviceTypeMap.TryGetValue(o.ServiceType, out var serviceName) ? serviceName : o.ServiceType,
                     Status = o.Status,
                     StatusText = statusTexts.TryGetValue(o.Status, out var statusName) ? statusName : o.Status,
-                    IsExpired = (o.Status == "0" && 
+                    IsExpired = (o.Status == "0" && o.CreatedAt.HasValue &&
                                 (DateTime.Now - o.CreatedAt.Value).TotalMinutes > 15),
 
                     Companion = new GetOrdersResponse.CompanionInfo
                     {
-                        Id = o.Companion.Id,
-                        Nickname = o.Companion.Nickname,
+                        Id = o.Companion?.Id ?? 0,
+                        Nickname = o.Companion?.Nickname ?? "",
                         // AvatarUrl = o.Companion.AvatarUrl ?? "",
-                        Level = o.Companion.Level?.ToString() ?? "",
+                        Level = o.Companion?.Level?.ToString() ?? "",
                     },
                     GameName = o.Game?.Name ?? "",
                     GameRank = "",
@@ -330,21 +344,31 @@ public class OrderService : IOrderService
     {
         try
         {
+            // 仅 INNER JOIN 必有的 User；Companion/Game 作为可选关系单独加载，
+            // 避免代练订单（companion_id=0 / game_id=0）被 INNER JOIN 过滤导致"订单不存在"。
             var order = await _context.Orders
                 .Include(o => o.User)
-                .Include(o => o.Companion)
-                .ThenInclude(c => c.User)
-                .Include(o => o.Game)
                 .FirstOrDefaultAsync(o => o.OrderNo == orderNo);
 
             if (order == null)
             {
                 return ApiResponse<GetOrderResponse>.ErrorResponse(3001, "订单不存在");
             }
-            
+
             if (order.UserId != userId)
             {
                 return ApiResponse<GetOrderResponse>.ErrorResponse(403, "无权访问");
+            }
+
+            if (order.CompanionId > 0)
+            {
+                order.Companion = await _context.Companions
+                    .Include(c => c.User)
+                    .FirstOrDefaultAsync(c => c.Id == order.CompanionId);
+            }
+            if (order.GameId > 0)
+            {
+                order.Game = await _context.Games.FirstOrDefaultAsync(g => g.Id == order.GameId);
             }
 
             // ==============================================
@@ -386,17 +410,17 @@ public class OrderService : IOrderService
                 Remark = order.Remark ?? "",
                 Companion = new GetOrderResponse.CompanionDetail
                 {
-                    Id = order.Companion.Id,
-                    UserId = order.Companion.UserId,
-                    Nickname = order.Companion.Nickname,
-                    AvatarUrl = order.Companion.User?.Avatar ?? "",
-                    Level = order.Companion.Level ?? null,
-                    Phone = order.Companion.Phone ?? ""
+                    Id = order.Companion?.Id ?? 0,
+                    UserId = order.Companion?.UserId ?? 0,
+                    Nickname = order.Companion?.Nickname ?? "",
+                    AvatarUrl = order.Companion?.User?.Avatar ?? "",
+                    Level = order.Companion?.Level,
+                    Phone = order.Companion?.Phone ?? ""
                 },
                 Game = new GetOrderResponse.GameInfo
                 {
-                    Id = order.Game.Id,
-                    Name = order.Game.Name
+                    Id = order.Game?.Id ?? 0,
+                    Name = order.Game?.Name ?? ""
                 },
                 GameRank = "",
                 ServiceType = order.ServiceType,
@@ -429,7 +453,7 @@ public class OrderService : IOrderService
                     CanReview = order.Status == "已完成" && !HasReviewed(order.Id)
                 },
                 Timeline = GenerateOrderTimeline(order),
-                IsExpired = (order.Status == "0" && 
+                IsExpired = (order.Status == "0" && order.CreatedAt.HasValue &&
                                 (DateTime.Now - order.CreatedAt.Value).TotalMinutes > 15),
             };
 

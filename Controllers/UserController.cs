@@ -271,7 +271,7 @@ public class UserController : ControllerBase
     /// </summary>
     private string GetOpenId()
     {
-        var claim = User.FindFirst("openId");
+        var claim = User.FindFirst("Openid");
         return claim != null ? claim.Value : string.Empty;
     }
     #endregion

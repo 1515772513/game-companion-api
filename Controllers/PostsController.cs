@@ -234,8 +234,9 @@ public class PostsController : ControllerBase
     /// <returns>用户ID</returns>
     private int GetUserIdFromClaims()
     {
-        // TODO: 从JWT Token的Claim中获取用户ID
-        // 这里返回1作为示例，实际应该从HttpContext.User中解析
-        return 1;
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+            return userId;
+        return 0;
     }
 }

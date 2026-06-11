@@ -165,8 +165,9 @@ public class ConversationsController : ControllerBase
     /// </summary>
     private int GetCurrentUserUserId()
     {
-        // 这里应该从JWT Token中解析用户ID
-        // 临时返回一个固定值，实际使用时需要从token中获取
-        return 10086888; // 示例用户ID
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+            return userId;
+        return 0;
     }
 }

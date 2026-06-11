@@ -57,23 +57,8 @@ public class CompanionController : ControllerBase
     public async Task<ActionResult<ApiResponse<ApplicationStatusResponse>>> GetApplicationStatus()
     {
         _logger.LogInformation("获取认证申请状态");
-        var result = await _companionService.GetApplicationStatusAsync();
-        return Ok(result);
-    }
-
-    /// <summary>
-    /// 获取我的陪玩师信息
-    /// </summary>
-    /// <returns>陪玩师信息</returns>
-    [HttpGet("my-info")]
-    [ProducesResponseType(typeof(ApiResponse<CompanionInfoResponse>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<ApiResponse<CompanionInfoResponse>>> GetMyCompanionInfo()
-    {
-        _logger.LogInformation("获取陪玩师信息");
-        var result = await _companionService.GetMyCompanionInfoAsync();
+        var userId = GetUserIdFromClaims();
+        var result = await _companionService.GetApplicationStatusAsync(userId);
         return Ok(result);
     }
 
@@ -282,6 +267,23 @@ public class CompanionController : ControllerBase
     {
         var userId = GetUserIdFromClaims();
         var result = await _companionService.GetCompanionDetailAsync(id, userId);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// 获取我的陪玩师信息
+    /// </summary>
+    /// <returns>陪玩师信息</returns>
+    [HttpGet("my-info")]
+    [ProducesResponseType(typeof(ApiResponse<CompanionListDetailDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<ApiResponse<CompanionListDetailDto>>> GetMyCompanionInfo()
+    {
+        _logger.LogInformation("获取陪玩师信息");
+        var userId = GetUserIdFromClaims();
+        var result = await _companionService.GetMyCompanionInfoAsync(userId);
         return Ok(result);
     }
 

@@ -14,11 +14,13 @@ public class PowerLevelingService : IPowerLevelingService
 {
     private readonly GameCompanionContext _context;
     private readonly ILogger<PowerLevelingService> _logger;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public PowerLevelingService(GameCompanionContext context, ILogger<PowerLevelingService> logger)
+    public PowerLevelingService(GameCompanionContext context, ILogger<PowerLevelingService> logger, IHttpContextAccessor httpContextAccessor)
     {
         _context = context;
         _logger = logger;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     /// <summary>
@@ -550,9 +552,10 @@ public class PowerLevelingService : IPowerLevelingService
     /// </summary>
     private int GetCurrentUserId()
     {
-        // 这里应该从 HttpContext.User.Claims 中获取用户ID
-        // 为了演示，返回一个模拟的用户ID
-        return 1; // 模拟用户ID
+        var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+            return userId;
+        return 0;
     }
 
     /// <summary>

@@ -79,8 +79,14 @@ public partial class GameCompanionContext : DbContext
     public virtual DbSet<VipMembership> VipMemberships { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseMySql("server=47.93.230.189;port=3306;database=game_companion;user=admin;password=admin123;charset=utf8mb4", Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.37-mysql"));
+    {
+        // 运行时连接由 Program.cs 的 AddDbContext 注入（读取 appsettings 的 DefaultConnection）。
+        // 仅当外部未配置时（例如设计时 dotnet ef 命令）才回退到下面的本地连接串。
+        if (!optionsBuilder.IsConfigured)
+        {
+            optionsBuilder.UseMySql("server=localhost;port=3306;database=game_companion;user=root;password=123456;charset=utf8mb4", Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.37-mysql"));
+        }
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

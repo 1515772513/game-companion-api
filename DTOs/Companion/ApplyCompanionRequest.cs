@@ -96,33 +96,6 @@ public class ApplicationStatusResponse
 }
 
 /// <summary>
-/// 陪玩师信息响应DTO
-/// </summary>
-public class CompanionInfoResponse
-{
-    public int Id { get; set; }
-    public int UserId { get; set; }
-    public string Nickname { get; set; } = string.Empty;
-    public string AvatarUrl { get; set; } = string.Empty;
-    public int? Level { get; set; } = null;
-    public string ServiceType { get; set; } = string.Empty;
-    public decimal Price { get; set; }
-    public decimal Rating { get; set; }
-    public int OrderCount { get; set; }
-    public int RatingCount { get; set; }
-    public decimal PositiveRate { get; set; }
-    public int OnlineStatus { get; set; }
-    public bool IsVerified { get; set; }
-    public List<string> Games { get; set; } = new();
-    public string GameRank { get; set; } = string.Empty;
-    public string Bio { get; set; } = string.Empty;
-    public List<string>? Tags { get; set; }
-    public string? CertificationTime { get; set; }
-    public int TodayOrders { get; set; }
-    public int MonthOrders { get; set; }
-}
-
-/// <summary>
 /// 更新陪玩师信息请求DTO
 /// </summary>
 public class UpdateCompanionInfoRequest

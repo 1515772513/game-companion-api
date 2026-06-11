@@ -16,12 +16,12 @@ public interface ICompanionService
     /// <summary>
     /// 获取认证申请状态
     /// </summary>
-    Task<ApiResponse<ApplicationStatusResponse>> GetApplicationStatusAsync();
+    Task<ApiResponse<ApplicationStatusResponse>> GetApplicationStatusAsync(int userId);
 
     /// <summary>
     /// 获取我的陪玩师信息
     /// </summary>
-    Task<ApiResponse<CompanionInfoResponse>> GetMyCompanionInfoAsync();
+    Task<ApiResponse<CompanionListDetailDto>> GetMyCompanionInfoAsync(int userId);
 
     /// <summary>
     /// 更新陪玩师信息
