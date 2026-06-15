@@ -122,6 +122,34 @@ public class SmsLoginRequest
 }
 
 /// <summary>
+/// 手机号验证码登录请求DTO（非微信环境使用）
+/// </summary>
+public class PhoneLoginRequest
+{
+    [Required(ErrorMessage = "手机号不能为空")]
+    [RegularExpression(@"^1[3-9]\d{9}$", ErrorMessage = "手机号格式不正确")]
+    public string Phone { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "验证码不能为空")]
+    [StringLength(6, MinimumLength = 4, ErrorMessage = "验证码格式不正确")]
+    public string Code { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// 手机号密码登录请求DTO（非微信环境使用）
+/// </summary>
+public class PhonePasswordLoginRequest
+{
+    [Required(ErrorMessage = "手机号不能为空")]
+    [RegularExpression(@"^1[3-9]\d{9}$", ErrorMessage = "手机号格式不正确")]
+    public string Phone { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "密码不能为空")]
+    [StringLength(20, MinimumLength = 6, ErrorMessage = "密码长度应为6-20位")]
+    public string Password { get; set; } = string.Empty;
+}
+
+/// <summary>
 /// 微信一键登录请求DTO
 /// </summary>
 public class WechatLoginRequest

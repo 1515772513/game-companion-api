@@ -57,8 +57,8 @@ public interface IOrderService
     Task<ApiResponse<OrderStatisticsDto>> GetStatisticsAsync();
 
     /// <summary>
-    /// 获取订单状态统计数据
+    /// 获取订单状态统计数据（按用户ID，兼容手机号/微信等所有登录方式）
     /// </summary>
     /// <returns>订单状态统计结果</returns>
-    Task<ApiResponse<OrderStatusDto>> GetOrderStatusAsync(string openId);
+    Task<ApiResponse<OrderStatusDto>> GetOrderStatusAsync(int userId);
 }

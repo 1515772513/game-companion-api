@@ -161,12 +161,35 @@ public class UserListDto
     public string Nickname { get; set; } = string.Empty;
     public string? Avatar { get; set; }
     public string? Bio { get; set; }
+    public string Phone { get; set; } = string.Empty;
     public int? VipLevel { get; set; }
     public int Points { get; set; }
     public int Status { get; set; }
     public string StatusCn { get; set; } = string.Empty; // 状态:1=正常,0=禁用
     // 格式化时间格式为yyyy-MM-dd HH:mm:ss
     public string CreatedAt { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// 管理员编辑用户DTO
+/// </summary>
+public class AdminUpdateUserDto
+{
+    public string Nickname { get; set; } = string.Empty;
+    public string Phone { get; set; } = string.Empty;
+    public int? VipLevel { get; set; }
+    public int Points { get; set; }
+}
+
+/// <summary>
+/// 更新用户状态DTO
+/// </summary>
+public class UpdateUserStatusDto
+{
+    /// <summary>
+    /// 状态:1=正常,0=禁用
+    /// </summary>
+    public int Status { get; set; }
 }
 
 // 用户列表列表DTO

@@ -9,6 +9,7 @@ using System.Security.Claims;
 using System.Text;
 using GameCompanion.Api.Utils;
 using System.Text.Json;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace GameCompanion.Api.Services;
 
@@ -20,12 +21,14 @@ public class AuthService : IAuthService
     private readonly GameCompanionContext _context;
     private readonly IConfiguration _configuration;
     private readonly ILogger<AuthService> _logger;
+    private readonly IMemoryCache _cache;
 
-    public AuthService(GameCompanionContext context, IConfiguration configuration, ILogger<AuthService> logger)
+    public AuthService(GameCompanionContext context, IConfiguration configuration, ILogger<AuthService> logger, IMemoryCache cache)
     {
         _context = context;
         _configuration = configuration;
         _logger = logger;
+        _cache = cache;
     }
 
     public async Task<ApiResponse<LoginResponse>> LoginAsync(LoginRequest request)
@@ -124,15 +127,22 @@ public class AuthService : IAuthService
 
     public async Task<ApiResponse<object>> SendCodeAsync(SendCodeRequest request)
     {
-        // TODO: 实现发送短信验证码逻辑
-        // 这里应该是调用短信服务商API
+        // 生成 6 位随机验证码并写入缓存（5 分钟有效）
+        var code = Random.Shared.Next(100000, 1000000).ToString();
+        var cacheKey = BuildCodeCacheKey(request.Phone, request.Type);
+        _cache.Set(cacheKey, code, TimeSpan.FromMinutes(5));
 
-        await Task.Delay(100); // 模拟发送
+        // TODO: 接入真实短信服务商发送验证码；当前仅记录日志，便于联调
+        _logger.LogInformation("发送验证码 手机号:{Phone} 类型:{Type} 验证码:{Code}", request.Phone, request.Type, code);
+
+        await Task.CompletedTask;
 
         return ApiResponse<object>.SuccessResponse(new
         {
             expire_in = 300,
-            phone = MaskPhone(request.Phone)
+            phone = MaskPhone(request.Phone),
+            // ⚠️ 仅用于开发联调，方便前端自动回填；正式短信接入后请删除此字段
+            debug_code = code
         }, "验证码已发送");
     }
 
@@ -317,6 +327,197 @@ public class AuthService : IAuthService
     }
 
     /// <summary>
+    /// 手机号验证码登录（非微信环境使用，校验验证码 + 账号不存在自动创建）
+    /// </summary>
+    public async Task<ApiResponse<LoginResponse>> PhoneLoginAsync(PhoneLoginRequest request)
+    {
+        try
+        {
+            // 1. 校验验证码
+            var cacheKey = BuildCodeCacheKey(request.Phone, "login");
+            if (!_cache.TryGetValue(cacheKey, out string? cachedCode) || string.IsNullOrEmpty(cachedCode))
+            {
+                return ApiResponse<LoginResponse>.ErrorResponse(1009, "验证码已过期，请重新获取");
+            }
+
+            if (!string.Equals(cachedCode, request.Code, StringComparison.Ordinal))
+            {
+                return ApiResponse<LoginResponse>.ErrorResponse(1010, "验证码错误");
+            }
+
+            // 验证通过后立即移除，防止验证码被重复使用
+            _cache.Remove(cacheKey);
+
+            // 2. 根据手机号查询用户，不存在则自动创建（与一键登录保持一致）
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Phone == request.Phone);
+
+            if (user == null)
+            {
+                user = new User
+                {
+                    Phone = request.Phone,
+                    Username = $"user_{request.Phone}",
+                    Nickname = $"用户{request.Phone[^4..]}",
+                    Status = true,
+                    IsBlocked = false,
+                    Gender = 0,
+                    VipLevel = 0,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now,
+                    LastLoginTime = DateTime.Now
+                };
+
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                if (user.Status != true)
+                    return ApiResponse<LoginResponse>.ErrorResponse(1007, "账号已被禁用");
+
+                if (user.IsBlocked == true)
+                    return ApiResponse<LoginResponse>.ErrorResponse(1008, "账号已被封禁");
+            }
+
+            // 3. 更新登录时间
+            user.LastLoginTime = DateTime.Now;
+            user.UpdatedAt = DateTime.Now;
+            await _context.SaveChangesAsync();
+
+            // 4. 生成 Token
+            var token = GenerateJwtToken(user);
+            var refreshToken = GenerateRefreshToken();
+
+            // 5. 查询是否为陪玩师
+            bool isCompanion = await _context.Companions.AnyAsync(c => c.UserId == user.Id);
+            int? companionStatus = isCompanion ? await _context.Companions
+                .Where(c => c.UserId == user.Id)
+                .Select(c => c.Status)
+                .FirstOrDefaultAsync() : null;
+
+            return ApiResponse<LoginResponse>.SuccessResponse(new LoginResponse
+            {
+                AccessToken = token,
+                RefreshToken = refreshToken,
+                ExpiresIn = 7200,
+                UserInfo = new UserInfo
+                {
+                    Id = user.Id,
+                    Username = user.Username,
+                    Nickname = user.Nickname,
+                    Avatar = user.Avatar,
+                    Phone = MaskPhone(user.Phone),
+                    Gender = user.Gender ?? 0,
+                    VipLevel = user.VipLevel.GetSafeInt(),
+                    VipExpireTime = user.VipExpireDate?.ToString("yyyy-MM-dd HH:mm:ss"),
+                    Balance = user.Balance.GetSafeDecimal(),
+                    Points = user.Points.GetSafeInt(),
+                    IsCompanion = isCompanion,
+                    CompanionStatus = companionStatus,
+                    CreatedAt = user.CreatedAt?.ToDateTimeString() ?? string.Empty
+                }
+            }, "登录成功");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "手机号验证码登录异常：{Phone}", request.Phone);
+            return ApiResponse<LoginResponse>.ErrorResponse(500, "服务器异常");
+        }
+    }
+
+    /// <summary>
+    /// 手机号密码登录（非微信环境使用，账号不存在自动注册）
+    /// </summary>
+    public async Task<ApiResponse<LoginResponse>> PhonePasswordLoginAsync(PhonePasswordLoginRequest request)
+    {
+        try
+        {
+            // 1. 根据手机号查询用户
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Phone == request.Phone);
+
+            if (user == null)
+            {
+                // 2. 账号不存在 → 自动注册（与验证码/微信登录保持一致）
+                user = new User
+                {
+                    Phone = request.Phone,
+                    Username = $"user_{request.Phone}",
+                    Nickname = $"用户{request.Phone[^4..]}",
+                    Password = HashPassword(request.Password),
+                    Status = true,
+                    IsBlocked = false,
+                    Gender = 0,
+                    VipLevel = 0,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now,
+                    LastLoginTime = DateTime.Now
+                };
+
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                // 3. 已有账号 → 校验密码与状态
+                if (string.IsNullOrEmpty(user.Password))
+                    return ApiResponse<LoginResponse>.ErrorResponse(1011, "该账号未设置密码，请使用验证码登录");
+
+                if (!VerifyPassword(request.Password, user.Password))
+                    return ApiResponse<LoginResponse>.ErrorResponse(1002, "密码错误");
+
+                if (user.Status != true)
+                    return ApiResponse<LoginResponse>.ErrorResponse(1007, "账号已被禁用");
+
+                if (user.IsBlocked == true)
+                    return ApiResponse<LoginResponse>.ErrorResponse(1008, "账号已被封禁");
+
+                user.LastLoginTime = DateTime.Now;
+                user.UpdatedAt = DateTime.Now;
+                await _context.SaveChangesAsync();
+            }
+
+            // 4. 生成 Token
+            var token = GenerateJwtToken(user);
+            var refreshToken = GenerateRefreshToken();
+
+            // 5. 查询是否为陪玩师
+            bool isCompanion = await _context.Companions.AnyAsync(c => c.UserId == user.Id);
+            int? companionStatus = isCompanion ? await _context.Companions
+                .Where(c => c.UserId == user.Id)
+                .Select(c => c.Status)
+                .FirstOrDefaultAsync() : null;
+
+            return ApiResponse<LoginResponse>.SuccessResponse(new LoginResponse
+            {
+                AccessToken = token,
+                RefreshToken = refreshToken,
+                ExpiresIn = 7200,
+                UserInfo = new UserInfo
+                {
+                    Id = user.Id,
+                    Username = user.Username,
+                    Nickname = user.Nickname,
+                    Avatar = user.Avatar,
+                    Phone = MaskPhone(user.Phone),
+                    Gender = user.Gender ?? 0,
+                    VipLevel = user.VipLevel.GetSafeInt(),
+                    VipExpireTime = user.VipExpireDate?.ToString("yyyy-MM-dd HH:mm:ss"),
+                    Balance = user.Balance.GetSafeDecimal(),
+                    Points = user.Points.GetSafeInt(),
+                    IsCompanion = isCompanion,
+                    CompanionStatus = companionStatus,
+                    CreatedAt = user.CreatedAt?.ToDateTimeString() ?? string.Empty
+                }
+            }, "登录成功");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "手机号密码登录异常：{Phone}", request.Phone);
+            return ApiResponse<LoginResponse>.ErrorResponse(500, "服务器异常");
+        }
+    }
+
+    /// <summary>
     /// 微信一键登录
     /// </summary>
     public async Task<ApiResponse<LoginResponse>> WechatLoginAsync(WechatLoginRequest request)
@@ -420,6 +621,15 @@ public class AuthService : IAuthService
 
 
     #region 私有方法
+
+    /// <summary>
+    /// 构造短信验证码缓存 Key（区分手机号 + 业务类型）
+    /// </summary>
+    private static string BuildCodeCacheKey(string phone, string? type)
+    {
+        var scene = string.IsNullOrEmpty(type) ? "login" : type;
+        return $"sms_code:{scene}:{phone}";
+    }
 
     /// <summary>
     /// 根据微信小程序 code 获取 openid

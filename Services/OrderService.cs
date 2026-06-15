@@ -677,13 +677,13 @@ public class OrderService : IOrderService
     /// <summary>
     /// 获取订单统计数据（高性能：单次SQL查询，5种状态一次算出）
     /// </summary>
-    public async Task<ApiResponse<OrderStatusDto>> GetOrderStatusAsync(string openId)
+    public async Task<ApiResponse<OrderStatusDto>> GetOrderStatusAsync(int userId)
     {
         try
         {
             // 🔥 高性能：单次EF Core查询，一次性统计所有状态，只查1次DB！
             var statistics = await _context.Orders
-                .Where(x => x.User.Openid == openId)
+                .Where(x => x.UserId == userId)
                 .AsNoTracking() // 无跟踪，极致性能
                 .GroupBy(x => 1) // 虚拟分组，一次性聚合所有数据
                 .Select(g => new OrderStatusDto

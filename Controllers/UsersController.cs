@@ -50,4 +50,30 @@ public class UsersController : ControllerBase
         var result = await _userService.GetUserStatCardsAsync();
         return result.ToActionResult();
     }
+
+    /// <summary>
+    /// 管理员编辑用户信息
+    /// </summary>
+    [HttpPut("{id}")]
+    [ProducesResponseType(typeof(ApiResponse<UserListDto>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<>), 404)]
+    [ProducesResponseType(typeof(ApiResponse<>), 500)]
+    public async Task<IActionResult> UpdateUser(int id, [FromBody] AdminUpdateUserDto dto)
+    {
+        var result = await _userService.AdminUpdateUserAsync(id, dto);
+        return result.ToActionResult();
+    }
+
+    /// <summary>
+    /// 启用/禁用用户
+    /// </summary>
+    [HttpPut("{id}/status")]
+    [ProducesResponseType(typeof(ApiResponse), 200)]
+    [ProducesResponseType(typeof(ApiResponse), 404)]
+    [ProducesResponseType(typeof(ApiResponse), 500)]
+    public async Task<IActionResult> UpdateUserStatus(int id, [FromBody] UpdateUserStatusDto dto)
+    {
+        var result = await _userService.UpdateUserStatusAsync(id, dto);
+        return result.ToActionResult();
+    }
 }

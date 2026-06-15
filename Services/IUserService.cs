@@ -10,9 +10,9 @@ namespace GameCompanion.Api.Services;
 public interface IUserService
 {
     /// <summary>
-    /// 获取用户个人信息
+    /// 获取用户个人信息（按用户ID，兼容手机号/微信等所有登录方式）
     /// </summary>
-    Task<ApiResponse<UserProfileDto>> GetProfileAsync(string openId);
+    Task<ApiResponse<UserProfileDto>> GetProfileAsync(int userId);
 
     /// <summary>
     /// 更新用户个人资料
@@ -68,6 +68,16 @@ public interface IUserService
     /// 获取用户统计卡片
     /// </summary>
     Task<ApiResponse<List<StatCardDto>>> GetUserStatCardsAsync();
+
+    /// <summary>
+    /// 管理员编辑用户信息
+    /// </summary>
+    Task<ApiResponse<UserListDto>> AdminUpdateUserAsync(int id, AdminUpdateUserDto dto);
+
+    /// <summary>
+    /// 启用/禁用用户
+    /// </summary>
+    Task<ApiResponse> UpdateUserStatusAsync(int id, UpdateUserStatusDto dto);
 
     /// <summary>
     /// 添加陪玩师收藏

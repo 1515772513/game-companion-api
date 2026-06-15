@@ -495,6 +495,7 @@ public class UserService : IUserService
                     Nickname = u.Nickname,
                     Avatar = u.Avatar,
                     Bio = u.Bio,
+                    Phone = u.Phone,
                     VipLevel = u.VipLevel,
                     Points = u.Points ?? 0,
                     Status = u.Status == true ? 1 : 0,
@@ -599,18 +600,90 @@ public class UserService : IUserService
         }
     }
 
+    /// <summary>
+    /// 管理员编辑用户信息
+    /// </summary>
+    public async Task<ApiResponse<UserListDto>> AdminUpdateUserAsync(int id, AdminUpdateUserDto dto)
+    {
+        try
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+            {
+                return ApiResponse<UserListDto>.Fail(404, "用户不存在");
+            }
+
+            user.Nickname = dto.Nickname;
+            user.Phone = dto.Phone;
+            user.VipLevel = dto.VipLevel;
+            user.Points = dto.Points;
+            user.UpdatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            var result = new UserListDto
+            {
+                Id = user.Id,
+                Username = user.Username,
+                Nickname = user.Nickname,
+                Avatar = user.Avatar,
+                Bio = user.Bio,
+                Phone = user.Phone,
+                VipLevel = user.VipLevel,
+                Points = user.Points ?? 0,
+                Status = user.Status == true ? 1 : 0,
+                StatusCn = user.Status == false ? "禁用" : "正常",
+                CreatedAt = user.CreatedAt.ToDateTimeString()
+            };
+
+            return ApiResponse<UserListDto>.Success(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "管理员编辑用户失败，用户ID：{UserId}", id);
+            return ApiResponse<UserListDto>.Fail(500, "编辑用户失败");
+        }
+    }
+
+    /// <summary>
+    /// 启用/禁用用户
+    /// </summary>
+    public async Task<ApiResponse> UpdateUserStatusAsync(int id, UpdateUserStatusDto dto)
+    {
+        try
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+            {
+                return ApiResponse.Fail(404, "用户不存在");
+            }
+
+            user.Status = dto.Status == 1;
+            user.UpdatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            return ApiResponse.Success(dto.Status == 1 ? "启用成功" : "禁用成功");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "更新用户状态失败，用户ID：{UserId}", id);
+            return ApiResponse.Fail(500, "更新用户状态失败");
+        }
+    }
+
     #region 客户端 mobile
 
     /// <summary>
     /// 获取用户个人信息
     /// </summary>
-    public async Task<ApiResponse<UserProfileDto>> GetProfileAsync(string openId)
+    public async Task<ApiResponse<UserProfileDto>> GetProfileAsync(int userId)
     {
         try
         {
             var user = await _context.Users
                 .Include(u => u.Companions)
-                .FirstOrDefaultAsync(u => u.Openid == openId);
+                .FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null)
             {
                 return ApiResponse<UserProfileDto>.Fail(404, "用户不存在");

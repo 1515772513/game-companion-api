@@ -125,6 +125,9 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// 内存缓存（短信验证码等临时数据）
+builder.Services.AddMemoryCache();
+
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(Program));
 

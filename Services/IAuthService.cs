@@ -43,6 +43,16 @@ public interface IAuthService
     /// </summary>
     Task<ApiResponse<LoginResponse>> SmsLoginAsync(SmsLoginRequest request);
 
+    /// <summary>
+    /// 手机号验证码登录（非微信环境使用）
+    /// </summary>
+    Task<ApiResponse<LoginResponse>> PhoneLoginAsync(PhoneLoginRequest request);
+
+    /// <summary>
+    /// 手机号密码登录（非微信环境使用）
+    /// </summary>
+    Task<ApiResponse<LoginResponse>> PhonePasswordLoginAsync(PhonePasswordLoginRequest request);
+
 
     /// <summary>
     /// 微信一键登录

@@ -127,6 +127,39 @@ public class AuthController : ControllerBase
 
 
     /// <summary>
+    /// 手机号验证码登录（非微信环境使用）
+    /// </summary>
+    /// <param name="request">手机号验证码登录请求</param>
+    /// <returns>登录结果</returns>
+    [HttpPost("phone-login")]
+    [ProducesResponseType(typeof(ApiResponse<LoginResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<ApiResponse<LoginResponse>>> PhoneLogin([FromBody] PhoneLoginRequest request)
+    {
+        _logger.LogInformation("手机号验证码登录: {Phone}", request.Phone);
+        var result = await _authService.PhoneLoginAsync(request);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// 手机号密码登录（非微信环境使用）
+    /// </summary>
+    /// <param name="request">手机号密码登录请求</param>
+    /// <returns>登录结果</returns>
+    [HttpPost("phone-password-login")]
+    [ProducesResponseType(typeof(ApiResponse<LoginResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<ApiResponse<LoginResponse>>> PhonePasswordLogin([FromBody] PhonePasswordLoginRequest request)
+    {
+        _logger.LogInformation("手机号密码登录: {Phone}", request.Phone);
+        var result = await _authService.PhonePasswordLoginAsync(request);
+        return Ok(result);
+    }
+
+
+    /// <summary>
     /// 微信一键登录
     /// </summary>
     /// <param name="request">微信一键登录请求</param>

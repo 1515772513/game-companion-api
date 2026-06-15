@@ -35,14 +35,14 @@ public class UserController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<>), 500)]
     public async Task<IActionResult> GetProfile()
     {
-        var openId = GetOpenId();
-        _logger.LogInformation($"openId: {openId}");
-        if (string.IsNullOrEmpty(openId))
+        var userId = GetUserId();
+        _logger.LogInformation($"userId: {userId}");
+        if (userId == 0)
         {
             return ApiResponse<UserProfileDto>.Fail(401, "用户未授权").ToActionResult();
         }
 
-        var result = await _userService.GetProfileAsync(openId);
+        var result = await _userService.GetProfileAsync(userId);
         return result.ToActionResult();
     }
 

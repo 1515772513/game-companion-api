@@ -165,8 +165,8 @@ public class OrdersController : ControllerBase
     [HttpGet("order-status")]
     public async Task<ApiResponse<OrderStatusDto>> GetOrderStatus()
     {
-        var openId = GetOpenId();
-        return await _orderService.GetOrderStatusAsync(openId);
+        var userId = GetUserId();
+        return await _orderService.GetOrderStatusAsync(userId);
     }
 
     #endregion
