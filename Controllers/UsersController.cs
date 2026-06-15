@@ -11,7 +11,7 @@ namespace GameCompanion.Api.Controllers;
 /// 用户控制器
 /// </summary>
 [ApiController]
-[Route("api/user")]
+[Route("api/users")]
 [Authorize]
 public class UsersController : ControllerBase
 {
